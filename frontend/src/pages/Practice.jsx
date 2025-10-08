@@ -586,7 +586,7 @@ const HistoryStatLabel = styled.div`
 const Practice = () => {
   const navigate = useNavigate();
   const [theme, setTheme] = useState('light');
-  const [selectedMode, setSelectedMode] = useState('weak-words');
+  const [selectedMode, setSelectedMode] = useState('flashcard'); // Đổi default
   const [settings, setSettings] = useState({
     difficulty: 'medium',
     questionCount: 10,
@@ -595,6 +595,20 @@ const Practice = () => {
   });
 
   const practiceHistory = [
+    {
+      mode: 'Flashcard chuẩn',
+      date: '1 giờ trước',
+      score: 90,
+      questions: 30,
+      time: '12:15',
+    },
+    {
+      mode: 'Mini-quiz ngữ pháp',
+      date: '3 giờ trước',
+      score: 88,
+      questions: 15,
+      time: '5:30',
+    },
     {
       mode: 'Từ vựng yếu',
       date: '2 giờ trước',
@@ -620,6 +634,22 @@ const Practice = () => {
 
   const modes = [
     {
+      id: 'flashcard',
+      title: 'Flashcard chuẩn',
+      icon: '🗂️',
+      color: '#1CB0F6',
+      description: 'Ôn tập bằng flashcard lật trước-sau hoặc gõ đáp án để kiểm tra từ vựng',
+      stats: { cards: 150, mastered: '82%' },
+    },
+    {
+      id: 'mini-quiz',
+      title: 'Mini-quiz ngữ pháp',
+      icon: '📝',
+      color: '#8b5cf6',
+      description: 'Làm mini-quiz ngữ pháp về từ loại, chia thì, mạo từ để củng cố kiến thức',
+      stats: { quizzes: 28, avg: '85%' },
+    },
+    {
       id: 'weak-words',
       title: 'Từ vựng yếu',
       icon: '📖',
@@ -638,9 +668,9 @@ const Practice = () => {
     {
       id: 'grammar',
       title: 'Ngữ pháp',
-      icon: '📝',
-      color: '#8b5cf6',
-      description: 'Ôn tập và củng cố ngữ pháp',
+      icon: '📚',
+      color: '#10b981',
+      description: 'Ôn tập và củng cố ngữ pháp tổng hợp',
       stats: { lessons: 12, completed: '8/12' },
     },
     {
@@ -655,7 +685,7 @@ const Practice = () => {
       id: 'listening',
       title: 'Luyện nghe',
       icon: '🎧',
-      color: '#10b981',
+      color: '#ec4899',
       description: 'Rèn luyện kỹ năng nghe hiểu',
       stats: { hours: 12, level: 'B2' },
     },
@@ -685,9 +715,14 @@ const Practice = () => {
   };
 
   const handleStartPractice = () => {
-    // Redirect to lesson with practice mode
+  if (selectedMode === 'flashcard') {
+    navigate('/flashcard-practice');
+  } else if (selectedMode === 'mini-quiz') {
+    navigate('/grammar-quiz');
+  } else {
     navigate(`/lesson/practice?mode=${selectedMode}`);
-  };
+  }
+};
 
   return (
     <PageWrapper theme={theme}>

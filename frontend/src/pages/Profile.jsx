@@ -5,7 +5,7 @@ import Swal from 'sweetalert2';
 import Toast from '../components/Toast';
 import useToast from '../hooks/useToast';
 import Avatar from '../components/Avatar';
-
+import Header from '../components/Header';
 // ========== STYLED COMPONENTS ==========
 
 const PageWrapper = styled.div`
@@ -34,89 +34,6 @@ const PageWrapper = styled.div`
   }
 `;
 
-const Header = styled.header`
-  position: sticky;
-  top: 0;
-  background: ${props => props.theme === 'dark'
-    ? 'rgba(26, 26, 26, 0.95)'
-    : 'rgba(255, 255, 255, 0.95)'
-  };
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid ${props => props.theme === 'dark' ? '#374151' : '#e5e7eb'};
-  z-index: 100;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-`;
-
-const HeaderContent = styled.div`
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 1rem 2rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-
-  @media (max-width: 768px) {
-    padding: 1rem;
-  }
-`;
-
-const Logo = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: #58CC02;
-  cursor: pointer;
-
-  span:first-child {
-    font-size: 2rem;
-  }
-`;
-
-const HeaderActions = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-`;
-
-const ThemeToggle = styled.button`
-  background: ${props => props.theme === 'dark' ? '#374151' : '#f3f4f6'};
-  border: none;
-  width: 45px;
-  height: 45px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.25rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-
-  &:hover {
-    transform: rotate(20deg) scale(1.1);
-    background: ${props => props.theme === 'dark' ? '#4B5563' : '#e5e7eb'};
-  }
-`;
-
-const BackButton = styled.button`
-  background: ${props => props.theme === 'dark' ? '#374151' : '#f3f4f6'};
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 12px;
-  font-weight: 600;
-  color: ${props => props.theme === 'dark' ? '#e5e7eb' : '#374151'};
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-
-  &:hover {
-    background: ${props => props.theme === 'dark' ? '#4B5563' : '#e5e7eb'};
-    transform: translateY(-2px);
-  }
-`;
 
 const DashboardContainer = styled.div`
   max-width: 1400px;
@@ -854,23 +771,15 @@ const Profile = () => {
       <Toast toast={toast} onClose={hideToast} />
 
       {/* Header */}
-      <Header theme={theme}>
-        <HeaderContent>
-          <Logo onClick={() => navigate('/dashboard')}>
-            <span>🦉</span>
-            <span>EnglishMaster</span>
-          </Logo>
-          <HeaderActions>
-            <ThemeToggle theme={theme} onClick={toggleTheme}>
-              {theme === 'light' ? '🌙' : '☀️'}
-            </ThemeToggle>
-            <BackButton theme={theme} onClick={() => navigate('/dashboard')}>
-              <span>←</span>
-              Quay lại
-            </BackButton>
-          </HeaderActions>
-        </HeaderContent>
-      </Header>
+      <Header
+        theme={theme}
+        onThemeToggle={toggleTheme}
+        userName="vinhsonvlog"
+        userEmail="vinhsonvlog@example.com"
+        notificationCount={3}
+        showNotification={true}
+        showAvatar={true}
+      />
 
       <DashboardContainer>
         {/* Profile Header */}
