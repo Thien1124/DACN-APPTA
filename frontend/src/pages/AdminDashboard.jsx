@@ -4,174 +4,8 @@ import styled from 'styled-components';
 import Swal from 'sweetalert2';
 import Toast from '../components/Toast';
 import useToast from '../hooks/useToast';
+import AdminLayout from '../layouts/AdminLayout';
 
-// ========== STYLED COMPONENTS ==========
-
-const PageWrapper = styled.div`
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  background: ${props => props.theme === 'dark' 
-    ? 'linear-gradient(135deg, #0c0c0c 0%, #1a1a1a 50%, #2d2d2d 100%)'
-    : 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e0 100%)'
-  };
-  position: relative;
-  overflow-x: hidden;
-
-  &::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: ${props => props.theme === 'dark'
-      ? 'radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.1) 0%, transparent 70%), radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.1) 0%, transparent 70%), radial-gradient(circle at 40% 80%, rgba(16, 185, 129, 0.1) 0%, transparent 70%)'
-      : 'radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.05) 0%, transparent 70%), radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.05) 0%, transparent 70%), radial-gradient(circle at 40% 80%, rgba(16, 185, 129, 0.05) 0%, transparent 70%)'
-    };
-    z-index: -1;
-  }
-`;
-
-const Header = styled.header`
-  position: sticky;
-  top: 0;
-  background: ${props => props.theme === 'dark' 
-    ? 'rgba(26, 26, 26, 0.95)' 
-    : 'rgba(255, 255, 255, 0.95)'
-  };
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid ${props => props.theme === 'dark' ? '#374151' : '#e5e7eb'};
-  z-index: 100;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-`;
-
-const HeaderContent = styled.div`
-  max-width: 1600px;
-  margin: 0 auto;
-  padding: 1rem 2rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-
-  @media (max-width: 768px) {
-    padding: 1rem;
-  }
-`;
-
-const Logo = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: #58CC02;
-  cursor: pointer;
-
-  span:first-child {
-    font-size: 2rem;
-  }
-`;
-
-const HeaderActions = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-`;
-
-const ThemeToggle = styled.button`
-  background: ${props => props.theme === 'dark' ? '#374151' : '#f3f4f6'};
-  border: none;
-  width: 45px;
-  height: 45px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.25rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-
-  &:hover {
-    transform: rotate(20deg) scale(1.1);
-    background: ${props => props.theme === 'dark' ? '#4B5563' : '#e5e7eb'};
-  }
-`;
-
-const AdminBadge = styled.div`
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-  color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 12px;
-  font-weight: bold;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.875rem;
-
-  @media (max-width: 768px) {
-    display: none;
-  }
-`;
-
-const UserAvatar = styled.div`
-  width: 45px;
-  height: 45px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #58CC02 0%, #45a302 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-
-  &:hover {
-    transform: scale(1.1);
-    box-shadow: 0 4px 12px rgba(88, 204, 2, 0.3);
-  }
-`;
-
-const DashboardContainer = styled.div`
-  max-width: 1600px;
-  margin: 0 auto;
-  padding: 2rem;
-  width: 100%;
-  position: relative;
-  z-index: 1;
-  
-  @media (max-width: 768px) {
-    padding: 1rem;
-  }
-`;
-
-const PageTitle = styled.h1`
-  font-size: 2.5rem;
-  font-weight: bold;
-  color: ${props => props.theme === 'dark' ? '#f9fafb' : '#1a1a1a'};
-  margin-bottom: 0.5rem;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-
-  span:first-child {
-    font-size: 3rem;
-  }
-
-  @media (max-width: 768px) {
-    font-size: 2rem;
-    
-    span:first-child {
-      font-size: 2.5rem;
-    }
-  }
-`;
-
-const PageSubtitle = styled.p`
-  font-size: 1.125rem;
-  color: ${props => props.theme === 'dark' ? '#9ca3af' : '#6b7280'};
-  margin-bottom: 2rem;
-`;
 
 const StatsGrid = styled.div`
   display: grid;
@@ -279,7 +113,6 @@ const TableSection = styled.section`
   animation-fill-mode: both;
 `;
 
-// ✅ SỬA: Đổi tên từ TableHeader thành TableControls
 const TableControls = styled.div`
   display: flex;
   justify-content: space-between;
@@ -419,7 +252,6 @@ const TableRow = styled.tr`
   }
 `;
 
-// ✅ Giữ nguyên TableHeader cho th của table
 const TableHeader = styled.th`
   padding: 1rem;
   text-align: left;
@@ -883,9 +715,8 @@ const ProgressFill = styled.div`
 // ========== COMPONENT ==========
 
 const AdminDashboard = () => {
-  const navigate = useNavigate();
   const { toast, showToast, hideToast } = useToast();
-  const [theme, setTheme] = useState('light');
+  const [theme] = useState('light');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
@@ -894,7 +725,7 @@ const AdminDashboard = () => {
   // Modal states
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
-  const [addModalOpen, setAddModalOpen] = useState(false); // ✅ THÊM state cho Add Modal
+  const [addModalOpen, setAddModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [editFormData, setEditFormData] = useState({
     name: '',
@@ -902,11 +733,10 @@ const AdminDashboard = () => {
     role: '',
     status: ''
   });
-  // ✅ THÊM state cho Add Form
   const [addFormData, setAddFormData] = useState({
     name: '',
     email: '',
-    role: '',
+    role: 'Student',
     password: ''
   });
 
@@ -981,10 +811,6 @@ const AdminDashboard = () => {
     teachers: users.filter(u => u.role === 'Teacher').length,
   };
 
-  const toggleTheme = () => {
-    setTheme(prev => prev === 'light' ? 'dark' : 'light');
-  };
-
   // Filter users
   const filteredUsers = users.filter(user => {
     const matchSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -998,13 +824,11 @@ const AdminDashboard = () => {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedUsers = filteredUsers.slice(startIndex, startIndex + itemsPerPage);
 
-  // Handle view user - New implementation
   const handleViewUser = (user) => {
     setSelectedUser(user);
     setViewModalOpen(true);
   };
 
-  // Handle edit user - New implementation
   const handleEditUser = (user) => {
     setSelectedUser(user);
     setEditFormData({
@@ -1037,26 +861,22 @@ const AdminDashboard = () => {
   };
 
   const handleSaveAdd = () => {
-    // Validation
     if (!addFormData.name || !addFormData.email || !addFormData.role || !addFormData.password) {
       showToast('error', 'Lỗi!', 'Vui lòng điền đầy đủ thông tin');
       return;
     }
 
-    // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(addFormData.email)) {
       showToast('error', 'Lỗi!', 'Email không hợp lệ');
       return;
     }
 
-    // Password length validation
     if (addFormData.password.length < 6) {
       showToast('error', 'Lỗi!', 'Mật khẩu phải có ít nhất 6 ký tự');
       return;
     }
 
-    // Check duplicate email
     if (users.some(u => u.email === addFormData.email)) {
       showToast('error', 'Lỗi!', 'Email đã tồn tại trong hệ thống');
       return;
@@ -1100,7 +920,6 @@ const AdminDashboard = () => {
     return Math.min(Math.max(progress, 0), 100);
   };
 
-  // Handle delete user
   const handleDeleteUser = (user) => {
     Swal.fire({
       title: 'Xác nhận xóa?',
@@ -1120,205 +939,171 @@ const AdminDashboard = () => {
   };
 
   return (
-    <PageWrapper theme={theme}>
+    <AdminLayout pageTitle="👥 Quản lý người dùng">
       <Toast toast={toast} onClose={hideToast} />
 
-      {/* Header */}
-      <Header theme={theme}>
-        <HeaderContent>
-          <Logo onClick={() => navigate('/dashboard')}>
-            <span>🦉</span>
-            <span>EnglishMaster</span>
-          </Logo>
-          <HeaderActions>
-            <AdminBadge>
-              <span>👑</span>
-              Admin Panel
-            </AdminBadge>
-            <ThemeToggle theme={theme} onClick={toggleTheme}>
-              {theme === 'light' ? '🌙' : '☀️'}
-            </ThemeToggle>
-            <UserAvatar onClick={() => navigate('/profile')}>
-              👤
-            </UserAvatar>
-          </HeaderActions>
-        </HeaderContent>
-      </Header>
+      {/* Stats */}
+      <StatsGrid>
+        <StatCard theme={theme} color="#58CC02" delay="0.1s">
+          <StatIcon color="#58CC02">👥</StatIcon>
+          <StatValue theme={theme}>{stats.totalUsers}</StatValue>
+          <StatLabel theme={theme}>Tổng người dùng</StatLabel>
+        </StatCard>
 
-      <DashboardContainer>
-        {/* Page Header */}
-        <PageTitle theme={theme}>
-          <span>👥</span>
-          Quản lý người dùng
-        </PageTitle>
-        <PageSubtitle theme={theme}>
-          Quản lý tất cả người dùng trong hệ thống
-        </PageSubtitle>
+        <StatCard theme={theme} color="#10b981" delay="0.2s">
+          <StatIcon color="#10b981">✅</StatIcon>
+          <StatValue theme={theme}>{stats.activeUsers}</StatValue>
+          <StatLabel theme={theme}>Đang hoạt động</StatLabel>
+        </StatCard>
 
-        {/* Stats */}
-        <StatsGrid>
-          <StatCard theme={theme} color="#58CC02" delay="0.1s">
-            <StatIcon color="#58CC02">👥</StatIcon>
-            <StatValue theme={theme}>{stats.totalUsers}</StatValue>
-            <StatLabel theme={theme}>Tổng người dùng</StatLabel>
-          </StatCard>
+        <StatCard theme={theme} color="#1CB0F6" delay="0.3s">
+          <StatIcon color="#1CB0F6">🎓</StatIcon>
+          <StatValue theme={theme}>{stats.students}</StatValue>
+          <StatLabel theme={theme}>Học sinh</StatLabel>
+        </StatCard>
 
-          <StatCard theme={theme} color="#10b981" delay="0.2s">
-            <StatIcon color="#10b981">✅</StatIcon>
-            <StatValue theme={theme}>{stats.activeUsers}</StatValue>
-            <StatLabel theme={theme}>Đang hoạt động</StatLabel>
-          </StatCard>
+        <StatCard theme={theme} color="#8b5cf6" delay="0.4s">
+          <StatIcon color="#8b5cf6">👨‍🏫</StatIcon>
+          <StatValue theme={theme}>{stats.teachers}</StatValue>
+          <StatLabel theme={theme}>Giáo viên</StatLabel>
+        </StatCard>
+      </StatsGrid>
 
-          <StatCard theme={theme} color="#1CB0F6" delay="0.3s">
-            <StatIcon color="#1CB0F6">🎓</StatIcon>
-            <StatValue theme={theme}>{stats.students}</StatValue>
-            <StatLabel theme={theme}>Học sinh</StatLabel>
-          </StatCard>
-
-          <StatCard theme={theme} color="#8b5cf6" delay="0.4s">
-            <StatIcon color="#8b5cf6">👨‍🏫</StatIcon>
-            <StatValue theme={theme}>{stats.teachers}</StatValue>
-            <StatLabel theme={theme}>Giáo viên</StatLabel>
-          </StatCard>
-        </StatsGrid>
-
-        {/* Table */}
-        <TableSection theme={theme}>
-          {/* ✅ SỬA: Đổi từ TableHeader thành TableControls */}
-          <TableControls>
-            <TableTitle theme={theme}>
-              <span>📋</span>
-              Danh sách người dùng
-            </TableTitle>
-            <TableActions>
-              <SearchWrapper>
-                <SearchInput
-                  theme={theme}
-                  placeholder="Tìm kiếm..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </SearchWrapper>
-              <FilterSelect
+      {/* Table */}
+      <TableSection theme={theme}>
+        <TableControls>
+          <TableTitle theme={theme}>
+            <span>📋</span>
+            Danh sách người dùng
+          </TableTitle>
+          <TableActions>
+            <SearchWrapper>
+              <SearchInput
                 theme={theme}
-                value={filterRole}
-                onChange={(e) => setFilterRole(e.target.value)}
-              >
-                <option value="all">Tất cả vai trò</option>
-                <option value="Admin">Admin</option>
-                <option value="Teacher">Teacher</option>
-                <option value="Student">Student</option>
-              </FilterSelect>
-              <AddButton onClick={handleAddUser}>
-                <span>➕</span>
-                Thêm mới
-              </AddButton>
-            </TableActions>
-          </TableControls>
+                placeholder="Tìm kiếm..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </SearchWrapper>
+            <FilterSelect
+              theme={theme}
+              value={filterRole}
+              onChange={(e) => setFilterRole(e.target.value)}
+            >
+              <option value="all">Tất cả vai trò</option>
+              <option value="Admin">Admin</option>
+              <option value="Teacher">Teacher</option>
+              <option value="Student">Student</option>
+            </FilterSelect>
+            <AddButton onClick={handleAddUser}>
+              <span>➕</span>
+              Thêm mới
+            </AddButton>
+          </TableActions>
+        </TableControls>
 
-          <TableWrapper theme={theme}>
-            <Table>
-              <TableHead theme={theme}>
-                <TableRow>
-                  <TableHeader theme={theme}>Người dùng</TableHeader>
-                  <TableHeader theme={theme}>Vai trò</TableHeader>
-                  <TableHeader theme={theme}>Trạng thái</TableHeader>
-                  <TableHeader theme={theme}>Ngày tham gia</TableHeader>
-                  <TableHeader theme={theme}>Level</TableHeader>
-                  <TableHeader theme={theme}>XP</TableHeader>
-                  <TableHeader theme={theme}>Hành động</TableHeader>
+        <TableWrapper theme={theme}>
+          <Table>
+            <TableHead theme={theme}>
+              <TableRow>
+                <TableHeader theme={theme}>Người dùng</TableHeader>
+                <TableHeader theme={theme}>Vai trò</TableHeader>
+                <TableHeader theme={theme}>Trạng thái</TableHeader>
+                <TableHeader theme={theme}>Ngày tham gia</TableHeader>
+                <TableHeader theme={theme}>Level</TableHeader>
+                <TableHeader theme={theme}>XP</TableHeader>
+                <TableHeader theme={theme}>Hành động</TableHeader>
+              </TableRow>
+            </TableHead>
+            <tbody>
+              {paginatedUsers.map(user => (
+                <TableRow key={user.id} theme={theme}>
+                  <TableCell>
+                    <UserInfo>
+                      <UserAvatar2 color={user.color}>
+                        {user.avatar}
+                      </UserAvatar2>
+                      <UserDetails>
+                        <UserName theme={theme}>{user.name}</UserName>
+                        <UserEmail theme={theme}>{user.email}</UserEmail>
+                      </UserDetails>
+                    </UserInfo>
+                  </TableCell>
+                  <TableCell>
+                    <RoleBadge role={user.role}>{user.role}</RoleBadge>
+                  </TableCell>
+                  <TableCell>
+                    <StatusBadge active={user.status === 'Active'}>
+                      {user.status}
+                    </StatusBadge>
+                  </TableCell>
+                  <TableCell>{user.joinDate}</TableCell>
+                  <TableCell>{user.level}</TableCell>
+                  <TableCell>{user.xp}</TableCell>
+                  <TableCell>
+                    <ActionButtons>
+                      <ActionButton 
+                        variant="view"
+                        onClick={() => handleViewUser(user)}
+                        title="Xem chi tiết"
+                      >
+                        👁️
+                      </ActionButton>
+                      <ActionButton 
+                        variant="edit"
+                        onClick={() => handleEditUser(user)}
+                        title="Chỉnh sửa"
+                      >
+                        ✏️
+                      </ActionButton>
+                      <ActionButton 
+                        variant="delete"
+                        onClick={() => handleDeleteUser(user)}
+                        title="Xóa"
+                      >
+                        🗑️
+                      </ActionButton>
+                    </ActionButtons>
+                  </TableCell>
                 </TableRow>
-              </TableHead>
-              <tbody>
-                {paginatedUsers.map(user => (
-                  <TableRow key={user.id} theme={theme}>
-                    <TableCell>
-                      <UserInfo>
-                        <UserAvatar2 color={user.color}>
-                          {user.avatar}
-                        </UserAvatar2>
-                        <UserDetails>
-                          <UserName theme={theme}>{user.name}</UserName>
-                          <UserEmail theme={theme}>{user.email}</UserEmail>
-                        </UserDetails>
-                      </UserInfo>
-                    </TableCell>
-                    <TableCell>
-                      <RoleBadge role={user.role}>{user.role}</RoleBadge>
-                    </TableCell>
-                    <TableCell>
-                      <StatusBadge active={user.status === 'Active'}>
-                        {user.status}
-                      </StatusBadge>
-                    </TableCell>
-                    <TableCell>{user.joinDate}</TableCell>
-                    <TableCell>{user.level}</TableCell>
-                    <TableCell>{user.xp}</TableCell>
-                    <TableCell>
-                      <ActionButtons>
-                        <ActionButton 
-                          variant="view"
-                          onClick={() => handleViewUser(user)}
-                          title="Xem chi tiết"
-                        >
-                          👁️
-                        </ActionButton>
-                        <ActionButton 
-                          variant="edit"
-                          onClick={() => handleEditUser(user)}
-                          title="Chỉnh sửa"
-                        >
-                          ✏️
-                        </ActionButton>
-                        <ActionButton 
-                          variant="delete"
-                          onClick={() => handleDeleteUser(user)}
-                          title="Xóa"
-                        >
-                          🗑️
-                        </ActionButton>
-                      </ActionButtons>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </tbody>
-            </Table>
-          </TableWrapper>
-
-          {/* Pagination */}
-          <Pagination>
-            <PaginationInfo theme={theme}>
-              Hiển thị {startIndex + 1} - {Math.min(startIndex + itemsPerPage, filteredUsers.length)} trong tổng số {filteredUsers.length} người dùng
-            </PaginationInfo>
-            <PaginationButtons>
-              <PaginationButton
-                theme={theme}
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
-              >
-                ← Trước
-              </PaginationButton>
-              {[...Array(totalPages)].map((_, index) => (
-                <PaginationButton
-                  key={index}
-                  theme={theme}
-                  active={currentPage === index + 1}
-                  onClick={() => setCurrentPage(index + 1)}
-                >
-                  {index + 1}
-                </PaginationButton>
               ))}
+            </tbody>
+          </Table>
+        </TableWrapper>
+
+        {/* Pagination */}
+        <Pagination>
+          <PaginationInfo theme={theme}>
+            Hiển thị {startIndex + 1} - {Math.min(startIndex + itemsPerPage, filteredUsers.length)} trong tổng số {filteredUsers.length} người dùng
+          </PaginationInfo>
+          <PaginationButtons>
+            <PaginationButton
+              theme={theme}
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+            >
+              ← Trước
+            </PaginationButton>
+            {[...Array(totalPages)].map((_, index) => (
               <PaginationButton
+                key={index}
                 theme={theme}
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                disabled={currentPage === totalPages}
+                active={currentPage === index + 1}
+                onClick={() => setCurrentPage(index + 1)}
               >
-                Sau →
+                {index + 1}
               </PaginationButton>
-            </PaginationButtons>
-          </Pagination>
-        </TableSection>
-      </DashboardContainer>
+            ))}
+            <PaginationButton
+              theme={theme}
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+            >
+              Sau →
+            </PaginationButton>
+          </PaginationButtons>
+        </Pagination>
+      </TableSection>
 
       {/* Add User Modal */}
       {addModalOpen && (
@@ -1616,7 +1401,7 @@ const AdminDashboard = () => {
           </ModalContent>
         </ModalOverlay>
       )}
-    </PageWrapper>
+    </AdminLayout>
   );
 };
 

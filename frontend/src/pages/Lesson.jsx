@@ -551,52 +551,6 @@ const FeedbackText = styled.div`
 
 
 
-const ContinueButton = styled.button`
-  padding: 1rem 2rem;
-  border-radius: 16px;
-  font-size: 1.125rem;
-  font-weight: bold;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  border: none;
-  background: white;
-  color: ${props => props.correct ? '#58CC02' : '#ef4444'};
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-  position: relative;
-  overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    border-radius: 50%;
-    background: ${props => props.correct ? 'rgba(88, 204, 2, 0.2)' : 'rgba(239, 68, 68, 0.2)'};
-    transform: translate(-50%, -50%);
-    transition: width 0.6s, height 0.6s;
-  }
-
-  &:hover::before {
-    width: 300px;
-    height: 300px;
-  }
-
-  &:hover {
-    transform: translateY(-2px) scale(1.05);
-    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-  }
-
-  &:active {
-    transform: translateY(0) scale(0.98);
-  }
-  
-  @media (max-width: 768px) {
-    width: 100%;
-  }
-`;
-
 
 const ButtonBase = styled.button`
   padding: 1rem 2rem;
@@ -883,8 +837,7 @@ const mockQuestions = [
 // ========== COMPONENT ==========
 const Lesson = () => {
   const navigate = useNavigate();
-  const { id } = useParams();
-  const [theme, setTheme] = useState('light');
+  const [theme] = useState('light');
   
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState(null);

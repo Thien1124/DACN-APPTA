@@ -2,10 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import Header from '../components/Header';
-import Footer from '../components/Footer';
 import LoadingSpinner from '../components/LoadingSpinner';
 import StreakCounter from '../components/StreakCounter'; 
-import Avatar from '../components/Avatar'; // ⬅️ Import Avatar
 
 // ========== STYLED COMPONENTS ==========
 
@@ -35,94 +33,6 @@ const PageWrapper = styled.div`
   }
 `;
 
-
-const Logo = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: #58CC02;
-  cursor: pointer;
-
-  span:first-child {
-    font-size: 2rem;
-  }
-`;
-
-
-const ThemeToggle = styled.button`
-  background: ${props => props.theme === 'dark' ? '#374151' : '#f3f4f6'};
-  border: none;
-  width: 45px;
-  height: 45px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.25rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-
-  &:hover {
-    transform: rotate(20deg) scale(1.1);
-    background: ${props => props.theme === 'dark' ? '#4B5563' : '#e5e7eb'};
-  }
-`;
-
-const NotificationBtn = styled.button`
-  background: ${props => props.theme === 'dark' ? '#374151' : '#f3f4f6'};
-  border: none;
-  width: 45px;
-  height: 45px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.25rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  position: relative;
-
-  &:hover {
-    transform: scale(1.1);
-    background: ${props => props.theme === 'dark' ? '#4B5563' : '#e5e7eb'};
-  }
-`;
-
-const NotificationBadge = styled.span`
-  position: absolute;
-  top: 5px;
-  right: 5px;
-  background: #ef4444;
-  color: white;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  font-size: 0.7rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-`;
-
-const UserAvatar = styled.div`
-  width: 45px;
-  height: 45px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #58CC02 0%, #45a302 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-
-  &:hover {
-    transform: scale(1.1);
-    box-shadow: 0 4px 12px rgba(88, 204, 2, 0.3);
-  }
-`;
 
 const DashboardContainer = styled.div`
   max-width: 1400px;
@@ -657,50 +567,6 @@ const ActionButton = styled.button`
   span:first-child {
     font-size: 1.25rem;
   }
-`;
-const ProfileCard = styled(SidebarCard)`
-  text-align: center;
-  animation-delay: 0.1s;
-`;
-
-const ProfileName = styled.h3`
-  font-size: 1.25rem;
-  font-weight: bold;
-  color: ${props => props.theme === 'dark' ? '#f9fafb' : '#1a1a1a'};
-  margin-top: 1rem;
-  margin-bottom: 0.5rem;
-`;
-
-const ProfileUsername = styled.p`
-  font-size: 0.875rem;
-  color: ${props => props.theme === 'dark' ? '#9ca3af' : '#6b7280'};
-  margin-bottom: 1rem;
-`;
-
-const ProfileStats = styled.div`
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.75rem;
-  margin-top: 1rem;
-`;
-
-const ProfileStatItem = styled.div`
-  padding: 0.75rem;
-  background: ${props => props.theme === 'dark' ? '#1f2937' : '#f9fafb'};
-  border-radius: 12px;
-  text-align: center;
-`;
-
-const ProfileStatValue = styled.div`
-  font-size: 1.125rem;
-  font-weight: bold;
-  color: ${props => props.color || (props.theme === 'dark' ? '#f9fafb' : '#1a1a1a')};
-`;
-
-const ProfileStatLabel = styled.div`
-  font-size: 0.625rem;
-  color: ${props => props.theme === 'dark' ? '#9ca3af' : '#6b7280'};
-  margin-top: 0.25rem;
 `;
 // ========== COMPONENT ==========
 

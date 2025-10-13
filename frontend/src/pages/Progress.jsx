@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import StreakCounter from '../components/StreakCounter';
-import ProgressCircle from '../components/ProgressCircle'; 
 
 // ========== STYLED COMPONENTS ==========
 
