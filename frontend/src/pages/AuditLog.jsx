@@ -492,10 +492,9 @@ const mockAuditLogs = [
 // ========== COMPONENT ==========
 
 const AuditLog = () => {
-  const navigate = useNavigate();
   const { toast, showToast, hideToast } = useToast();
   const [theme, setTheme] = useState('light');
-  const [logs, setLogs] = useState(mockAuditLogs);
+  const [logs] = useState(mockAuditLogs);
   const [displayedLogs, setDisplayedLogs] = useState([]);
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterDate, setFilterDate] = useState('');
@@ -544,20 +543,6 @@ const AuditLog = () => {
 
   const handleLogClick = (log) => {
     showToast('info', 'Chi tiết hoạt động', log.description);
-  };
-
-  const getCategoryIcon = (category) => {
-    const icons = {
-      authentication: '🔐',
-      profile: '👤',
-      learning: '📚',
-      flashcard: '🗂️',
-      practice: '🎧',
-      achievement: '🏆',
-      exam: '📝',
-      security: '🔒',
-    };
-    return icons[category] || '📋';
   };
 
   const getCategoryColor = (category) => {

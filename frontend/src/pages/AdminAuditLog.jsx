@@ -4,175 +4,9 @@ import styled from 'styled-components';
 import Swal from 'sweetalert2';
 import Toast from '../components/Toast';
 import useToast from '../hooks/useToast';
+import AdminLayout from '../layouts/AdminLayout';
 
 // ========== STYLED COMPONENTS ==========
-
-const PageWrapper = styled.div`
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  background: ${props => props.theme === 'dark' 
-    ? 'linear-gradient(135deg, #0c0c0c 0%, #1a1a1a 50%, #2d2d2d 100%)'
-    : 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e0 100%)'
-  };
-  position: relative;
-  overflow-x: hidden;
-
-  &::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: ${props => props.theme === 'dark'
-      ? 'radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.1) 0%, transparent 70%), radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.1) 0%, transparent 70%), radial-gradient(circle at 40% 80%, rgba(16, 185, 129, 0.1) 0%, transparent 70%)'
-      : 'radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.05) 0%, transparent 70%), radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.05) 0%, transparent 70%), radial-gradient(circle at 40% 80%, rgba(16, 185, 129, 0.05) 0%, transparent 70%)'
-    };
-    z-index: -1;
-  }
-`;
-
-const Header = styled.header`
-  position: sticky;
-  top: 0;
-  background: ${props => props.theme === 'dark' 
-    ? 'rgba(26, 26, 26, 0.95)' 
-    : 'rgba(255, 255, 255, 0.95)'
-  };
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid ${props => props.theme === 'dark' ? '#374151' : '#e5e7eb'};
-  z-index: 100;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-`;
-
-const HeaderContent = styled.div`
-  max-width: 1600px;
-  margin: 0 auto;
-  padding: 1rem 2rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-
-  @media (max-width: 768px) {
-    padding: 1rem;
-  }
-`;
-
-const Logo = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: #58CC02;
-  cursor: pointer;
-
-  span:first-child {
-    font-size: 2rem;
-  }
-`;
-
-const HeaderActions = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-`;
-
-const ThemeToggle = styled.button`
-  background: ${props => props.theme === 'dark' ? '#374151' : '#f3f4f6'};
-  border: none;
-  width: 45px;
-  height: 45px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.25rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-
-  &:hover {
-    transform: rotate(20deg) scale(1.1);
-    background: ${props => props.theme === 'dark' ? '#4B5563' : '#e5e7eb'};
-  }
-`;
-
-const AdminBadge = styled.div`
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-  color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 12px;
-  font-weight: bold;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.875rem;
-
-  @media (max-width: 768px) {
-    display: none;
-  }
-`;
-
-const BackButton = styled.button`
-  background: ${props => props.theme === 'dark' ? '#374151' : '#f3f4f6'};
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 12px;
-  font-weight: 600;
-  color: ${props => props.theme === 'dark' ? '#e5e7eb' : '#374151'};
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-
-  &:hover {
-    background: ${props => props.theme === 'dark' ? '#4B5563' : '#e5e7eb'};
-    transform: translateY(-2px);
-  }
-`;
-
-const DashboardContainer = styled.div`
-  max-width: 1600px;
-  margin: 0 auto;
-  padding: 2rem;
-  width: 100%;
-  position: relative;
-  z-index: 1;
-  
-  @media (max-width: 768px) {
-    padding: 1rem;
-  }
-`;
-
-const PageTitle = styled.h1`
-  font-size: 2.5rem;
-  font-weight: bold;
-  color: ${props => props.theme === 'dark' ? '#f9fafb' : '#1a1a1a'};
-  margin-bottom: 0.5rem;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-
-  span:first-child {
-    font-size: 3rem;
-  }
-
-  @media (max-width: 768px) {
-    font-size: 2rem;
-    
-    span:first-child {
-      font-size: 2.5rem;
-    }
-  }
-`;
-
-const PageSubtitle = styled.p`
-  font-size: 1.125rem;
-  color: ${props => props.theme === 'dark' ? '#9ca3af' : '#6b7280'};
-  margin-bottom: 2rem;
-`;
 
 const StatsGrid = styled.div`
   display: grid;
@@ -664,7 +498,7 @@ const mockAuditLogs = [
     description: 'Đăng nhập thành công từ Chrome on Windows',
     ip: '192.168.1.100',
     device: 'Chrome/Windows',
-    timestamp: '2025-10-08 14:30:22',
+    timestamp: '2025-10-09 14:30:22',
     severity: 'low',
     avatar: '👨‍💼',
     color: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
@@ -679,7 +513,7 @@ const mockAuditLogs = [
     description: 'Thay đổi ảnh đại diện và thông tin cá nhân',
     ip: '192.168.1.105',
     device: 'Safari/MacOS',
-    timestamp: '2025-10-08 14:15:10',
+    timestamp: '2025-10-09 14:15:10',
     severity: 'low',
     avatar: '👨',
     color: 'linear-gradient(135deg, #1CB0F6 0%, #0891b2 100%)',
@@ -694,7 +528,7 @@ const mockAuditLogs = [
     description: 'Tạo đề thi TOEIC L&R Full Test #10',
     ip: '192.168.1.110',
     device: 'Firefox/Windows',
-    timestamp: '2025-10-08 14:00:45',
+    timestamp: '2025-10-09 14:00:45',
     severity: 'medium',
     avatar: '👩‍🏫',
     color: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
@@ -709,7 +543,7 @@ const mockAuditLogs = [
     description: 'Tự động backup dữ liệu định kỳ',
     ip: '127.0.0.1',
     device: 'System/Linux',
-    timestamp: '2025-10-08 13:00:00',
+    timestamp: '2025-10-09 13:00:00',
     severity: 'low',
     avatar: '🤖',
     color: 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)',
@@ -724,7 +558,7 @@ const mockAuditLogs = [
     description: 'Nhập sai mật khẩu 3 lần liên tiếp',
     ip: '192.168.1.200',
     device: 'Chrome/Android',
-    timestamp: '2025-10-08 12:45:30',
+    timestamp: '2025-10-09 12:45:30',
     severity: 'high',
     avatar: '🧑',
     color: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
@@ -739,7 +573,7 @@ const mockAuditLogs = [
     description: 'Xóa tài khoản người dùng "testuser123"',
     ip: '192.168.1.100',
     device: 'Chrome/Windows',
-    timestamp: '2025-10-08 12:30:15',
+    timestamp: '2025-10-09 12:30:15',
     severity: 'critical',
     avatar: '👨‍💼',
     color: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
@@ -754,7 +588,7 @@ const mockAuditLogs = [
     description: 'Hoàn thành Unit 5: Daily Routines với điểm 95/100',
     ip: '192.168.1.115',
     device: 'Edge/Windows',
-    timestamp: '2025-10-08 12:00:00',
+    timestamp: '2025-10-09 12:00:00',
     severity: 'low',
     avatar: '👩',
     color: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
@@ -769,7 +603,7 @@ const mockAuditLogs = [
     description: 'Gửi email thông báo điểm thi cho 156 học viên',
     ip: '127.0.0.1',
     device: 'System/Linux',
-    timestamp: '2025-10-08 11:00:00',
+    timestamp: '2025-10-09 11:00:00',
     severity: 'low',
     avatar: '🤖',
     color: 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)',
@@ -779,10 +613,9 @@ const mockAuditLogs = [
 // ========== COMPONENT ==========
 
 const AdminAuditLog = () => {
-  const navigate = useNavigate();
   const { toast, showToast, hideToast } = useToast();
-  const [theme, setTheme] = useState('light');
-  const [logs, setLogs] = useState(mockAuditLogs);
+  const [theme] = useState('light');
+  const [logs] = useState(mockAuditLogs);
   const [displayedLogs, setDisplayedLogs] = useState(mockAuditLogs);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
@@ -793,14 +626,10 @@ const AdminAuditLog = () => {
 
   const stats = {
     total: logs.length,
-    today: logs.filter(l => l.timestamp.startsWith('2025-10-08')).length,
+    today: logs.filter(l => l.timestamp.startsWith('2025-10-09')).length,
     critical: logs.filter(l => l.severity === 'critical').length,
     security: logs.filter(l => l.category === 'security').length,
     failed: logs.filter(l => l.action.includes('thất bại')).length,
-  };
-
-  const toggleTheme = () => {
-    setTheme(prev => prev === 'light' ? 'dark' : 'light');
   };
 
   // Filter logs
@@ -981,253 +810,219 @@ const AdminAuditLog = () => {
   };
 
   return (
-    <PageWrapper theme={theme}>
+    <AdminLayout pageTitle="🔐 Audit Log">
       <Toast toast={toast} onClose={hideToast} />
 
-      {/* Header */}
-      <Header theme={theme}>
-        <HeaderContent>
-          <Logo onClick={() => navigate('/admin')}>
-            <span>🦉</span>
-            <span>EnglishMaster Admin</span>
-          </Logo>
-          <HeaderActions>
-            <AdminBadge>
-              <span>👑</span>
-              Admin Panel
-            </AdminBadge>
-            <ThemeToggle theme={theme} onClick={toggleTheme}>
-              {theme === 'light' ? '🌙' : '☀️'}
-            </ThemeToggle>
-            <BackButton theme={theme} onClick={() => navigate('/admin')}>
-              <span>←</span>
-              Quay lại
-            </BackButton>
-          </HeaderActions>
-        </HeaderContent>
-      </Header>
+      {/* Stats */}
+      <StatsGrid>
+        <StatCard theme={theme} color="#58CC02" delay="0.1s">
+          <StatIcon color="#58CC02">📊</StatIcon>
+          <StatValue theme={theme}>{stats.total}</StatValue>
+          <StatLabel theme={theme}>Tổng logs</StatLabel>
+        </StatCard>
 
-      <DashboardContainer>
-        {/* Page Header */}
-        <PageTitle theme={theme}>
-          <span>🔐</span>
-          Audit Log - Lịch sử hệ thống
-        </PageTitle>
-        <PageSubtitle theme={theme}>
-          Theo dõi và quản lý toàn bộ hoạt động của hệ thống
-        </PageSubtitle>
+        <StatCard theme={theme} color="#1CB0F6" delay="0.2s">
+          <StatIcon color="#1CB0F6">📅</StatIcon>
+          <StatValue theme={theme}>{stats.today}</StatValue>
+          <StatLabel theme={theme}>Hôm nay</StatLabel>
+        </StatCard>
 
-        {/* Stats */}
-        <StatsGrid>
-          <StatCard theme={theme} color="#58CC02" delay="0.1s">
-            <StatIcon color="#58CC02">📊</StatIcon>
-            <StatValue theme={theme}>{stats.total}</StatValue>
-            <StatLabel theme={theme}>Tổng logs</StatLabel>
-          </StatCard>
+        <StatCard theme={theme} color="#ef4444" delay="0.3s">
+          <StatIcon color="#ef4444">🚨</StatIcon>
+          <StatValue theme={theme}>{stats.critical}</StatValue>
+          <StatLabel theme={theme}>Critical</StatLabel>
+        </StatCard>
 
-          <StatCard theme={theme} color="#1CB0F6" delay="0.2s">
-            <StatIcon color="#1CB0F6">📅</StatIcon>
-            <StatValue theme={theme}>{stats.today}</StatValue>
-            <StatLabel theme={theme}>Hôm nay</StatLabel>
-          </StatCard>
+        <StatCard theme={theme} color="#f59e0b" delay="0.4s">
+          <StatIcon color="#f59e0b">🔒</StatIcon>
+          <StatValue theme={theme}>{stats.security}</StatValue>
+          <StatLabel theme={theme}>Security</StatLabel>
+        </StatCard>
 
-          <StatCard theme={theme} color="#ef4444" delay="0.3s">
-            <StatIcon color="#ef4444">🚨</StatIcon>
-            <StatValue theme={theme}>{stats.critical}</StatValue>
-            <StatLabel theme={theme}>Critical</StatLabel>
-          </StatCard>
+        <StatCard theme={theme} color="#6b7280" delay="0.5s">
+          <StatIcon color="#6b7280">❌</StatIcon>
+          <StatValue theme={theme}>{stats.failed}</StatValue>
+          <StatLabel theme={theme}>Thất bại</StatLabel>
+        </StatCard>
+      </StatsGrid>
 
-          <StatCard theme={theme} color="#f59e0b" delay="0.4s">
-            <StatIcon color="#f59e0b">🔒</StatIcon>
-            <StatValue theme={theme}>{stats.security}</StatValue>
-            <StatLabel theme={theme}>Security</StatLabel>
-          </StatCard>
-
-          <StatCard theme={theme} color="#6b7280" delay="0.5s">
-            <StatIcon color="#6b7280">❌</StatIcon>
-            <StatValue theme={theme}>{stats.failed}</StatValue>
-            <StatLabel theme={theme}>Thất bại</StatLabel>
-          </StatCard>
-        </StatsGrid>
-
-        {/* Filters */}
-        <FilterSection theme={theme}>
-          <FilterGrid>
-            <FilterGroup>
-              <FilterLabel theme={theme}>Tìm kiếm</FilterLabel>
-              <SearchWrapper>
-                <SearchIcon theme={theme}>🔍</SearchIcon>
-                <SearchInput
-                  theme={theme}
-                  placeholder="Tìm theo user, action, IP..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </SearchWrapper>
-            </FilterGroup>
-
-            <FilterGroup>
-              <FilterLabel theme={theme}>Danh mục</FilterLabel>
-              <FilterSelect
+      {/* Filters */}
+      <FilterSection theme={theme}>
+        <FilterGrid>
+          <FilterGroup>
+            <FilterLabel theme={theme}>Tìm kiếm</FilterLabel>
+            <SearchWrapper>
+              <SearchIcon theme={theme}>🔍</SearchIcon>
+              <SearchInput
                 theme={theme}
-                value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
-              >
-                <option value="all">Tất cả</option>
-                <option value="authentication">🔐 Authentication</option>
-                <option value="profile">👤 Profile</option>
-                <option value="learning">📚 Learning</option>
-                <option value="admin">⚙️ Admin</option>
-                <option value="security">🔒 Security</option>
-                <option value="system">🤖 System</option>
-              </FilterSelect>
-            </FilterGroup>
-
-            <FilterGroup>
-              <FilterLabel theme={theme}>Mức độ</FilterLabel>
-              <FilterSelect
-                theme={theme}
-                value={severityFilter}
-                onChange={(e) => setSeverityFilter(e.target.value)}
-              >
-                <option value="all">Tất cả</option>
-                <option value="critical">🚨 Critical</option>
-                <option value="high">⚠️ High</option>
-                <option value="medium">ℹ️ Medium</option>
-                <option value="low">✅ Low</option>
-              </FilterSelect>
-            </FilterGroup>
-
-            <FilterGroup>
-              <FilterLabel theme={theme}>Ngày</FilterLabel>
-              <DateInput
-                theme={theme}
-                type="date"
-                value={dateFilter}
-                onChange={(e) => setDateFilter(e.target.value)}
+                placeholder="Tìm theo user, action, IP..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
               />
-            </FilterGroup>
+            </SearchWrapper>
+          </FilterGroup>
 
-            <FilterGroup>
-              <FilterLabel theme={theme}>&nbsp;</FilterLabel>
-              <ExportButton onClick={handleExport}>
-                <span>📥</span>
-                Xuất báo cáo
-              </ExportButton>
-            </FilterGroup>
-          </FilterGrid>
-        </FilterSection>
+          <FilterGroup>
+            <FilterLabel theme={theme}>Danh mục</FilterLabel>
+            <FilterSelect
+              theme={theme}
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+            >
+              <option value="all">Tất cả</option>
+              <option value="authentication">🔐 Authentication</option>
+              <option value="profile">👤 Profile</option>
+              <option value="learning">📚 Learning</option>
+              <option value="admin">⚙️ Admin</option>
+              <option value="security">🔒 Security</option>
+              <option value="system">🤖 System</option>
+            </FilterSelect>
+          </FilterGroup>
 
-        {/* Table */}
-        <TableSection theme={theme}>
-          <TableWrapper theme={theme}>
-            <Table>
-              <TableHead theme={theme}>
-                <TableRow>
-                  <TableHeader theme={theme}>Người dùng</TableHeader>
-                  <TableHeader theme={theme}>Hành động</TableHeader>
-                  <TableHeader theme={theme}>Danh mục</TableHeader>
-                  <TableHeader theme={theme}>Mô tả</TableHeader>
-                  <TableHeader theme={theme}>IP / Thiết bị</TableHeader>
-                  <TableHeader theme={theme}>Thời gian</TableHeader>
-                  <TableHeader theme={theme}>Mức độ</TableHeader>
-                  <TableHeader theme={theme}>Hành động</TableHeader>
+          <FilterGroup>
+            <FilterLabel theme={theme}>Mức độ</FilterLabel>
+            <FilterSelect
+              theme={theme}
+              value={severityFilter}
+              onChange={(e) => setSeverityFilter(e.target.value)}
+            >
+              <option value="all">Tất cả</option>
+              <option value="critical">🚨 Critical</option>
+              <option value="high">⚠️ High</option>
+              <option value="medium">ℹ️ Medium</option>
+              <option value="low">✅ Low</option>
+            </FilterSelect>
+          </FilterGroup>
+
+          <FilterGroup>
+            <FilterLabel theme={theme}>Ngày</FilterLabel>
+            <DateInput
+              theme={theme}
+              type="date"
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+            />
+          </FilterGroup>
+
+          <FilterGroup>
+            <FilterLabel theme={theme}>&nbsp;</FilterLabel>
+            <ExportButton onClick={handleExport}>
+              <span>📥</span>
+              Xuất báo cáo
+            </ExportButton>
+          </FilterGroup>
+        </FilterGrid>
+      </FilterSection>
+
+      {/* Table */}
+      <TableSection theme={theme}>
+        <TableWrapper theme={theme}>
+          <Table>
+            <TableHead theme={theme}>
+              <TableRow>
+                <TableHeader theme={theme}>Người dùng</TableHeader>
+                <TableHeader theme={theme}>Hành động</TableHeader>
+                <TableHeader theme={theme}>Danh mục</TableHeader>
+                <TableHeader theme={theme}>Mô tả</TableHeader>
+                <TableHeader theme={theme}>IP / Thiết bị</TableHeader>
+                <TableHeader theme={theme}>Thời gian</TableHeader>
+                <TableHeader theme={theme}>Mức độ</TableHeader>
+                <TableHeader theme={theme}>Hành động</TableHeader>
+              </TableRow>
+            </TableHead>
+            <tbody>
+              {paginatedLogs.map(log => (
+                <TableRow key={log.id} theme={theme}>
+                  <TableCell>
+                    <UserCell>
+                      <UserAvatar color={log.color}>
+                        {log.avatar}
+                      </UserAvatar>
+                      <UserInfo>
+                        <UserName theme={theme}>{log.user}</UserName>
+                        <UserRole theme={theme}>{log.role}</UserRole>
+                      </UserInfo>
+                    </UserCell>
+                  </TableCell>
+                  <TableCell>
+                    <ActionBadge color="#58CC02">{log.action}</ActionBadge>
+                  </TableCell>
+                  <TableCell>
+                    <CategoryBadge category={log.category}>
+                      {log.category}
+                    </CategoryBadge>
+                  </TableCell>
+                  <TableCell>{log.description}</TableCell>
+                  <TableCell>
+                    <div>{log.ip}</div>
+                    <div style={{ fontSize: '0.75rem', color: '#9ca3af' }}>
+                      {log.device}
+                    </div>
+                  </TableCell>
+                  <TableCell>{log.timestamp}</TableCell>
+                  <TableCell>
+                    <SeverityBadge severity={log.severity}>
+                      {log.severity}
+                    </SeverityBadge>
+                  </TableCell>
+                  <TableCell>
+                    <ActionButtons>
+                      <ActionButton
+                        variant="view"
+                        onClick={() => handleViewDetail(log)}
+                        title="Xem chi tiết"
+                      >
+                        👁️
+                      </ActionButton>
+                      <ActionButton
+                        variant="flag"
+                        onClick={() => handleFlagLog(log)}
+                        title="Đánh dấu cảnh báo"
+                      >
+                        🚩
+                      </ActionButton>
+                    </ActionButtons>
+                  </TableCell>
                 </TableRow>
-              </TableHead>
-              <tbody>
-                {paginatedLogs.map(log => (
-                  <TableRow key={log.id} theme={theme}>
-                    <TableCell>
-                      <UserCell>
-                        <UserAvatar color={log.color}>
-                          {log.avatar}
-                        </UserAvatar>
-                        <UserInfo>
-                          <UserName theme={theme}>{log.user}</UserName>
-                          <UserRole theme={theme}>{log.role}</UserRole>
-                        </UserInfo>
-                      </UserCell>
-                    </TableCell>
-                    <TableCell>
-                      <ActionBadge color="#58CC02">{log.action}</ActionBadge>
-                    </TableCell>
-                    <TableCell>
-                      <CategoryBadge category={log.category}>
-                        {log.category}
-                      </CategoryBadge>
-                    </TableCell>
-                    <TableCell>{log.description}</TableCell>
-                    <TableCell>
-                      <div>{log.ip}</div>
-                      <div style={{ fontSize: '0.75rem', color: '#9ca3af' }}>
-                        {log.device}
-                      </div>
-                    </TableCell>
-                    <TableCell>{log.timestamp}</TableCell>
-                    <TableCell>
-                      <SeverityBadge severity={log.severity}>
-                        {log.severity}
-                      </SeverityBadge>
-                    </TableCell>
-                    <TableCell>
-                      <ActionButtons>
-                        <ActionButton
-                          variant="view"
-                          onClick={() => handleViewDetail(log)}
-                          title="Xem chi tiết"
-                        >
-                          👁️
-                        </ActionButton>
-                        <ActionButton
-                          variant="flag"
-                          onClick={() => handleFlagLog(log)}
-                          title="Đánh dấu cảnh báo"
-                        >
-                          🚩
-                        </ActionButton>
-                      </ActionButtons>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </tbody>
-            </Table>
-          </TableWrapper>
-
-          {/* Pagination */}
-          <Pagination>
-            <PaginationInfo theme={theme}>
-              Hiển thị {startIndex + 1} - {Math.min(startIndex + itemsPerPage, displayedLogs.length)} trong tổng số {displayedLogs.length} logs
-            </PaginationInfo>
-            <PaginationButtons>
-              <PaginationButton
-                theme={theme}
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
-              >
-                ← Trước
-              </PaginationButton>
-              {[...Array(totalPages)].map((_, index) => (
-                <PaginationButton
-                  key={index}
-                  theme={theme}
-                  active={currentPage === index + 1}
-                  onClick={() => setCurrentPage(index + 1)}
-                >
-                  {index + 1}
-                </PaginationButton>
               ))}
+            </tbody>
+          </Table>
+        </TableWrapper>
+
+        {/* Pagination */}
+        <Pagination>
+          <PaginationInfo theme={theme}>
+            Hiển thị {startIndex + 1} - {Math.min(startIndex + itemsPerPage, displayedLogs.length)} trong tổng số {displayedLogs.length} logs
+          </PaginationInfo>
+          <PaginationButtons>
+            <PaginationButton
+              theme={theme}
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+            >
+              ← Trước
+            </PaginationButton>
+            {[...Array(totalPages)].map((_, index) => (
               <PaginationButton
+                key={index}
                 theme={theme}
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                disabled={currentPage === totalPages}
+                active={currentPage === index + 1}
+                onClick={() => setCurrentPage(index + 1)}
               >
-                Sau →
+                {index + 1}
               </PaginationButton>
-            </PaginationButtons>
-          </Pagination>
-        </TableSection>
-      </DashboardContainer>
-    </PageWrapper>
+            ))}
+            <PaginationButton
+              theme={theme}
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+            >
+              Sau →
+            </PaginationButton>
+          </PaginationButtons>
+        </Pagination>
+      </TableSection>
+    </AdminLayout>
   );
 };
 

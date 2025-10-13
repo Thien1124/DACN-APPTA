@@ -327,6 +327,12 @@ const Header = ({
     navigate('/wordbank');
   };
 
+  const handleMyClassesClick = () => {
+    setShowDropdown(false);
+    setShowMobileMenu(false);
+    navigate('/classes');
+  };
+
   const handleLogout = () => {
     setShowDropdown(false);
 
@@ -416,6 +422,16 @@ const Header = ({
                 <MenuItem theme={theme} onClick={handleWordbankClick}>
                   <span>📚</span>
                   <span>Từ vựng của tôi</span>
+                </MenuItem>
+
+                <MenuItem theme={theme} onClick={handleMyClassesClick}>
+                  <span>🏫</span>
+                  <span>Lớp học của tôi</span>
+                </MenuItem>
+
+                <MenuItem theme={theme} onClick={() => navigate('/advanced-features')}>
+                  <span>✨</span>
+                  <span>Tính năng nâng cao</span>
                 </MenuItem>
                 <MenuDivider theme={theme} />
 

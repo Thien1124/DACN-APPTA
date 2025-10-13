@@ -4,48 +4,10 @@ import styled from 'styled-components';
 import Swal from 'sweetalert2';
 import Toast from '../components/Toast';
 import useToast from '../hooks/useToast';
-import Header from '../components/Header';
+import TeacherLayout from '../layouts/TeacherLayout';
 
 // ========== STYLED COMPONENTS ==========
-
-const PageWrapper = styled.div`
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  background: ${props => props.theme === 'dark' 
-    ? 'linear-gradient(135deg, #0c0c0c 0%, #1a1a1a 50%, #2d2d2d 100%)'
-    : 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e0 100%)'
-  };
-  position: relative;
-  overflow-x: hidden;
-
-  &::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: ${props => props.theme === 'dark'
-      ? 'radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.1) 0%, transparent 70%), radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.1) 0%, transparent 70%), radial-gradient(circle at 40% 80%, rgba(16, 185, 129, 0.1) 0%, transparent 70%)'
-      : 'radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.05) 0%, transparent 70%), radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.05) 0%, transparent 70%), radial-gradient(circle at 40% 80%, rgba(16, 185, 129, 0.05) 0%, transparent 70%)'
-    };
-    z-index: -1;
-  }
-`;
-
-const DashboardContainer = styled.div`
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 2rem;
-  width: 100%;
-  position: relative;
-  z-index: 1;
-  
-  @media (max-width: 768px) {
-    padding: 1rem;
-  }
-`;
+// ✅ XÓA: PageWrapper, Header (đã có trong TeacherLayout)
 
 const PageHeader = styled.div`
   display: flex;
@@ -88,7 +50,7 @@ const PageSubtitle = styled.p`
 const CreateButton = styled.button`
   padding: 1rem 2rem;
   border-radius: 12px;
-  background: linear-gradient(135deg, #58CC02 0%, #45a302 100%);
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
   color: white;
   border: none;
   font-weight: bold;
@@ -98,11 +60,11 @@ const CreateButton = styled.button`
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  box-shadow: 0 4px 12px rgba(88, 204, 2, 0.3);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
 
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(88, 204, 2, 0.4);
+    box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
   }
 
   span:first-child {
@@ -196,7 +158,7 @@ const TabsContainer = styled.div`
   }
 
   &::-webkit-scrollbar-thumb {
-    background: #58CC02;
+    background: #8b5cf6;
     border-radius: 2px;
   }
 `;
@@ -206,18 +168,18 @@ const Tab = styled.button`
   border: none;
   background: none;
   color: ${props => {
-    if (props.active) return '#58CC02';
+    if (props.active) return '#8b5cf6';
     return props.theme === 'dark' ? '#9ca3af' : '#6b7280';
   }};
   font-weight: bold;
   font-size: 1rem;
   cursor: pointer;
   transition: all 0.3s ease;
-  border-bottom: 3px solid ${props => props.active ? '#58CC02' : 'transparent'};
+  border-bottom: 3px solid ${props => props.active ? '#8b5cf6' : 'transparent'};
   white-space: nowrap;
 
   &:hover {
-    color: #58CC02;
+    color: #8b5cf6;
   }
 `;
 
@@ -254,7 +216,7 @@ const ClassCard = styled.div`
 `;
 
 const ClassHeader = styled.div`
-  background: ${props => props.color || 'linear-gradient(135deg, #58CC02 0%, #45a302 100%)'};
+  background: ${props => props.color || 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)'};
   padding: 2rem;
   color: white;
   position: relative;
@@ -335,18 +297,18 @@ const CodeValue = styled.div`
 `;
 
 const CopyButton = styled.button`
-  background: rgba(88, 204, 2, 0.1);
+  background: rgba(139, 92, 246, 0.1);
   border: none;
   padding: 0.5rem 1rem;
   border-radius: 8px;
-  color: #58CC02;
+  color: #8b5cf6;
   font-weight: bold;
   cursor: pointer;
   transition: all 0.3s ease;
   font-size: 0.875rem;
 
   &:hover {
-    background: rgba(88, 204, 2, 0.2);
+    background: rgba(139, 92, 246, 0.2);
     transform: scale(1.05);
   }
 `;
@@ -373,12 +335,12 @@ const ActionButton = styled.button`
   ${props => {
     if (props.variant === 'primary') {
       return `
-        background: linear-gradient(135deg, #58CC02 0%, #45a302 100%);
+        background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
         color: white;
         
         &:hover {
           transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(88, 204, 2, 0.3);
+          box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
         }
       `;
     }
@@ -489,7 +451,7 @@ const mockClasses = [
 const TeacherClassroom = () => {
   const navigate = useNavigate();
   const { toast, showToast, hideToast } = useToast();
-  const [theme, setTheme] = useState('light');
+  const [theme] = useState('light');
   const [activeTab, setActiveTab] = useState('all');
   const [classes, setClasses] = useState(mockClasses);
 
@@ -507,10 +469,6 @@ const TeacherClassroom = () => {
     return true;
   });
 
-  const toggleTheme = () => {
-    setTheme(prev => prev === 'light' ? 'dark' : 'light');
-  };
-
   const handleCreateClass = () => {
     Swal.fire({
       title: '',
@@ -519,8 +477,8 @@ const TeacherClassroom = () => {
           <div style="
             border-radius:22px;
             padding:1.75rem;
-            background:linear-gradient(135deg, rgba(88,204,2,0.16) 0%, rgba(139,92,246,0.18) 100%);
-            border:1px solid rgba(88,204,2,0.35);
+            background:linear-gradient(135deg, rgba(139,92,246,0.16) 0%, rgba(124,58,237,0.18) 100%);
+            border:1px solid rgba(139,92,246,0.35);
             box-shadow:0 12px 30px rgba(15,23,42,0.12);
           ">
             <div style="display:flex;align-items:flex-start;gap:1rem;">
@@ -528,28 +486,19 @@ const TeacherClassroom = () => {
               <div>
                 <h2 style="margin:0;font-size:1.6rem;color:#0f172a;font-weight:700;">Tạo lớp học mới</h2>
                 <p style="margin:0.35rem 0 0;font-size:0.95rem;color:#475569;line-height:1.6;">
-                  Nhập thông tin bên dưới để bắt đầu quản lý lớp học của bạn. Bạn có thể chỉnh sửa chi tiết sau.
+                  Nhập thông tin bên dưới để bắt đầu quản lý lớp học của bạn.
                 </p>
               </div>
             </div>
           </div>
 
-          <div style="
-            display:grid;
-            grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
-            gap:1.25rem;
-          ">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.25rem;">
             <label style="display:flex;flex-direction:column;gap:0.45rem;font-weight:600;color:#1e293b;">
               <span style="display:flex;align-items:center;gap:0.45rem;font-size:0.9rem;letter-spacing:0.02em;text-transform:uppercase;color:#64748b;">
                 <span>🏫</span> Tên lớp học *
               </span>
               <input id="className" class="swal2-input" placeholder="VD: TOEIC Basic" style="
-                width:100%;
-                margin:0;
-                border-radius:14px;
-                border:2px solid rgba(148,163,184,0.35);
-                padding:0.85rem 1rem;
-                font-size:0.95rem;
+                width:100%;margin:0;border-radius:14px;border:2px solid rgba(148,163,184,0.35);padding:0.85rem 1rem;font-size:0.95rem;
               ">
             </label>
 
@@ -558,59 +507,26 @@ const TeacherClassroom = () => {
                 <span>📘</span> Môn học *
               </span>
               <input id="subject" class="swal2-input" placeholder="VD: TOEIC Preparation" style="
-                width:100%;
-                margin:0;
-                border-radius:14px;
-                border:2px solid rgba(148,163,184,0.35);
-                padding:0.85rem 1rem;
-                font-size:0.95rem;
+                width:100%;margin:0;border-radius:14px;border:2px solid rgba(148,163,184,0.35);padding:0.85rem 1rem;font-size:0.95rem;
               ">
             </label>
           </div>
 
-          <div style="
-            display:grid;
-            grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-            gap:1.25rem;
-          ">
-            <label style="display:flex;flex-direction:column;gap:0.45rem;font-weight:600;color:#1e293b;">
-              <span style="display:flex;align-items:center;gap:0.45rem;font-size:0.9rem;letter-spacing:0.02em;text-transform:uppercase;color:#64748b;">
-                <span>👥</span> Số học viên tối đa
-              </span>
-              <div style="
-                position:relative;
-                border-radius:14px;
-                border:2px solid rgba(148,163,184,0.35);
-                background:#f8fafc;
-                padding:0.65rem 1rem;
-              ">
-                <input id="maxStudents" type="number" placeholder="30" value="30" style="
-                  width:100%;
-                  border:none;
-                  background:transparent;
-                  font-size:1rem;
-                  font-weight:600;
-                  color:#0f172a;
-                  outline:none;
-                  padding:0;
-                ">
-              </div>
-            </label>
-          </div>
+          <label style="display:flex;flex-direction:column;gap:0.45rem;font-weight:600;color:#1e293b;">
+            <span style="display:flex;align-items:center;gap:0.45rem;font-size:0.9rem;letter-spacing:0.02em;text-transform:uppercase;color:#64748b;">
+              <span>👥</span> Số học viên tối đa
+            </span>
+            <input id="maxStudents" type="number" placeholder="30" value="30" style="
+              width:100%;margin:0;border-radius:14px;border:2px solid rgba(148,163,184,0.35);padding:0.85rem 1rem;font-size:1rem;
+            ">
+          </label>
 
           <label style="display:flex;flex-direction:column;gap:0.45rem;font-weight:600;color:#1e293b;">
             <span style="display:flex;align-items:center;gap:0.45rem;font-size:0.9rem;letter-spacing:0.02em;text-transform:uppercase;color:#64748b;">
               <span>📝</span> Mô tả lớp học
             </span>
             <textarea id="description" class="swal2-textarea" placeholder="Nhập mô tả..." style="
-              width:100%;
-              margin:0;
-              min-height:110px;
-              border-radius:16px;
-              border:2px solid rgba(148,163,184,0.35);
-              padding:1rem 1.1rem;
-              font-size:0.95rem;
-              line-height:1.55;
+              width:100%;margin:0;min-height:110px;border-radius:16px;border:2px solid rgba(148,163,184,0.35);padding:1rem 1.1rem;font-size:0.95rem;
             "></textarea>
           </label>
         </div>
@@ -619,16 +535,10 @@ const TeacherClassroom = () => {
       showCancelButton: true,
       confirmButtonText: '✨ Tạo lớp',
       cancelButtonText: 'Hủy',
-      confirmButtonColor: '#58CC02',
+      confirmButtonColor: '#8b5cf6',
       cancelButtonColor: '#94a3b8',
       width: 680,
       background: '#f8fafc',
-      color: '#0f172a',
-      customClass: {
-        popup: 'swal2-rounded swal2-elevated',
-        confirmButton: 'swal2-confirm-pill',
-        cancelButton: 'swal2-cancel-soft'
-      },
       preConfirm: () => {
         const className = document.getElementById('className').value.trim();
         const subject = document.getElementById('subject').value.trim();
@@ -664,29 +574,14 @@ const TeacherClassroom = () => {
           icon: 'success',
           title: '🎉 Tạo lớp thành công!',
           html: `
-            <div style="text-align:left;display:flex;flex-direction:column;gap:0.75rem;">
-              <p style="margin:0;font-size:1rem;color:#0f172a;">
-                Lớp <strong>${result.value.className}</strong> đã sẵn sàng.
-              </p>
-              <div style="
-                padding:1rem 1.25rem;
-                border-radius:14px;
-                background:rgba(88,204,2,0.12);
-                border:1px dashed rgba(88,204,2,0.45);
-                font-family:'Courier New', monospace;
-                font-size:1.4rem;
-                letter-spacing:0.15em;
-                color:#166534;
-                text-align:center;
-              ">
-                ${newClass.code}
-              </div>
-              <p style="margin:0;font-size:0.95rem;color:#475569;">
-                Chia sẻ mã này với học viên để họ tham gia lớp.
-              </p>
+            <p>Lớp <strong>${result.value.className}</strong> đã sẵn sàng.</p>
+            <div style="padding:1rem;border-radius:14px;background:rgba(139,92,246,0.12);border:1px dashed rgba(139,92,246,0.45);
+              font-family:'Courier New',monospace;font-size:1.4rem;letter-spacing:0.15em;color:#6b21a8;text-align:center;margin:1rem 0;">
+              ${newClass.code}
             </div>
+            <p style="font-size:0.95rem;color:#475569;">Chia sẻ mã này với học viên để họ tham gia lớp.</p>
           `,
-          confirmButtonColor: '#58CC02',
+          confirmButtonColor: '#8b5cf6',
         });
       }
     });
@@ -708,10 +603,10 @@ const TeacherClassroom = () => {
           
           <div style="background: #f3f4f6; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
             <strong>Mã lớp:</strong>
-            <div style="font-family: monospace; font-size: 1.5rem; color: #58CC02; margin: 0.5rem 0;">
+            <div style="font-family: monospace; font-size: 1.5rem; color: #8b5cf6; margin: 0.5rem 0;">
               ${classItem.code}
             </div>
-            <button id="copyCodeBtn" style="background: #58CC02; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-weight: bold;">
+            <button id="copyCodeBtn" style="background: #8b5cf6; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-weight: bold;">
               📋 Sao chép mã
             </button>
           </div>
@@ -730,7 +625,7 @@ const TeacherClassroom = () => {
             <strong>Hoặc mời qua email:</strong>
             <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
               <input id="emailInput" type="email" placeholder="student@example.com" style="flex: 1; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 8px;">
-              <button id="sendEmailBtn" style="background: #8b5cf6; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; cursor: pointer; font-weight: bold; white-space: nowrap;">
+              <button id="sendEmailBtn" style="background: #8b5cf6; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; cursor: pointer; font-weight: bold;">
                 📧 Gửi
               </button>
             </div>
@@ -780,183 +675,167 @@ const TeacherClassroom = () => {
         </div>
       `,
       icon: 'info',
-      confirmButtonColor: '#58CC02',
+      confirmButtonColor: '#8b5cf6',
     });
   };
 
   return (
-    <PageWrapper theme={theme}>
+    <TeacherLayout pageTitle="🎓 Quản lý lớp học">
       <Toast toast={toast} onClose={hideToast} />
 
-      <Header
-        theme={theme}
-        onThemeToggle={toggleTheme}
-        userName="Tran Thi B"
-        userEmail="teacher@example.com"
-        notificationCount={5}
-        showNotification={true}
-        showAvatar={true}
-      />
+      {/* Page Header - BỎ PageTitle vì đã có trong TeacherLayout */}
+      <PageHeader>
+        <PageTitleSection>
+          <PageSubtitle theme={theme}>
+            Tạo và quản lý các lớp học của bạn
+          </PageSubtitle>
+        </PageTitleSection>
+        <CreateButton onClick={handleCreateClass}>
+          <span>➕</span>
+          Tạo lớp mới
+        </CreateButton>
+      </PageHeader>
 
-      <DashboardContainer>
-        {/* Page Header */}
-        <PageHeader>
-          <PageTitleSection>
-            <PageTitle theme={theme}>
-              <span>👩‍🏫</span>
-              Quản lý lớp học
-            </PageTitle>
-            <PageSubtitle theme={theme}>
-              Tạo và quản lý các lớp học của bạn
-            </PageSubtitle>
-          </PageTitleSection>
-          <CreateButton onClick={handleCreateClass}>
-            <span>➕</span>
-            Tạo lớp mới
-          </CreateButton>
-        </PageHeader>
+      {/* Stats */}
+      <StatsGrid>
+        <StatCard theme={theme} delay="0.1s">
+          <StatIcon color="#8b5cf6">🎓</StatIcon>
+          <StatValue theme={theme}>{stats.totalClasses}</StatValue>
+          <StatLabel theme={theme}>Tổng lớp học</StatLabel>
+        </StatCard>
 
-        {/* Stats */}
-        <StatsGrid>
-          <StatCard theme={theme} delay="0.1s">
-            <StatIcon color="#58CC02">🎓</StatIcon>
-            <StatValue theme={theme}>{stats.totalClasses}</StatValue>
-            <StatLabel theme={theme}>Tổng lớp học</StatLabel>
-          </StatCard>
+        <StatCard theme={theme} delay="0.2s">
+          <StatIcon color="#10b981">✅</StatIcon>
+          <StatValue theme={theme}>{stats.activeClasses}</StatValue>
+          <StatLabel theme={theme}>Đang hoạt động</StatLabel>
+        </StatCard>
 
-          <StatCard theme={theme} delay="0.2s">
-            <StatIcon color="#10b981">✅</StatIcon>
-            <StatValue theme={theme}>{stats.activeClasses}</StatValue>
-            <StatLabel theme={theme}>Đang hoạt động</StatLabel>
-          </StatCard>
+        <StatCard theme={theme} delay="0.3s">
+          <StatIcon color="#1CB0F6">👥</StatIcon>
+          <StatValue theme={theme}>{stats.totalStudents}</StatValue>
+          <StatLabel theme={theme}>Tổng học viên</StatLabel>
+        </StatCard>
 
-          <StatCard theme={theme} delay="0.3s">
-            <StatIcon color="#1CB0F6">👥</StatIcon>
-            <StatValue theme={theme}>{stats.totalStudents}</StatValue>
-            <StatLabel theme={theme}>Tổng học viên</StatLabel>
-          </StatCard>
+        <StatCard theme={theme} delay="0.4s">
+          <StatIcon color="#58CC02">📚</StatIcon>
+          <StatValue theme={theme}>{stats.totalLessons}</StatValue>
+          <StatLabel theme={theme}>Bài học</StatLabel>
+        </StatCard>
+      </StatsGrid>
 
-          <StatCard theme={theme} delay="0.4s">
-            <StatIcon color="#8b5cf6">📚</StatIcon>
-            <StatValue theme={theme}>{stats.totalLessons}</StatValue>
-            <StatLabel theme={theme}>Bài học</StatLabel>
-          </StatCard>
-        </StatsGrid>
+      {/* Tabs */}
+      <TabsContainer theme={theme}>
+        <Tab
+          theme={theme}
+          active={activeTab === 'all'}
+          onClick={() => setActiveTab('all')}
+        >
+          📋 Tất cả ({classes.length})
+        </Tab>
+        <Tab
+          theme={theme}
+          active={activeTab === 'active'}
+          onClick={() => setActiveTab('active')}
+        >
+          ✅ Đang hoạt động ({classes.filter(c => c.status === 'active').length})
+        </Tab>
+        <Tab
+          theme={theme}
+          active={activeTab === 'draft'}
+          onClick={() => setActiveTab('draft')}
+        >
+          📝 Nháp ({classes.filter(c => c.status === 'draft').length})
+        </Tab>
+      </TabsContainer>
 
-        {/* Tabs */}
-        <TabsContainer theme={theme}>
-          <Tab
-            theme={theme}
-            active={activeTab === 'all'}
-            onClick={() => setActiveTab('all')}
-          >
-            📋 Tất cả ({classes.length})
-          </Tab>
-          <Tab
-            theme={theme}
-            active={activeTab === 'active'}
-            onClick={() => setActiveTab('active')}
-          >
-            ✅ Đang hoạt động ({classes.filter(c => c.status === 'active').length})
-          </Tab>
-          <Tab
-            theme={theme}
-            active={activeTab === 'draft'}
-            onClick={() => setActiveTab('draft')}
-          >
-            📝 Nháp ({classes.filter(c => c.status === 'draft').length})
-          </Tab>
-        </TabsContainer>
+      {/* Classes Grid */}
+      {filteredClasses.length > 0 ? (
+        <ClassesGrid>
+          {filteredClasses.map(classItem => (
+            <ClassCard key={classItem.id} theme={theme}>
+              <ClassHeader color={classItem.color}>
+                <ClassTitle>{classItem.name}</ClassTitle>
+                <ClassSubject>{classItem.subject}</ClassSubject>
+              </ClassHeader>
 
-        {/* Classes Grid */}
-        {filteredClasses.length > 0 ? (
-          <ClassesGrid>
-            {filteredClasses.map(classItem => (
-              <ClassCard key={classItem.id} theme={theme}>
-                <ClassHeader color={classItem.color}>
-                  <ClassTitle>{classItem.name}</ClassTitle>
-                  <ClassSubject>{classItem.subject}</ClassSubject>
-                </ClassHeader>
+              <ClassBody>
+                <ClassInfo>
+                  <InfoItem theme={theme}>
+                    <span>👥</span>
+                    <span>{classItem.students}/{classItem.maxStudents} học viên</span>
+                  </InfoItem>
+                  <InfoItem theme={theme}>
+                    <span>📚</span>
+                    <span>{classItem.lessons} bài học</span>
+                  </InfoItem>
+                  <InfoItem theme={theme}>
+                    <span>📝</span>
+                    <span>{classItem.assignments} bài tập</span>
+                  </InfoItem>
+                  <InfoItem theme={theme}>
+                    <span>📅</span>
+                    <span>Tạo ngày {classItem.createdDate}</span>
+                  </InfoItem>
+                </ClassInfo>
 
-                <ClassBody>
-                  <ClassInfo>
-                    <InfoItem theme={theme}>
-                      <span>👥</span>
-                      <span>{classItem.students}/{classItem.maxStudents} học viên</span>
-                    </InfoItem>
-                    <InfoItem theme={theme}>
-                      <span>📚</span>
-                      <span>{classItem.lessons} bài học</span>
-                    </InfoItem>
-                    <InfoItem theme={theme}>
-                      <span>📝</span>
-                      <span>{classItem.assignments} bài tập</span>
-                    </InfoItem>
-                    <InfoItem theme={theme}>
-                      <span>📅</span>
-                      <span>Tạo ngày {classItem.createdDate}</span>
-                    </InfoItem>
-                  </ClassInfo>
+                <ClassCode theme={theme}>
+                  <div>
+                    <CodeLabel theme={theme}>Mã lớp</CodeLabel>
+                    <CodeValue theme={theme}>{classItem.code}</CodeValue>
+                  </div>
+                  <CopyButton onClick={() => handleCopyCode(classItem.code)}>
+                    📋 Sao chép
+                  </CopyButton>
+                </ClassCode>
 
-                  <ClassCode theme={theme}>
-                    <div>
-                      <CodeLabel theme={theme}>Mã lớp</CodeLabel>
-                      <CodeValue theme={theme}>{classItem.code}</CodeValue>
-                    </div>
-                    <CopyButton onClick={() => handleCopyCode(classItem.code)}>
-                      📋 Sao chép
-                    </CopyButton>
-                  </ClassCode>
-
-                  <ClassActions>
-                    <ActionButton
-                      theme={theme}
-                      variant="primary"
-                      onClick={() => handleManageClass(classItem)}
-                    >
-                      <span>⚙️</span>
-                      Quản lý
-                    </ActionButton>
-                    <ActionButton
-                      theme={theme}
-                      variant="secondary"
-                      onClick={() => handleInviteStudents(classItem)}
-                    >
-                      <span>📨</span>
-                      Mời học viên
-                    </ActionButton>
-                    <ActionButton
-                      theme={theme}
-                      onClick={() => handleViewStudents(classItem)}
-                    >
-                      <span>👥</span>
-                      Xem học viên
-                    </ActionButton>
-                    <ActionButton
-                      theme={theme}
-                      onClick={() => showToast('info', 'Thông báo', 'Tính năng đang phát triển')}
-                    >
-                      <span>📊</span>
-                      Thống kê
-                    </ActionButton>
-                  </ClassActions>
-                </ClassBody>
-              </ClassCard>
-            ))}
-          </ClassesGrid>
-        ) : (
-          <EmptyState>
-            <EmptyIcon>📚</EmptyIcon>
-            <EmptyText theme={theme}>
-              Chưa có lớp học nào
-            </EmptyText>
-            <EmptySubtext theme={theme}>
-              Nhấn "Tạo lớp mới" để bắt đầu tạo lớp học đầu tiên
-            </EmptySubtext>
-          </EmptyState>
-        )}
-      </DashboardContainer>
-    </PageWrapper>
+                <ClassActions>
+                  <ActionButton
+                    theme={theme}
+                    variant="primary"
+                    onClick={() => handleManageClass(classItem)}
+                  >
+                    <span>⚙️</span>
+                    Quản lý
+                  </ActionButton>
+                  <ActionButton
+                    theme={theme}
+                    variant="secondary"
+                    onClick={() => handleInviteStudents(classItem)}
+                  >
+                    <span>📨</span>
+                    Mời học viên
+                  </ActionButton>
+                  <ActionButton
+                    theme={theme}
+                    onClick={() => handleViewStudents(classItem)}
+                  >
+                    <span>👥</span>
+                    Xem học viên
+                  </ActionButton>
+                  <ActionButton
+                    theme={theme}
+                    onClick={() => showToast('info', 'Thông báo', 'Tính năng đang phát triển')}
+                  >
+                    <span>📊</span>
+                    Thống kê
+                  </ActionButton>
+                </ClassActions>
+              </ClassBody>
+            </ClassCard>
+          ))}
+        </ClassesGrid>
+      ) : (
+        <EmptyState>
+          <EmptyIcon>📚</EmptyIcon>
+          <EmptyText theme={theme}>
+            Chưa có lớp học nào
+          </EmptyText>
+          <EmptySubtext theme={theme}>
+            Nhấn "Tạo lớp mới" để bắt đầu tạo lớp học đầu tiên
+          </EmptySubtext>
+        </EmptyState>
+      )}
+    </TeacherLayout>
   );
 };
 

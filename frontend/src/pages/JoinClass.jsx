@@ -145,13 +145,6 @@ const InputWrapper = styled.div`
   align-items: center;
 `;
 
-const InputIcon = styled.span`
-  position: absolute;
-  left: 1rem;
-  font-size: 1.25rem;
-  color: ${props => props.theme === 'dark' ? '#9ca3af' : '#6b7280'};
-`;
-
 const Input = styled.input`
   width: 100%;
   padding: 1rem 1rem 1rem 3rem;
@@ -421,7 +414,7 @@ const JoinClass = () => {
             confirmButtonText: 'Đến lớp học',
             confirmButtonColor: '#58CC02',
           }).then(() => {
-            navigate('/student/classes');
+            navigate('/classes');
           });
         }
       });
