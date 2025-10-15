@@ -26,6 +26,8 @@ import SearchByKeywordTag from './pages/SearchByKeywordTag';
 import ManageDecks from './pages/ManageDecks';
 import CreateCardWithNoteType from './pages/CreateCardWithNoteType';
 import AdvancedFeatures from './pages/AdvancedFeatures';
+import Welcome from './pages/Welcome';
+import Learn from './pages/Learn';
 
 //Import Admin Pages
 import AdminStatistics from './pages/AdminStatistics';
@@ -74,7 +76,7 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/lesson/:id" element={<Lesson />} />
+          <Route path="/lesson" element={<Lesson />} />
           <Route path="/practice" element={<Practice />} />
           <Route path="/wordbank" element={<Wordbank />} />
           <Route path="/progress" element={<Progress />} />
@@ -84,6 +86,8 @@ function App() {
           <Route path="/grammar-quiz" element={<GrammarQuiz />} />
           <Route path="/join-class" element={<JoinClass />} />
           <Route path="/notifications" element={<Notifications />} />
+          <Route path="/welcome" element={<Welcome />} />
+          <Route path="/learn" element={<Learn />} />
 
           <Route path="/create-card" element={<CreateCardWithNoteType />} />
           <Route path="/advanced-features" element={<AdvancedFeatures />} />

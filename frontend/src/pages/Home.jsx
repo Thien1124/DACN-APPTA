@@ -1,63 +1,82 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import styled from 'styled-components';
-
-// ========== STYLED COMPONENTS ==========
-
-const PageWrapper = styled.div`
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  background: ${props => props.theme === 'dark' 
-    ? 'linear-gradient(135deg, #0c0c0c 0%, #1a1a1a 50%, #2d2d2d 100%)'
-    : 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e0 100%)'
-  };
-  position: relative;
-  overflow-x: hidden;
-
-  &::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: ${props => props.theme === 'dark'
-      ? 'radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.1) 0%, transparent 70%), radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.1) 0%, transparent 70%), radial-gradient(circle at 40% 80%, rgba(16, 185, 129, 0.1) 0%, transparent 70%)'
-      : 'radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.05) 0%, transparent 70%), radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.05) 0%, transparent 70%), radial-gradient(circle at 40% 80%, rgba(16, 185, 129, 0.05) 0%, transparent 70%)'
-    };
-    z-index: -1;
-  }
+import styled, { keyframes } from 'styled-components';
+import logo from '../assets/logo.png';
+import home from '../assets/home.png';
+// ========== ANIMATIONS ==========
+const float = keyframes`
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
 `;
 
+const pulse = keyframes`
+  0%, 100% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.05); opacity: 1; }
+`;
+
+const slideInLeft = keyframes`
+  from { opacity: 0; transform: translateX(-50px); }
+  to { opacity: 1; transform: translateX(0); }
+`;
+
+const slideInRight = keyframes`
+  from { opacity: 0; transform: translateX(50px); }
+  to { opacity: 1; transform: translateX(0); }
+`;
+
+const fadeIn = keyframes`
+  from { opacity: 0; }
+  to { opacity: 1; }
+`;
+
+// ========== STYLED COMPONENTS ==========
+const PageWrapper = styled.div`
+  min-height: 100vh;
+  background: ${props => props.theme === 'dark' 
+    ? 'linear-gradient(180deg, #0c0c0c 0%, #1a1a1a 100%)'
+    : 'linear-gradient(180deg, #ffffff 0%, #f0f9ff 100%)'
+  };
+`;
+
+const CharacterIcon = styled.img`
+  width:  70px;
+  height: 70px;
+  object-fit: contain;
+
+  @media (max-width: 768px) {
+    width: 80px;
+    height: 80px;
+  }
+`;
 const Navbar = styled.nav`
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   background: ${props => props.theme === 'dark' 
-    ? 'rgba(26, 26, 26, 0.95)' 
-    : 'rgba(255, 255, 255, 0.95)'
+    ? 'rgba(12, 12, 12, 0.98)' 
+    : 'rgba(255, 255, 255, 0.98)'
   };
   backdrop-filter: blur(10px);
   box-shadow: ${props => props.scrolled 
-    ? '0 4px 12px rgba(0,0,0,0.15)' 
-    : '0 2px 4px rgba(0,0,0,0.1)'
+    ? '0 4px 20px rgba(0,0,0,0.1)' 
+    : 'none'
   };
   z-index: 1000;
   transition: all 0.3s ease;
+  padding: 1rem 0;
 `;
 
-const NavbarContent = styled.div`
-  max-width: 1400px;
+const NavContent = styled.div`
+  max-width: 1280px;
   margin: 0 auto;
-  padding: 1rem 2rem;
+  padding: 0 2rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  
+
   @media (max-width: 768px) {
-    padding: 1rem;
+    padding: 0 1rem;
   }
 `;
 
@@ -65,26 +84,33 @@ const Logo = styled.div`
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: ${props => props.theme === 'dark' ? '#58CC02' : '#45a302'};
   cursor: pointer;
   transition: transform 0.3s ease;
 
   &:hover {
     transform: scale(1.05);
   }
-`;
 
-const LogoIcon = styled.span`
-  font-size: 2rem;
+  img, span {
+    height: 40px;
+    font-size: 2rem;
+  }
+
+  h1 {
+    font-size: 1.75rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #58CC02 0%, #45a302 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin: 0;
+  }
 `;
 
 const NavLinks = styled.div`
   display: flex;
   align-items: center;
   gap: 1.5rem;
-  
+
   @media (max-width: 768px) {
     display: none;
   }
@@ -93,65 +119,46 @@ const NavLinks = styled.div`
 const NavLink = styled.button`
   background: none;
   border: none;
-  color: ${props => props.theme === 'dark' ? '#e5e7eb' : '#4B4B4B'};
+  color: ${props => props.theme === 'dark' ? '#e5e7eb' : '#4B5563'};
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
   transition: color 0.3s ease;
+  padding: 0.5rem 1rem;
 
   &:hover {
-    color: ${props => props.theme === 'dark' ? '#58CC02' : '#45a302'};
+    color: #58CC02;
   }
 `;
 
-const ThemeToggle = styled.button`
-  background: ${props => props.theme === 'dark' ? '#374151' : '#f3f4f6'};
-  border: none;
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-
-  &:hover {
-    transform: rotate(20deg) scale(1.1);
-    background: ${props => props.theme === 'dark' ? '#4B5563' : '#e5e7eb'};
-  }
-`;
-
-const BtnLogin = styled.button`
+const BtnSignIn = styled.button`
   background: none;
   border: 2px solid #58CC02;
-  color: ${props => props.theme === 'dark' ? '#58CC02' : '#45a302'};
-  padding: 0.5rem 1.5rem;
-  border-radius: 12px;
+  color: #58CC02;
+  padding: 0.75rem 1.5rem;
+  border-radius: 16px;
   font-size: 1rem;
-  font-weight: bold;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.3s ease;
 
   &:hover {
-    background: #58CC02;
-    color: white;
+    background: rgba(88, 204, 2, 0.1);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(88, 204, 2, 0.3);
   }
 `;
 
-const BtnSignup = styled.button`
+const BtnGetStarted = styled.button`
   background: #58CC02;
-  border: 2px solid #58CC02;
+  border: none;
   color: white;
-  padding: 0.5rem 1.5rem;
-  border-radius: 12px;
+  padding: 0.75rem 2rem;
+  border-radius: 16px;
   font-size: 1rem;
-  font-weight: bold;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.3s ease;
+  box-shadow: 0 4px 16px rgba(88, 204, 2, 0.3);
 
   &:hover {
     background: #45a302;
@@ -160,102 +167,47 @@ const BtnSignup = styled.button`
   }
 `;
 
-const MobileMenuBtn = styled.button`
-  display: none;
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  cursor: pointer;
-  color: ${props => props.theme === 'dark' ? '#e5e7eb' : '#1a1a1a'};
-  
-  @media (max-width: 768px) {
-    display: block;
-  }
-`;
-
-const HomeContainer = styled.div`
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 1rem 2rem 2rem;
-  width: 100%;
-  position: relative;
-  z-index: 1;
-  margin-top: 80px;
-  
-  @media (max-width: 768px) {
-    padding: 1rem;
-  }
-`;
-
 const HeroSection = styled.section`
-  padding: 4rem 0;
-  min-height: calc(100vh - 80px);
-  display: flex;
-  align-items: center;
-`;
-
-const HeroContent = styled.div`
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 120px 2rem 4rem;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 4rem;
   align-items: center;
-  
+  min-height: calc(100vh - 80px);
+
   @media (max-width: 1024px) {
     grid-template-columns: 1fr;
+    padding: 100px 2rem 2rem;
     gap: 2rem;
   }
 `;
 
-const HeroText = styled.div`
-  animation: fadeInLeft 0.8s ease;
-
-  @keyframes fadeInLeft {
-    from {
-      opacity: 0;
-      transform: translateX(-30px);
-    }
-    to {
-      opacity: 1;
-      transform: translateX(0);
-    }
-  }
+const HeroContent = styled.div`
+  animation: ${slideInLeft} 0.8s ease;
 `;
 
 const HeroTitle = styled.h1`
   font-size: 3.5rem;
-  line-height: 1.2;
+  font-weight: 800;
   color: ${props => props.theme === 'dark' ? '#f9fafb' : '#1a1a1a'};
+  line-height: 1.1;
   margin-bottom: 1.5rem;
-  
+
   @media (max-width: 768px) {
-    font-size: 2rem;
+    font-size: 2.5rem;
   }
 `;
 
-const Highlight = styled.span`
-  color: #58CC02;
-  position: relative;
-  
-  &::after {
-    content: '';
-    position: absolute;
-    bottom: -5px;
-    left: 0;
-    width: 100%;
-    height: 3px;
-    background: #58CC02;
-    opacity: 0.3;
-  }
-`;
-
-const HeroDescription = styled.p`
-  font-size: 1.25rem;
-  color: ${props => props.theme === 'dark' ? '#d1d5db' : '#4B4B4B'};
+const HeroSubtitle = styled.p`
+  font-size: 1.5rem;
+  color: ${props => props.theme === 'dark' ? '#d1d5db' : '#4B5563'};
   line-height: 1.6;
-  margin-bottom: 2rem;
-  
+  margin-bottom: 2.5rem;
+
   @media (max-width: 768px) {
-    font-size: 1rem;
+    font-size: 1.25rem;
   }
 `;
 
@@ -263,139 +215,125 @@ const HeroButtons = styled.div`
   display: flex;
   gap: 1rem;
   flex-wrap: wrap;
-  
-  @media (max-width: 768px) {
-    flex-direction: column;
-  }
 `;
 
-const BtnPrimaryLarge = styled.button`
+const BtnPrimary = styled.button`
   background: #58CC02;
-  color: white;
   border: none;
-  padding: 1rem 2.5rem;
-  border-radius: 16px;
+  color: white;
+  padding: 1.25rem 3rem;
+  border-radius: 20px;
   font-size: 1.125rem;
-  font-weight: bold;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(88, 204, 2, 0.3);
+  box-shadow: 0 6px 20px rgba(88, 204, 2, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 
   &:hover {
     background: #45a302;
     transform: translateY(-3px);
-    box-shadow: 0 6px 20px rgba(88, 204, 2, 0.4);
+    box-shadow: 0 8px 25px rgba(88, 204, 2, 0.4);
   }
-  
+
   @media (max-width: 768px) {
     width: 100%;
+    padding: 1rem 2rem;
   }
 `;
 
-const BtnSecondaryLarge = styled.button`
-  background: ${props => props.theme === 'dark' ? '#374151' : 'white'};
+const BtnSecondary = styled.button`
+  background: ${props => props.theme === 'dark' ? 'transparent' : 'white'};
+  border: 2px solid ${props => props.theme === 'dark' ? '#374151' : '#e5e7eb'};
   color: #58CC02;
-  border: 2px solid #58CC02;
-  padding: 1rem 2.5rem;
-  border-radius: 16px;
+  padding: 1.25rem 3rem;
+  border-radius: 20px;
   font-size: 1.125rem;
-  font-weight: bold;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 
   &:hover {
-    background: ${props => props.theme === 'dark' ? '#4B5563' : '#f0f9ff'};
+    background: ${props => props.theme === 'dark' ? '#1f2937' : '#f9fafb'};
+    border-color: #58CC02;
     transform: translateY(-3px);
   }
-  
+
   @media (max-width: 768px) {
     width: 100%;
+    padding: 1rem 2rem;
   }
 `;
 
-const HeroImage = styled.div`
+const HeroIllustration = styled.div`
   position: relative;
-  height: 500px;
-  animation: fadeInRight 0.8s ease;
+  height: 600px;
+  animation: ${slideInRight} 0.8s ease;
 
-  @keyframes fadeInRight {
-    from {
-      opacity: 0;
-      transform: translateX(30px);
-    }
-    to {
-      opacity: 1;
-      transform: translateX(0);
-    }
-  }
-  
   @media (max-width: 1024px) {
     height: 400px;
   }
-  
+
   @media (max-width: 768px) {
     height: 300px;
   }
 `;
 
-const HeroIllustration = styled.div`
+const IllustrationWrapper = styled.div`
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 300px;
-  height: 300px;
+  width: 500px;
+  height: 500px;
   display: flex;
   align-items: center;
   justify-content: center;
-  
+
+  @media (max-width: 1024px) {
+    width: 400px;
+    height: 400px;
+  }
+
   @media (max-width: 768px) {
-    width: 200px;
-    height: 200px;
+    width: 280px;
+    height: 280px;
   }
 `;
 
-const IllustrationCircle = styled.div`
+const GlowCircle = styled.div`
   position: absolute;
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, #58CC02 0%, #45a302 100%);
+  background: linear-gradient(135deg, 
+    rgba(88, 204, 2, 0.2) 0%, 
+    rgba(28, 176, 246, 0.2) 50%, 
+    rgba(139, 92, 246, 0.2) 100%
+  );
   border-radius: 50%;
-  animation: pulse 3s ease-in-out infinite;
-
-  @keyframes pulse {
-    0%, 100% {
-      transform: scale(1);
-      opacity: 0.8;
-    }
-    50% {
-      transform: scale(1.05);
-      opacity: 1;
-    }
-  }
+  filter: blur(40px);
+  animation: ${pulse} 3s ease-in-out infinite;
 `;
 
-const IllustrationEmoji = styled.span`
-  font-size: 8rem;
+const CharacterGroup = styled.div`
   position: relative;
   z-index: 2;
-  animation: float 3s ease-in-out infinite;
+  font-size: 12rem;
+  animation: ${float} 4s ease-in-out infinite;
 
-  @keyframes float {
-    0%, 100% {
-      transform: translateY(0);
-    }
-    50% {
-      transform: translateY(-20px);
-    }
+  @media (max-width: 1024px) {
+    font-size: 10rem;
   }
-  
+
   @media (max-width: 768px) {
-    font-size: 5rem;
+    font-size: 7rem;
   }
 `;
 
-const FloatingCard = styled.div`
+const FloatingElement = styled.div`
   position: absolute;
   background: ${props => props.theme === 'dark' 
     ? 'rgba(31, 41, 55, 0.9)' 
@@ -403,79 +341,91 @@ const FloatingCard = styled.div`
   };
   backdrop-filter: blur(10px);
   padding: 1rem 1.5rem;
-  border-radius: 16px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  border-radius: 20px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
   color: ${props => props.theme === 'dark' ? '#f9fafb' : '#1a1a1a'};
-  animation: float 4s ease-in-out infinite;
+  animation: ${float} 5s ease-in-out infinite;
   animation-delay: ${props => props.delay || '0s'};
-  
+
+  span:first-child {
+    font-size: 2rem;
+  }
+
   @media (max-width: 768px) {
     display: none;
   }
 `;
 
-const CardIcon = styled.span`
-  font-size: 1.5rem;
-`;
-
 const StatsSection = styled.section`
-  padding: 3rem 0;
-  margin: 2rem 0;
+  max-width: 1280px;
+  margin: 4rem auto;
+  padding: 0 2rem;
+  animation: ${fadeIn} 1s ease;
 `;
 
-const StatsContainer = styled.div`
+const StatsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 2rem;
   text-align: center;
-  
+
   @media (max-width: 1024px) {
     grid-template-columns: repeat(2, 1fr);
   }
-  
-  @media (max-width: 768px) {
+
+  @media (max-width: 640px) {
     grid-template-columns: 1fr;
-    gap: 1rem;
   }
 `;
 
-const StatItem = styled.div`
-  padding: 2rem;
+const StatCard = styled.div`
   background: ${props => props.theme === 'dark' 
     ? 'rgba(31, 41, 55, 0.5)' 
-    : 'rgba(255, 255, 255, 0.7)'
+    : 'rgba(255, 255, 255, 0.8)'
   };
   backdrop-filter: blur(10px);
-  border-radius: 20px;
-  transition: transform 0.3s ease;
+  padding: 2.5rem 2rem;
+  border-radius: 24px;
+  border: 1px solid ${props => props.theme === 'dark' 
+    ? 'rgba(75, 85, 99, 0.3)' 
+    : 'rgba(229, 231, 235, 0.5)'
+  };
+  transition: all 0.3s ease;
 
   &:hover {
-    transform: translateY(-5px);
+    transform: translateY(-8px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+    border-color: #58CC02;
   }
 `;
 
 const StatNumber = styled.h3`
   font-size: 3rem;
-  font-weight: bold;
-  color: #58CC02;
+  font-weight: 800;
+  background: linear-gradient(135deg, #58CC02 0%, #1CB0F6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
   margin-bottom: 0.5rem;
-  
+
   @media (max-width: 768px) {
-    font-size: 2rem;
+    font-size: 2.5rem;
   }
 `;
 
 const StatLabel = styled.p`
   font-size: 1.125rem;
-  color: ${props => props.theme === 'dark' ? '#d1d5db' : '#4B4B4B'};
+  color: ${props => props.theme === 'dark' ? '#9ca3af' : '#6b7280'};
+  font-weight: 600;
 `;
 
 const FeaturesSection = styled.section`
-  padding: 5rem 0;
+  max-width: 1280px;
+  margin: 6rem auto;
+  padding: 0 2rem;
 `;
 
 const SectionHeader = styled.div`
@@ -484,30 +434,33 @@ const SectionHeader = styled.div`
 `;
 
 const SectionTitle = styled.h2`
-  font-size: 2.5rem;
+  font-size: 3rem;
+  font-weight: 800;
   color: ${props => props.theme === 'dark' ? '#f9fafb' : '#1a1a1a'};
   margin-bottom: 1rem;
-  
+
   @media (max-width: 768px) {
-    font-size: 1.75rem;
+    font-size: 2rem;
   }
 `;
 
 const SectionSubtitle = styled.p`
   font-size: 1.25rem;
   color: ${props => props.theme === 'dark' ? '#9ca3af' : '#6b7280'};
+  max-width: 600px;
+  margin: 0 auto;
 `;
 
 const FeaturesGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 2rem;
-  
+
   @media (max-width: 1024px) {
     grid-template-columns: repeat(2, 1fr);
   }
-  
-  @media (max-width: 768px) {
+
+  @media (max-width: 640px) {
     grid-template-columns: 1fr;
   }
 `;
@@ -515,49 +468,55 @@ const FeaturesGrid = styled.div`
 const FeatureCard = styled.div`
   background: ${props => props.theme === 'dark' 
     ? 'rgba(31, 41, 55, 0.5)' 
-    : 'rgba(255, 255, 255, 0.9)'
+    : 'rgba(255, 255, 255, 0.8)'
   };
   backdrop-filter: blur(10px);
-  padding: 2rem;
-  border-radius: 20px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-  transition: all 0.3s ease;
+  padding: 2.5rem;
+  border-radius: 24px;
   border: 1px solid ${props => props.theme === 'dark' 
     ? 'rgba(75, 85, 99, 0.3)' 
     : 'rgba(229, 231, 235, 0.5)'
   };
+  transition: all 0.3s ease;
+  text-align: center;
 
   &:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 12px 24px rgba(0,0,0,0.15);
-    border-color: #58CC02;
+    transform: translateY(-10px);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+    border-color: ${props => props.color || '#58CC02'};
   }
 `;
 
 const FeatureIcon = styled.div`
-  width: 80px;
-  height: 80px;
-  border-radius: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 2.5rem;
-  margin-bottom: 1.5rem;
+  width: 100px;
+  height: 100px;
+  margin: 0 auto 1.5rem;
   background: ${props => {
     const colors = {
-      green: props.theme === 'dark' ? 'rgba(88, 204, 2, 0.2)' : '#e6f9e6',
-      blue: props.theme === 'dark' ? 'rgba(59, 130, 246, 0.2)' : '#e0f2fe',
-      orange: props.theme === 'dark' ? 'rgba(255, 150, 0, 0.2)' : '#ffedd5',
-      red: props.theme === 'dark' ? 'rgba(239, 68, 68, 0.2)' : '#fee2e2',
-      purple: props.theme === 'dark' ? 'rgba(139, 92, 246, 0.2)' : '#f3e8ff',
-      yellow: props.theme === 'dark' ? 'rgba(250, 204, 21, 0.2)' : '#fef9c3',
+      green: 'linear-gradient(135deg, rgba(88, 204, 2, 0.2) 0%, rgba(69, 163, 2, 0.3) 100%)',
+      blue: 'linear-gradient(135deg, rgba(28, 176, 246, 0.2) 0%, rgba(8, 145, 178, 0.3) 100%)',
+      purple: 'linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(124, 58, 237, 0.3) 100%)',
+      orange: 'linear-gradient(135deg, rgba(255, 150, 0, 0.2) 0%, rgba(255, 107, 0, 0.3) 100%)',
+      pink: 'linear-gradient(135deg, rgba(236, 72, 153, 0.2) 0%, rgba(219, 39, 119, 0.3) 100%)',
+      yellow: 'linear-gradient(135deg, rgba(250, 204, 21, 0.2) 0%, rgba(234, 179, 8, 0.3) 100%)',
     };
     return colors[props.color] || colors.green;
   }};
+  border-radius: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  transition: all 0.3s ease;
+
+  ${FeatureCard}:hover & {
+    transform: scale(1.1) rotate(5deg);
+  }
 `;
 
 const FeatureTitle = styled.h3`
   font-size: 1.5rem;
+  font-weight: 700;
   color: ${props => props.theme === 'dark' ? '#f9fafb' : '#1a1a1a'};
   margin-bottom: 1rem;
 `;
@@ -568,106 +527,41 @@ const FeatureDescription = styled.p`
   line-height: 1.6;
 `;
 
-const TestimonialsSection = styled.section`
-  padding: 5rem 0;
-`;
-
-const TestimonialsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 2rem;
-  
-  @media (max-width: 1024px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-const TestimonialCard = styled.div`
-  background: ${props => props.theme === 'dark' 
-    ? 'rgba(31, 41, 55, 0.5)' 
-    : 'rgba(249, 250, 251, 0.9)'
-  };
-  backdrop-filter: blur(10px);
-  padding: 2rem;
-  border-radius: 20px;
-  transition: all 0.3s ease;
-  border: 1px solid ${props => props.theme === 'dark' 
-    ? 'rgba(75, 85, 99, 0.3)' 
-    : 'transparent'
-  };
-
-  &:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-  }
-`;
-
-const TestimonialRating = styled.div`
-  font-size: 1.25rem;
-  margin-bottom: 1rem;
-`;
-
-const TestimonialText = styled.p`
-  font-size: 1rem;
-  color: ${props => props.theme === 'dark' ? '#d1d5db' : '#4B4B4B'};
-  line-height: 1.6;
-  margin-bottom: 1.5rem;
-  font-style: italic;
-`;
-
-const TestimonialAuthor = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-`;
-
-const AuthorAvatar = styled.div`
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  background: ${props => props.theme === 'dark' 
-    ? 'rgba(59, 130, 246, 0.2)' 
-    : '#e0f2fe'
-  };
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5rem;
-`;
-
-const AuthorInfo = styled.div``;
-
-const AuthorName = styled.h4`
-  font-size: 1rem;
-  color: ${props => props.theme === 'dark' ? '#f9fafb' : '#1a1a1a'};
-  margin-bottom: 0.25rem;
-`;
-
-const AuthorTitle = styled.p`
-  font-size: 0.875rem;
-  color: ${props => props.theme === 'dark' ? '#9ca3af' : '#6b7280'};
-`;
-
 const CTASection = styled.section`
-  padding: 5rem 0;
+  max-width: 1280px;
+  margin: 6rem auto;
+  padding: 0 2rem;
+`;
+
+const CTACard = styled.div`
   background: linear-gradient(135deg, #58CC02 0%, #45a302 100%);
   border-radius: 30px;
+  padding: 4rem 3rem;
   text-align: center;
-  margin: 3rem 0;
-  box-shadow: 0 12px 30px rgba(88, 204, 2, 0.3);
-`;
+  box-shadow: 0 20px 60px rgba(88, 204, 2, 0.3);
+  position: relative;
+  overflow: hidden;
 
-const CTAContent = styled.div`
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 0 2rem;
+  &::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    animation: ${pulse} 4s ease-in-out infinite;
+  }
 `;
 
 const CTATitle = styled.h2`
   font-size: 3rem;
+  font-weight: 800;
   color: white;
   margin-bottom: 1rem;
-  
+  position: relative;
+  z-index: 1;
+
   @media (max-width: 768px) {
     font-size: 2rem;
   }
@@ -675,48 +569,57 @@ const CTATitle = styled.h2`
 
 const CTADescription = styled.p`
   font-size: 1.25rem;
-  color: rgba(255,255,255,0.9);
-  margin-bottom: 2rem;
+  color: rgba(255, 255, 255, 0.95);
+  margin-bottom: 2.5rem;
+  position: relative;
+  z-index: 1;
 `;
 
-const BtnCTA = styled.button`
+const CTAButton = styled.button`
   background: white;
-  color: #58CC02;
   border: none;
-  padding: 1rem 3rem;
-  border-radius: 16px;
+  color: #58CC02;
+  padding: 1.25rem 3.5rem;
+  border-radius: 20px;
   font-size: 1.25rem;
-  font-weight: bold;
+  font-weight: 800;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  position: relative;
+  z-index: 1;
 
   &:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    transform: translateY(-5px) scale(1.05);
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.3);
   }
 `;
 
 const Footer = styled.footer`
-  background: ${props => props.theme === 'dark' ? '#0c0c0c' : '#1a1a1a'};
-  color: white;
-  padding: 3rem 2rem 1rem;
-  margin-top: auto;
+  background: ${props => props.theme === 'dark' ? '#0c0c0c' : '#f9fafb'};
+  padding: 3rem 2rem 1.5rem;
+  margin-top: 4rem;
+  border-top: 1px solid ${props => props.theme === 'dark' 
+    ? 'rgba(75, 85, 99, 0.3)' 
+    : 'rgba(229, 231, 235, 0.5)'
+  };
 `;
 
 const FooterContent = styled.div`
-  max-width: 1400px;
+  max-width: 1280px;
   margin: 0 auto;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 2rem;
+  gap: 3rem;
   margin-bottom: 2rem;
-  
+
   @media (max-width: 1024px) {
     grid-template-columns: repeat(2, 1fr);
   }
-  
-  @media (max-width: 768px) {
+
+  @media (max-width: 640px) {
     grid-template-columns: 1fr;
   }
 `;
@@ -725,75 +628,81 @@ const FooterSection = styled.div``;
 
 const FooterTitle = styled.h4`
   font-size: 1.125rem;
-  margin-bottom: 1rem;
+  font-weight: 700;
   color: #58CC02;
+  margin-bottom: 1rem;
 `;
 
 const FooterLinks = styled.ul`
   list-style: none;
+  padding: 0;
+  margin: 0;
 `;
 
-const FooterLinkItem = styled.li`
+const FooterLink = styled.li`
   margin-bottom: 0.75rem;
-`;
 
-const FooterLink = styled.a`
-  color: #9ca3af;
-  text-decoration: none;
-  transition: color 0.3s ease;
+  a {
+    color: ${props => props.theme === 'dark' ? '#9ca3af' : '#6b7280'};
+    text-decoration: none;
+    transition: color 0.3s ease;
+    font-size: 0.95rem;
 
-  &:hover {
-    color: #58CC02;
+    &:hover {
+      color: #58CC02;
+    }
   }
 `;
 
 const SocialLinks = styled.div`
   display: flex;
   gap: 1rem;
+  margin-top: 1rem;
 `;
 
 const SocialLink = styled.a`
-  width: 40px;
-  height: 40px;
-  background: #374151;
+  width: 45px;
+  height: 45px;
+  background: ${props => props.theme === 'dark' ? '#1f2937' : '#e5e7eb'};
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   text-decoration: none;
-  font-size: 1.25rem;
+  font-size: 1.5rem;
   transition: all 0.3s ease;
 
   &:hover {
     background: #58CC02;
-    transform: translateY(-3px);
+    transform: translateY(-5px) scale(1.1);
   }
 `;
 
 const FooterBottom = styled.div`
   text-align: center;
   padding-top: 2rem;
-  border-top: 1px solid #374151;
-  color: #9ca3af;
+  border-top: 1px solid ${props => props.theme === 'dark' 
+    ? 'rgba(75, 85, 99, 0.3)' 
+    : 'rgba(229, 231, 235, 0.5)'
+  };
+  color: ${props => props.theme === 'dark' ? '#6b7280' : '#9ca3af'};
+  font-size: 0.95rem;
 `;
 
 // ========== COMPONENT ==========
-
 const Home = () => {
   const navigate = useNavigate();
   const [theme, setTheme] = useState('light');
   const [isScrolled, setIsScrolled] = useState(false);
 
-  // Xử lý scroll effect
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
+      setIsScrolled(window.scrollY > 20);
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Toggle theme
   const toggleTheme = () => {
     setTheme(prev => prev === 'light' ? 'dark' : 'light');
   };
@@ -802,262 +711,209 @@ const Home = () => {
     <PageWrapper theme={theme}>
       {/* Navbar */}
       <Navbar theme={theme} scrolled={isScrolled}>
-        <NavbarContent>
-          <Logo theme={theme}>
-            <LogoIcon>🦉</LogoIcon>
-            <span>EnglishMaster</span>
+        <NavContent>
+          <Logo onClick={() => navigate('/')}>
+            <CharacterIcon src={logo} alt="logo" />
+            <h1>EnglishMaster</h1>
           </Logo>
           <NavLinks>
-            <NavLink theme={theme}>Về chúng tôi</NavLink>
-            <NavLink theme={theme}>Tính năng</NavLink>
-            <NavLink theme={theme}>Giá cả</NavLink>
-            <ThemeToggle theme={theme} onClick={toggleTheme}>
-              {theme === 'light' ? '🌙' : '☀️'}
-            </ThemeToggle>
-            <BtnLogin theme={theme} onClick={() => navigate('/login')}>
-              Đăng nhập
-            </BtnLogin>
-            <BtnSignup onClick={() => navigate('/register')}>
-              Đăng ký
-            </BtnSignup>
+            
+            <BtnSignIn onClick={() => navigate('/login')}>
+              TÔI ĐÃ CÓ TÀI KHOẢN
+            </BtnSignIn>
+            <BtnGetStarted onClick={() => navigate('/welcome')}>
+              BẮT ĐẦU
+            </BtnGetStarted>
           </NavLinks>
-          <MobileMenuBtn theme={theme}>☰</MobileMenuBtn>
-        </NavbarContent>
+        </NavContent>
       </Navbar>
 
-      <HomeContainer>
-        {/* Hero Section */}
-        <HeroSection>
-          <HeroContent>
-            <HeroText>
-              <HeroTitle theme={theme}>
-                Học tiếng Anh miễn phí,
-                <Highlight> vui vẻ</Highlight> và
-                <Highlight> hiệu quả</Highlight>
-              </HeroTitle>
-              <HeroDescription theme={theme}>
-                Học tiếng Anh chỉ 5 phút mỗi ngày với các bài học thú vị và khoa học. 
-                Phương pháp được chứng minh hiệu quả bởi hàng triệu người dùng.
-              </HeroDescription>
-              <HeroButtons>
-                <BtnPrimaryLarge onClick={() => navigate('/register')}>
-                  Bắt đầu ngay
-                </BtnPrimaryLarge>
-                <BtnSecondaryLarge theme={theme} onClick={() => navigate('/login')}>
-                  Tôi đã có tài khoản
-                </BtnSecondaryLarge>
-              </HeroButtons>
-            </HeroText>
-            <HeroImage>
-              <FloatingCard theme={theme} delay="0s" style={{top: '10%', left: '0'}}>
-                <CardIcon>✨</CardIcon>
-                <span>Học mọi lúc, mọi nơi</span>
-              </FloatingCard>
-              <FloatingCard theme={theme} delay="1s" style={{top: '50%', right: '0'}}>
-                <CardIcon>🎯</CardIcon>
-                <span>Đạt mục tiêu nhanh chóng</span>
-              </FloatingCard>
-              <FloatingCard theme={theme} delay="2s" style={{bottom: '10%', left: '10%'}}>
-                <CardIcon>🏆</CardIcon>
-                <span>Nhận huy chương</span>
-              </FloatingCard>
-              <HeroIllustration>
-                <IllustrationCircle />
-                <IllustrationEmoji>📚</IllustrationEmoji>
-              </HeroIllustration>
-            </HeroImage>
-          </HeroContent>
-        </HeroSection>
+      {/* Hero Section */}
+      <HeroSection>
+        <HeroContent>
+          <HeroTitle theme={theme}>
+            Học ngoại ngữ miễn phí, vui nhộn và hiệu quả!
+          </HeroTitle>
+          <HeroSubtitle theme={theme}>
+            Phương pháp học khoa học, bài học ngắn gọn và hiệu quả. 
+            Tham gia cùng hàng triệu người học mỗi ngày!
+          </HeroSubtitle>
+          <HeroButtons>
+            <BtnPrimary onClick={() => navigate('/register')}>
+              Bắt đầu ngay
+            </BtnPrimary>
+            <BtnSecondary theme={theme} onClick={() => navigate('/login')}>
+              Tôi đã có tài khoản
+            </BtnSecondary>
+          </HeroButtons>
+        </HeroContent>
 
-        {/* Statistics Section */}
-        <StatsSection>
-          <StatsContainer>
-            <StatItem theme={theme}>
-              <StatNumber>500M+</StatNumber>
-              <StatLabel theme={theme}>Người học</StatLabel>
-            </StatItem>
-            <StatItem theme={theme}>
-              <StatNumber>40+</StatNumber>
-              <StatLabel theme={theme}>Ngôn ngữ</StatLabel>
-            </StatItem>
-            <StatItem theme={theme}>
-              <StatNumber>5 phút</StatNumber>
-              <StatLabel theme={theme}>Mỗi ngày</StatLabel>
-            </StatItem>
-            <StatItem theme={theme}>
-              <StatNumber>100%</StatNumber>
-              <StatLabel theme={theme}>Miễn phí</StatLabel>
-            </StatItem>
-          </StatsContainer>
-        </StatsSection>
+        <HeroIllustration>
+          <IllustrationWrapper>
+            <GlowCircle />
+            <CharacterGroup>
+              <CharacterIcon src={home} alt="home" />
+            </CharacterGroup>
+          </IllustrationWrapper>
+          
+          <FloatingElement theme={theme} delay="0s" style={{top: '10%', left: '5%'}}>
+            <span>📚</span>
+            <span>Học mọi lúc</span>
+          </FloatingElement>
+          
+          <FloatingElement theme={theme} delay="1s" style={{top: '50%', right: '0'}}>
+            <span>🎯</span>
+            <span>Hiệu quả cao</span>
+          </FloatingElement>
+          
+          <FloatingElement theme={theme} delay="2s" style={{bottom: '15%', left: '10%'}}>
+            <span>🏆</span>
+            <span>Miễn phí 100%</span>
+          </FloatingElement>
+        </HeroIllustration>
+      </HeroSection>
 
-        {/* Features Section */}
-        <FeaturesSection>
-          <SectionHeader>
-            <SectionTitle theme={theme}>Tại sao chọn chúng tôi?</SectionTitle>
-            <SectionSubtitle theme={theme}>
-              Phương pháp học hiện đại, hiệu quả và thú vị
-            </SectionSubtitle>
-          </SectionHeader>
-          <FeaturesGrid>
-            <FeatureCard theme={theme}>
-              <FeatureIcon color="green" theme={theme}>🎮</FeatureIcon>
-              <FeatureTitle theme={theme}>Học như chơi game</FeatureTitle>
-              <FeatureDescription theme={theme}>
-                Các bài học ngắn gọn, thú vị như trò chơi. 
-                Tích điểm, mở khóa cấp độ mới mỗi ngày.
-              </FeatureDescription>
-            </FeatureCard>
-            <FeatureCard theme={theme}>
-              <FeatureIcon color="blue" theme={theme}>🎯</FeatureIcon>
-              <FeatureTitle theme={theme}>Cá nhân hóa</FeatureTitle>
-              <FeatureDescription theme={theme}>
-                AI thông minh điều chỉnh bài học phù hợp với trình độ 
-                và tốc độ học của bạn.
-              </FeatureDescription>
-            </FeatureCard>
-            <FeatureCard theme={theme}>
-              <FeatureIcon color="orange" theme={theme}>🔥</FeatureIcon>
-              <FeatureTitle theme={theme}>Duy trì động lực</FeatureTitle>
-              <FeatureDescription theme={theme}>
-                Streak counter, nhắc nhở thông minh và cộng đồng 
-                giúp bạn kiên trì mỗi ngày.
-              </FeatureDescription>
-            </FeatureCard>
-            <FeatureCard theme={theme}>
-              <FeatureIcon color="red" theme={theme}>🎤</FeatureIcon>
-              <FeatureTitle theme={theme}>Luyện phát âm</FeatureTitle>
-              <FeatureDescription theme={theme}>
-                Công nghệ nhận diện giọng nói giúp bạn cải thiện 
-                phát âm như người bản xứ.
-              </FeatureDescription>
-            </FeatureCard>
-            <FeatureCard theme={theme}>
-              <FeatureIcon color="purple" theme={theme}>📊</FeatureIcon>
-              <FeatureTitle theme={theme}>Theo dõi tiến độ</FeatureTitle>
-              <FeatureDescription theme={theme}>
-                Biểu đồ chi tiết giúp bạn thấy rõ sự tiến bộ 
-                và những điểm cần cải thiện.
-              </FeatureDescription>
-            </FeatureCard>
-            <FeatureCard theme={theme}>
-              <FeatureIcon color="yellow" theme={theme}>🌍</FeatureIcon>
-              <FeatureTitle theme={theme}>Học mọi lúc mọi nơi</FeatureTitle>
-              <FeatureDescription theme={theme}>
-                Đồng bộ trên mọi thiết bị. Học trên điện thoại, 
-                máy tính bảng hay máy tính.
-              </FeatureDescription>
-            </FeatureCard>
-          </FeaturesGrid>
-        </FeaturesSection>
+      {/* Stats Section */}
+      <StatsSection>
+        <StatsGrid>
+          <StatCard theme={theme}>
+            <StatNumber>500M+</StatNumber>
+            <StatLabel theme={theme}>Học viên trên toàn cầu</StatLabel>
+          </StatCard>
+          <StatCard theme={theme}>
+            <StatNumber>40+</StatNumber>
+            <StatLabel theme={theme}>Ngôn ngữ khác nhau</StatLabel>
+          </StatCard>
+          <StatCard theme={theme}>
+            <StatNumber>5 phút</StatNumber>
+            <StatLabel theme={theme}>Mỗi bài học</StatLabel>
+          </StatCard>
+          <StatCard theme={theme}>
+            <StatNumber>100%</StatNumber>
+            <StatLabel theme={theme}>Hoàn toàn miễn phí</StatLabel>
+          </StatCard>
+        </StatsGrid>
+      </StatsSection>
 
-        {/* Testimonials Section */}
-        <TestimonialsSection>
-          <SectionHeader>
-            <SectionTitle theme={theme}>Người học nói gì về chúng tôi</SectionTitle>
-          </SectionHeader>
-          <TestimonialsGrid>
-            <TestimonialCard theme={theme}>
-              <TestimonialRating>⭐⭐⭐⭐⭐</TestimonialRating>
-              <TestimonialText theme={theme}>
-                "Ứng dụng tuyệt vời! Tôi đã học được rất nhiều từ vựng mới 
-                chỉ sau 2 tuần. Các bài học rất thú vị và dễ hiểu."
-              </TestimonialText>
-              <TestimonialAuthor>
-                <AuthorAvatar theme={theme}>👨</AuthorAvatar>
-                <AuthorInfo>
-                  <AuthorName theme={theme}>Nguyễn Văn A</AuthorName>
-                  <AuthorTitle theme={theme}>Học sinh lớp 10</AuthorTitle>
-                </AuthorInfo>
-              </TestimonialAuthor>
-            </TestimonialCard>
-            <TestimonialCard theme={theme}>
-              <TestimonialRating>⭐⭐⭐⭐⭐</TestimonialRating>
-              <TestimonialText theme={theme}>
-                "Mình đã thử nhiều ứng dụng học tiếng Anh nhưng đây là 
-                ứng dụng tốt nhất. Giao diện đẹp, bài học hay và hoàn toàn miễn phí!"
-              </TestimonialText>
-              <TestimonialAuthor>
-                <AuthorAvatar theme={theme}>👩</AuthorAvatar>
-                <AuthorInfo>
-                  <AuthorName theme={theme}>Trần Thị B</AuthorName>
-                  <AuthorTitle theme={theme}>Sinh viên đại học</AuthorTitle>
-                </AuthorInfo>
-              </TestimonialAuthor>
-            </TestimonialCard>
-            <TestimonialCard theme={theme}>
-              <TestimonialRating>⭐⭐⭐⭐⭐</TestimonialRating>
-              <TestimonialText theme={theme}>
-                "Tôi học mỗi ngày 10 phút trước khi ngủ. Sau 3 tháng, 
-                khả năng nghe và nói tiếng Anh của tôi đã cải thiện rõ rệt."
-              </TestimonialText>
-              <TestimonialAuthor>
-                <AuthorAvatar theme={theme}>🧑</AuthorAvatar>
-                <AuthorInfo>
-                  <AuthorName theme={theme}>Lê Văn C</AuthorName>
-                  <AuthorTitle theme={theme}>Nhân viên văn phòng</AuthorTitle>
-                </AuthorInfo>
-              </TestimonialAuthor>
-            </TestimonialCard>
-          </TestimonialsGrid>
-        </TestimonialsSection>
+      {/* Features Section */}
+      <FeaturesSection>
+        <SectionHeader>
+          <SectionTitle theme={theme}>Tại sao chọn EnglishMaster?</SectionTitle>
+          <SectionSubtitle theme={theme}>
+            Phương pháp học hiện đại, khoa học và hiệu quả nhất
+          </SectionSubtitle>
+        </SectionHeader>
+        
+        <FeaturesGrid>
+          <FeatureCard theme={theme} color="#58CC02">
+            <FeatureIcon color="green">🎮</FeatureIcon>
+            <FeatureTitle theme={theme}>Học như chơi game</FeatureTitle>
+            <FeatureDescription theme={theme}>
+              Bài học thú vị như trò chơi. Tích điểm, nâng cấp và mở khóa thành tựu mới mỗi ngày.
+            </FeatureDescription>
+          </FeatureCard>
 
-        {/* CTA Section */}
-        <CTASection>
-          <CTAContent>
-            <CTATitle>Sẵn sàng bắt đầu học?</CTATitle>
-            <CTADescription>
-              Tham gia cùng hàng triệu người đang học tiếng Anh mỗi ngày
-            </CTADescription>
-            <BtnCTA onClick={() => navigate('/register')}>
-              Bắt đầu miễn phí ngay
-            </BtnCTA>
-          </CTAContent>
-        </CTASection>
-      </HomeContainer>
+          <FeatureCard theme={theme} color="#1CB0F6">
+            <FeatureIcon color="blue">🎯</FeatureIcon>
+            <FeatureTitle theme={theme}>Được cá nhân hóa</FeatureTitle>
+            <FeatureDescription theme={theme}>
+              AI thông minh điều chỉnh bài học phù hợp với trình độ và tốc độ học của bạn.
+            </FeatureDescription>
+          </FeatureCard>
+
+          <FeatureCard theme={theme} color="#8b5cf6">
+            <FeatureIcon color="purple">🔥</FeatureIcon>
+            <FeatureTitle theme={theme}>Duy trì động lực</FeatureTitle>
+            <FeatureDescription theme={theme}>
+              Streak counter, nhắc nhở thông minh giúp bạn kiên trì học mỗi ngày.
+            </FeatureDescription>
+          </FeatureCard>
+
+          <FeatureCard theme={theme} color="#FF9600">
+            <FeatureIcon color="orange">🎤</FeatureIcon>
+            <FeatureTitle theme={theme}>Luyện phát âm</FeatureTitle>
+            <FeatureDescription theme={theme}>
+              Công nghệ nhận diện giọng nói giúp bạn cải thiện phát âm chuẩn.
+            </FeatureDescription>
+          </FeatureCard>
+
+          <FeatureCard theme={theme} color="#ec4899">
+            <FeatureIcon color="pink">📊</FeatureIcon>
+            <FeatureTitle theme={theme}>Theo dõi tiến độ</FeatureTitle>
+            <FeatureDescription theme={theme}>
+              Biểu đồ chi tiết giúp bạn thấy rõ sự tiến bộ và điểm cần cải thiện.
+            </FeatureDescription>
+          </FeatureCard>
+
+          <FeatureCard theme={theme} color="#facc15">
+            <FeatureIcon color="yellow">🌍</FeatureIcon>
+            <FeatureTitle theme={theme}>Học mọi lúc mọi nơi</FeatureTitle>
+            <FeatureDescription theme={theme}>
+              Đồng bộ trên mọi thiết bị. Học trên điện thoại, máy tính bảng hoặc máy tính.
+            </FeatureDescription>
+          </FeatureCard>
+        </FeaturesGrid>
+      </FeaturesSection>
+
+      {/* CTA Section */}
+      <CTASection>
+        <CTACard>
+          <CTATitle>Sẵn sàng bắt đầu học?</CTATitle>
+          <CTADescription>
+            Tham gia cùng hàng triệu người đang học tiếng Anh mỗi ngày
+          </CTADescription>
+          <CTAButton onClick={() => navigate('/register')}>
+            Bắt đầu miễn phí
+          </CTAButton>
+        </CTACard>
+      </CTASection>
 
       {/* Footer */}
       <Footer theme={theme}>
         <FooterContent>
           <FooterSection>
             <FooterTitle>Về chúng tôi</FooterTitle>
-            <FooterLinks>
-              <FooterLinkItem><FooterLink href="#about">Giới thiệu</FooterLink></FooterLinkItem>
-              <FooterLinkItem><FooterLink href="#team">Đội ngũ</FooterLink></FooterLinkItem>
-              <FooterLinkItem><FooterLink href="#careers">Tuyển dụng</FooterLink></FooterLinkItem>
-              <FooterLinkItem><FooterLink href="#press">Báo chí</FooterLink></FooterLinkItem>
+            <FooterLinks theme={theme}>
+              <FooterLink><a href="#about">Giới thiệu</a></FooterLink>
+              <FooterLink><a href="#team">Đội ngũ</a></FooterLink>
+              <FooterLink><a href="#careers">Tuyển dụng</a></FooterLink>
+              <FooterLink><a href="#press">Báo chí</a></FooterLink>
             </FooterLinks>
           </FooterSection>
+
           <FooterSection>
             <FooterTitle>Sản phẩm</FooterTitle>
-            <FooterLinks>
-              <FooterLinkItem><FooterLink href="#app">Ứng dụng di động</FooterLink></FooterLinkItem>
-              <FooterLinkItem><FooterLink href="#premium">Premium</FooterLink></FooterLinkItem>
-              <FooterLinkItem><FooterLink href="#schools">Dành cho trường học</FooterLink></FooterLinkItem>
-              <FooterLinkItem><FooterLink href="#business">Dành cho doanh nghiệp</FooterLink></FooterLinkItem>
+            <FooterLinks theme={theme}>
+              <FooterLink><a href="#app">Ứng dụng di động</a></FooterLink>
+              <FooterLink><a href="#premium">Premium</a></FooterLink>
+              <FooterLink><a href="#schools">Dành cho trường học</a></FooterLink>
+              <FooterLink><a href="#business">Dành cho doanh nghiệp</a></FooterLink>
             </FooterLinks>
           </FooterSection>
+
           <FooterSection>
             <FooterTitle>Hỗ trợ</FooterTitle>
-            <FooterLinks>
-              <FooterLinkItem><FooterLink href="#help">Trung tâm hỗ trợ</FooterLink></FooterLinkItem>
-              <FooterLinkItem><FooterLink href="#faq">Câu hỏi thường gặp</FooterLink></FooterLinkItem>
-              <FooterLinkItem><FooterLink href="#contact">Liên hệ</FooterLink></FooterLinkItem>
-              <FooterLinkItem><FooterLink href="#privacy">Chính sách bảo mật</FooterLink></FooterLinkItem>
+            <FooterLinks theme={theme}>
+              <FooterLink><a href="#help">Trung tâm hỗ trợ</a></FooterLink>
+              <FooterLink><a href="#faq">Câu hỏi thường gặp</a></FooterLink>
+              <FooterLink><a href="#contact">Liên hệ</a></FooterLink>
+              <FooterLink><a href="#privacy">Chính sách bảo mật</a></FooterLink>
             </FooterLinks>
           </FooterSection>
+
           <FooterSection>
             <FooterTitle>Kết nối với chúng tôi</FooterTitle>
             <SocialLinks>
-              <SocialLink href="#facebook">📘</SocialLink>
-              <SocialLink href="#twitter">🐦</SocialLink>
-              <SocialLink href="#instagram">📷</SocialLink>
-              <SocialLink href="#youtube">📺</SocialLink>
+              <SocialLink href="#facebook" theme={theme}>📘</SocialLink>
+              <SocialLink href="#twitter" theme={theme}>🐦</SocialLink>
+              <SocialLink href="#instagram" theme={theme}>📷</SocialLink>
+              <SocialLink href="#youtube" theme={theme}>📺</SocialLink>
             </SocialLinks>
           </FooterSection>
         </FooterContent>
-        <FooterBottom>
-          <p>&copy; 2025 EnglishMaster. All rights reserved.</p>
+
+        <FooterBottom theme={theme}>
+          <p>&copy; 2025 EnglishMaster. All rights reserved. Made with ❤️ in Vietnam</p>
         </FooterBottom>
       </Footer>
     </PageWrapper>
