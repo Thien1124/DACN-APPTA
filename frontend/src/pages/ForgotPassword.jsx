@@ -1,7 +1,6 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import styled from 'styled-components';
-import Swal from 'sweetalert2';
 import Toast from '../components/Toast';
 import useToast from '../hooks/useToast';
 
@@ -10,28 +9,11 @@ import useToast from '../hooks/useToast';
 const PageWrapper = styled.div`
   display: flex;
   min-height: 100vh;
-  background: ${props => props.theme === 'dark'
-        ? 'linear-gradient(135deg, #0c0c0c 0%, #1a1a1a 50%, #2d2d2d 100%)'
-        : 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e0 100%)'
-    };
+  background: #ffffff;
   position: relative;
   overflow: hidden;
 
-  &::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: ${props => props.theme === 'dark'
-        ? 'radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.1) 0%, transparent 70%), radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.1) 0%, transparent 70%)'
-        : 'radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.05) 0%, transparent 70%), radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.05) 0%, transparent 70%)'
-    };
-    z-index: -1;
-  }
-
-  @media (max-width: 768px) {
+  @media (max-width: 968px) {
     flex-direction: column;
   }
 `;
@@ -44,16 +26,31 @@ const LeftSection = styled.div`
   padding: 2rem;
   position: relative;
   z-index: 1;
+  background: linear-gradient(135deg, #58CC02 0%, #45a302 100%);
 
-  @media (max-width: 768px) {
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+      radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.08) 0%, transparent 50%);
+  }
+
+  @media (max-width: 968px) {
     display: none;
   }
 `;
 
 const IllustrationContainer = styled.div`
-  max-width: 500px;
+  max-width: 450px;
   text-align: center;
   animation: fadeInLeft 0.8s ease;
+  position: relative;
+  z-index: 2;
 
   @keyframes fadeInLeft {
     from {
@@ -68,30 +65,33 @@ const IllustrationContainer = styled.div`
 `;
 
 const IllustrationEmoji = styled.div`
-  font-size: 10rem;
-  margin-bottom: 2rem;
+  font-size: 6rem;
+  margin-bottom: 1.5rem;
   animation: float 3s ease-in-out infinite;
+  filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.2));
 
   @keyframes float {
     0%, 100% {
-      transform: translateY(0);
+      transform: translateY(0) rotate(0deg);
     }
     50% {
-      transform: translateY(-20px);
+      transform: translateY(-15px) rotate(3deg);
     }
   }
 `;
 
 const IllustrationTitle = styled.h2`
-  font-size: 2.5rem;
-  color: ${props => props.theme === 'dark' ? '#f9fafb' : '#1a1a1a'};
+  font-size: 2.25rem;
+  color: #ffffff;
   margin-bottom: 1rem;
-  font-weight: bold;
+  font-weight: 800;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  line-height: 1.2;
 `;
 
 const IllustrationText = styled.p`
-  font-size: 1.25rem;
-  color: ${props => props.theme === 'dark' ? '#d1d5db' : '#6b7280'};
+  font-size: 1.125rem;
+  color: rgba(255, 255, 255, 0.95);
   line-height: 1.6;
 `;
 
@@ -103,16 +103,19 @@ const RightSection = styled.div`
   padding: 2rem;
   position: relative;
   z-index: 1;
+  background: #ffffff;
+  overflow-y: auto;
 
-  @media (max-width: 768px) {
-    padding: 1rem;
-    min-height: 100vh;
+  @media (max-width: 968px) {
+    padding: 1.5rem 1rem;
+    padding-top: 5rem;
+    padding-bottom: 2rem;
   }
 `;
 
 const FormContainer = styled.div`
   width: 100%;
-  max-width: 450px;
+  max-width: 420px;
   animation: fadeInRight 0.8s ease;
 
   @keyframes fadeInRight {
@@ -127,245 +130,128 @@ const FormContainer = styled.div`
   }
 `;
 
-const FormCard = styled.div`
-  background: ${props => props.theme === 'dark'
-        ? 'rgba(31, 41, 55, 0.8)'
-        : 'rgba(255, 255, 255, 0.9)'
-    };
-  backdrop-filter: blur(20px);
-  border-radius: 24px;
-  padding: 3rem;
-  box-shadow: ${props => props.theme === 'dark'
-        ? '0 20px 60px rgba(0, 0, 0, 0.5)'
-        : '0 20px 60px rgba(0, 0, 0, 0.1)'
-    };
-  border: 1px solid ${props => props.theme === 'dark'
-        ? 'rgba(75, 85, 99, 0.3)'
-        : 'rgba(229, 231, 235, 0.5)'
-    };
-
-  @media (max-width: 768px) {
-    padding: 2rem 1.5rem;
-  }
-`;
-
-const Logo = styled.div`
+const BackButton = styled(Link)`
+  position: fixed;
+  top: 1.25rem;
+  left: 1.25rem;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  margin-bottom: 2rem;
-`;
-
-const LogoIcon = styled.span`
-  font-size: 3rem;
-`;
-
-const LogoText = styled.span`
-  font-size: 2rem;
-  font-weight: bold;
-  color: #58CC02;
-`;
-
-const ThemeToggle = styled.button`
-  position: absolute;
-  top: 2rem;
-  right: 2rem;
-  background: ${props => props.theme === 'dark' ? '#374151' : '#f3f4f6'};
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
   border: none;
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5rem;
+  border-radius: 10px;
+  font-size: 1.25rem;
+  color: rgba(255, 255, 255, 0.95);
   cursor: pointer;
   transition: all 0.3s ease;
-  z-index: 10;
-
-  &:hover {
-    transform: rotate(20deg) scale(1.1);
-    background: ${props => props.theme === 'dark' ? '#4B5563' : '#e5e7eb'};
-  }
-
-  @media (max-width: 768px) {
-    top: 1rem;
-    right: 1rem;
-    width: 45px;
-    height: 45px;
-  }
-`;
-
-const BackLink = styled(Link)`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: ${props => props.theme === 'dark' ? '#9ca3af' : '#6b7280'};
+  z-index: 1000;
   text-decoration: none;
-  font-size: 0.875rem;
-  font-weight: 600;
-  margin-bottom: 2rem;
-  transition: color 0.3s ease;
 
   &:hover {
-    color: #58CC02;
+    background: rgba(255, 255, 255, 0.25);
+    transform: scale(1.05);
+  }
+
+  @media (max-width: 968px) {
+    background: rgba(0, 0, 0, 0.05);
+    color: #3c3c3c;
+    
+    &:hover {
+      background: rgba(0, 0, 0, 0.1);
+    }
   }
 `;
 
 const Title = styled.h1`
-  font-size: 2rem;
-  color: ${props => props.theme === 'dark' ? '#f9fafb' : '#1a1a1a'};
-  margin-bottom: 0.5rem;
+  font-size: 1.75rem;
+  color: #3c3c3c;
+  margin-bottom: 0.75rem;
   text-align: center;
-  font-weight: bold;
+  font-weight: 800;
+  letter-spacing: -0.5px;
 `;
 
 const Subtitle = styled.p`
-  font-size: 1rem;
-  color: ${props => props.theme === 'dark' ? '#9ca3af' : '#6b7280'};
+  font-size: 0.9375rem;
+  color: #777;
   margin-bottom: 2rem;
   text-align: center;
   line-height: 1.6;
 `;
 
-const StepIndicator = styled.div`
-  display: flex;
-  justify-content: center;
-  gap: 0.5rem;
-  margin-bottom: 2rem;
-`;
-
-const Step = styled.div`
-  width: ${props => props.active ? '40px' : '12px'};
-  height: 12px;
-  border-radius: 6px;
-  background: ${props => props.active
-        ? '#58CC02'
-        : props.theme === 'dark' ? '#374151' : '#e5e7eb'
-    };
-  transition: all 0.3s ease;
-`;
-
 const Form = styled.form`
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1rem;
 `;
 
 const FormGroup = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-`;
-
-const Label = styled.label`
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: ${props => props.theme === 'dark' ? '#e5e7eb' : '#374151'};
-`;
-
-const InputWrapper = styled.div`
-  position: relative;
-  display: flex;
-  align-items: center;
-`;
-
-const InputIcon = styled.span`
-  position: absolute;
-  left: 1rem;
-  font-size: 1.25rem;
-  color: ${props => props.theme === 'dark' ? '#9ca3af' : '#6b7280'};
+  gap: 0.375rem;
 `;
 
 const Input = styled.input`
   width: 100%;
-  padding: 1rem 1rem 1rem 3rem;
-  font-size: 1rem;
-  border: 2px solid ${props => props.theme === 'dark'
-        ? props.error ? '#ef4444' : '#374151'
-        : props.error ? '#ef4444' : '#e5e7eb'
-    };
-  border-radius: 12px;
-  background: ${props => props.theme === 'dark' ? '#1f2937' : '#ffffff'};
-  color: ${props => props.theme === 'dark' ? '#f9fafb' : '#1a1a1a'};
+  padding: 0.9375rem 1.25rem;
+  font-size: 0.9375rem;
+  border: 2px solid ${props => props.error ? '#ea2b2b' : '#e5e5e5'};
+  border-radius: 14px;
+  background: #ffffff;
+  color: #3c3c3c;
   transition: all 0.3s ease;
+  font-family: inherit;
 
   &:focus {
     outline: none;
-    border-color: ${props => props.error ? '#ef4444' : '#58CC02'};
-    box-shadow: 0 0 0 3px ${props => props.error
-        ? 'rgba(239, 68, 68, 0.1)'
-        : 'rgba(88, 204, 2, 0.1)'
-    };
+    border-color: ${props => props.error ? '#ea2b2b' : '#1cb0f6'};
+    background: #f7f7f7;
+    box-shadow: 0 0 0 3px ${props => props.error ? 'rgba(234, 43, 43, 0.08)' : 'rgba(28, 176, 246, 0.08)'};
   }
 
   &::placeholder {
-    color: ${props => props.theme === 'dark' ? '#6b7280' : '#9ca3af'};
+    color: #afafaf;
+    font-weight: 400;
   }
 `;
 
 const ErrorMessage = styled.span`
-  font-size: 0.875rem;
-  color: #ef4444;
+  font-size: 0.8125rem;
+  color: #ea2b2b;
   margin-top: 0.25rem;
-`;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
 
-const SuccessMessage = styled.div`
-  background: rgba(88, 204, 2, 0.1);
-  border: 2px solid #58CC02;
-  border-radius: 12px;
-  padding: 1rem;
-  text-align: center;
-  margin-bottom: 1rem;
-  animation: slideDown 0.5s ease;
-
-  @keyframes slideDown {
-    from {
-      opacity: 0;
-      transform: translateY(-20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+  &::before {
+    content: '⚠️';
+    font-size: 0.8125rem;
   }
-`;
-
-const SuccessIcon = styled.div`
-  font-size: 3rem;
-  margin-bottom: 0.5rem;
-`;
-
-const SuccessText = styled.p`
-  font-size: 1rem;
-  color: ${props => props.theme === 'dark' ? '#e5e7eb' : '#1a1a1a'};
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-`;
-
-const SuccessSubtext = styled.p`
-  font-size: 0.875rem;
-  color: ${props => props.theme === 'dark' ? '#9ca3af' : '#6b7280'};
 `;
 
 const SubmitButton = styled.button`
   width: 100%;
   padding: 1rem;
-  font-size: 1.125rem;
-  font-weight: bold;
-  color: white;
-  background: linear-gradient(135deg, #58CC02 0%, #45a302 100%);
-  border: none;
-  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 700;
+  border-radius: 14px;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(88, 204, 2, 0.3);
-  margin-top: 1rem;
+  border: none;
+  background: ${props => props.disabled ? '#e5e5e5' : 'linear-gradient(135deg, #1cb0f6 0%, #0e8fc7 100%)'};
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 0.5rem;
+  box-shadow: ${props => props.disabled ? 'none' : '0 3px 10px rgba(28, 176, 246, 0.25)'};
 
   &:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(88, 204, 2, 0.4);
+    box-shadow: 0 5px 16px rgba(28, 176, 246, 0.35);
   }
 
   &:active:not(:disabled) {
@@ -373,15 +259,15 @@ const SubmitButton = styled.button`
   }
 
   &:disabled {
-    opacity: 0.6;
     cursor: not-allowed;
+    opacity: 0.6;
   }
 `;
 
 const LoadingSpinner = styled.div`
   display: inline-block;
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   border: 3px solid rgba(255, 255, 255, 0.3);
   border-radius: 50%;
   border-top-color: white;
@@ -394,37 +280,26 @@ const LoadingSpinner = styled.div`
   }
 `;
 
-const LoginText = styled.p`
+const TimerText = styled.p`
   text-align: center;
-  margin-top: 2rem;
   font-size: 0.875rem;
-  color: ${props => props.theme === 'dark' ? '#9ca3af' : '#6b7280'};
-`;
-
-const LoginLink = styled(Link)`
-  color: #58CC02;
-  font-weight: 600;
-  text-decoration: none;
-  transition: color 0.3s ease;
-
-  &:hover {
-    color: #45a302;
-    text-decoration: underline;
-  }
+  color: #777;
+  margin-top: 1rem;
 `;
 
 const ResendButton = styled.button`
   background: none;
   border: none;
-  color: #58CC02;
+  color: #1cb0f6;
   font-weight: 600;
   cursor: pointer;
   font-size: 0.875rem;
   text-decoration: underline;
   transition: color 0.3s ease;
+  padding: 0;
 
   &:hover {
-    color: #45a302;
+    color: #0e8fc7;
   }
 
   &:disabled {
@@ -433,473 +308,272 @@ const ResendButton = styled.button`
   }
 `;
 
-const CodeInputContainer = styled.div`
-  display: flex;
-  gap: 0.85rem;
-  justify-content: center;
-  margin: 2rem 0;
-`;
-
-const CodeInput = styled.input`
-  width: 60px;
-  height: 60px;
-  font-size: 2rem;
-  font-weight: bold;
-  text-align: center;
-  border: 2px solid ${props => props.theme === 'dark'
-        ? props.error ? '#ef4444' : '#374151'
-        : props.error ? '#ef4444' : '#e5e7eb'
-    };
-  border-radius: 12px;
-  background: ${props => props.theme === 'dark' ? '#1f2937' : '#ffffff'};
-  color: ${props => props.theme === 'dark' ? '#f9fafb' : '#1a1a1a'};
-  transition: all 0.3s ease;
-
-  &:focus {
-    outline: none;
-    border-color: #58CC02;
-    box-shadow: 0 0 0 3px rgba(88, 204, 2, 0.1);
-  }
-
-  @media (max-width: 480px) {
-    width: 50px;
-    height: 50px;
-    font-size: 1.5rem;
-  }
-`;
-
-const TimerText = styled.p`
-  text-align: center;
-  font-size: 0.875rem;
-  color: ${props => props.theme === 'dark' ? '#9ca3af' : '#6b7280'};
-  margin-top: 1rem;
-`;
-
 // ========== COMPONENT ==========
 
 const ForgotPassword = () => {
-    const navigate = useNavigate();
-    const { toast, showToast, hideToast } = useToast();
-    const [theme, setTheme] = useState('light');
-    const [currentStep, setCurrentStep] = useState(1);
-    const [loading, setLoading] = useState(false);
-    const [email, setEmail] = useState('');
-    const [code, setCode] = useState(['', '', '', '', '', '']);
-    const [password, setPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
-    const [error, setError] = useState('');
-    const [successMessage, setSuccessMessage] = useState(false);
-    const [timer, setTimer] = useState(60);
-    const [canResend, setCanResend] = useState(false);
+  const navigate = useNavigate();
+  const { toast, showToast, hideToast } = useToast();
+  const [currentStep, setCurrentStep] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState('');
+  const [code, setCode] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState('');
+  const [timer, setTimer] = useState(60);
+  const [canResend, setCanResend] = useState(false);
 
-    const inputRefs = useRef([]);
+  // Timer countdown
+  useEffect(() => {
+    if (currentStep === 2 && timer > 0) {
+      const interval = setInterval(() => {
+        setTimer(prev => prev - 1);
+      }, 1000);
+      return () => clearInterval(interval);
+    } else if (timer === 0) {
+      setCanResend(true);
+    }
+  }, [currentStep, timer]);
 
-    const toggleTheme = () => {
-        setTheme(prev => prev === 'light' ? 'dark' : 'light');
-    };
+  // Handle email submission
+  const handleEmailSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
 
-    // Timer countdown
-    useEffect(() => {
-        if (currentStep === 2 && timer > 0) {
-            const interval = setInterval(() => {
-                setTimer(prev => prev - 1);
-            }, 1000);
-            return () => clearInterval(interval);
-        } else if (timer === 0) {
-            setCanResend(true);
-        }
-    }, [currentStep, timer]);
+    if (!email) {
+      setError('Vui lòng nhập email');
+      showToast('error', 'Lỗi!', 'Vui lòng nhập email');
+      return;
+    }
 
-    // Handle email submission
-    const handleEmailSubmit = async (e) => {
-        e.preventDefault();
-        setError('');
+    if (!/\S+@\S+\.\S+/.test(email)) {
+      setError('Email không hợp lệ');
+      showToast('error', 'Lỗi!', 'Email không hợp lệ');
+      return;
+    }
 
-        if (!email) {
-            showToast('error', 'Lỗi!', 'Vui lòng nhập email');
-            return;
-        }
+    setLoading(true);
 
-        if (!/\S+@\S+\.\S+/.test(email)) {
-            showToast('error', 'Lỗi!', 'Email không hợp lệ');
-            return;
-        }
+    setTimeout(() => {
+      setLoading(false);
+      setCurrentStep(2);
+      setTimer(60);
+      setCanResend(false);
+      showToast('success', 'Thành công!', 'Mã xác nhận đã được gửi đến email của bạn');
+    }, 1500);
+  };
 
-        setLoading(true);
+  // Handle code verification
+  const handleCodeSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
 
-        setTimeout(() => {
-            setLoading(false);
-            setCurrentStep(2);
-            setTimer(60);
-            setCanResend(false);
-            showToast('success', 'Thành công!', `Mã xác nhận đã được gửi đến ${email}`);
-        }, 1500);
-    };
+    if (!code) {
+      setError('Vui lòng nhập mã xác nhận');
+      showToast('warning', 'Cảnh báo!', 'Vui lòng nhập mã xác nhận');
+      return;
+    }
 
+    if (code.length !== 6) {
+      setError('Mã xác nhận phải có 6 số');
+      showToast('warning', 'Cảnh báo!', 'Mã xác nhận phải có 6 số');
+      return;
+    }
 
-    const handleBeforeInput = (index, e) => {
-        const { data, inputType } = e;
+    setLoading(true);
 
-        if (inputType === 'deleteContentBackward' || inputType === 'deleteContentForward') {
-            return;
-        }
+    setTimeout(() => {
+      setLoading(false);
 
-        if (inputType === 'insertFromPaste') {
-            return;
-        }
+      // Giả lập kiểm tra mã (trong thực tế sẽ gọi API)
+      if (code === '123456') {
+        setCurrentStep(3);
+        showToast('success', 'Thành công!', 'Mã xác nhận chính xác!');
+      } else {
+        setError('Mã xác nhận không đúng');
+        showToast('error', 'Lỗi!', 'Mã xác nhận không đúng');
+        setCode('');
+      }
+    }, 1500);
+  };
 
-        if (!data || !/^\d$/.test(data)) {
-            e.preventDefault();
-            return;
-        }
+  // Handle resend code
+  const handleResendCode = () => {
+    setTimer(60);
+    setCanResend(false);
+    setCode('');
+    showToast('info', 'Thông báo', 'Mã xác nhận mới đã được gửi!');
+  };
 
-        if (code[index]) {
-            e.preventDefault();
-            const newCode = [...code];
-            newCode[index] = data;
-            setCode(newCode);
-            setError('');
+  // Handle password submission
+  const handlePasswordSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
 
-            if (index < 5) {
-                requestAnimationFrame(() => {
-                    inputRefs.current[index + 1]?.focus();
-                    inputRefs.current[index + 1]?.select();
-                });
-            }
-        }
-    };
+    if (!password) {
+      setError('Vui lòng nhập mật khẩu mới');
+      showToast('error', 'Lỗi!', 'Vui lòng nhập mật khẩu mới');
+      return;
+    }
 
-    const handleCodeChange = (index, e) => {
-        const value = e.target.value;
-        const digit = value.replace(/\D/g, '').slice(-1);
+    if (password.length < 6) {
+      setError('Mật khẩu phải có ít nhất 6 ký tự');
+      showToast('error', 'Lỗi!', 'Mật khẩu phải có ít nhất 6 ký tự');
+      return;
+    }
 
-        if (!digit) {
-            const updatedCode = [...code];
-            updatedCode[index] = '';
-            setCode(updatedCode);
-            return;
-        }
+    if (password !== confirmPassword) {
+      setError('Mật khẩu xác nhận không khớp');
+      showToast('error', 'Lỗi!', 'Mật khẩu xác nhận không khớp');
+      return;
+    }
 
-        const updatedCode = [...code];
-        updatedCode[index] = digit;
-        setCode(updatedCode);
-        setError('');
+    setLoading(true);
 
-        if (index < 5) {
-            requestAnimationFrame(() => {
-                inputRefs.current[index + 1]?.focus();
-                inputRefs.current[index + 1]?.select();
-            });
-        }
-    };
-    // Sửa lại hàm handleCodePaste
-    const handleCodePaste = (e, startIndex = 0) => {
-        e.preventDefault();
+    setTimeout(() => {
+      setLoading(false);
+      showToast('success', 'Thành công!', 'Đặt lại mật khẩu thành công!');
 
-        // Lấy dữ liệu paste và chỉ giữ lại số
-        const pastedData = e.clipboardData.getData('text').replace(/\D/g, '');
+      // Chuyển về trang login sau 2 giây
+      setTimeout(() => {
+        navigate('/login');
+      }, 2000);
+    }, 1500);
+  };
 
-        if (!pastedData) return;
+  return (
+    <PageWrapper>
+      <Toast toast={toast} onClose={hideToast} />
 
-        const newCode = [...code];
+      <BackButton to="/login">←</BackButton>
 
-        // Điền từng số vào từng ô
-        for (let i = 0; i < pastedData.length && (startIndex + i) < 6; i++) {
-            newCode[startIndex + i] = pastedData[i];
-        }
+      {/* Left Section */}
+      <LeftSection>
+        <IllustrationContainer>
+          <IllustrationEmoji>🔐</IllustrationEmoji>
+          <IllustrationTitle>Đừng lo lắng!</IllustrationTitle>
+          <IllustrationText>
+            Chúng tôi sẽ giúp bạn lấy lại mật khẩu một cách nhanh chóng và an toàn
+          </IllustrationText>
+        </IllustrationContainer>
+      </LeftSection>
 
-        setCode(newCode);
+      {/* Right Section - Form */}
+      <RightSection>
+        <FormContainer>
+          <Title>
+            {currentStep === 1 && 'Quên mật khẩu'}
+            {currentStep === 2 && 'Nhập mã xác nhận'}
+            {currentStep === 3 && 'Tạo mật khẩu mới'}
+          </Title>
+          <Subtitle>
+            {currentStep === 1 && 'Chúng tôi sẽ gửi hướng dẫn đặt lại mật khẩu của bạn qua email.'}
+            {currentStep === 2 && `Chúng tôi đã gửi mã 6 số đến ${email}`}
+            {currentStep === 3 && 'Hãy tạo một mật khẩu mạnh và dễ nhớ'}
+          </Subtitle>
 
-        // Focus vào ô tiếp theo sau khi paste
-        const nextEmptyIndex = newCode.findIndex((val, idx) => idx >= startIndex && !val);
-        if (nextEmptyIndex !== -1) {
-            setTimeout(() => {
-                inputRefs.current[nextEmptyIndex]?.focus();
-            }, 0);
-        } else {
-            // Nếu đã đầy, focus ô cuối
-            setTimeout(() => {
-                inputRefs.current[5]?.focus();
-            }, 0);
-        }
-    };
+          {currentStep === 1 && (
+            <Form onSubmit={handleEmailSubmit}>
+              <FormGroup>
+                <Input
+                  type="email"
+                  placeholder="Email"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setError('');
+                  }}
+                  error={error}
+                  autoComplete="email"
+                />
+                {error && <ErrorMessage>{error}</ErrorMessage>}
+              </FormGroup>
 
-    const handleCodeKeyDown = (index, e) => {
-        if (e.key === 'Backspace') {
-            if (!code[index] && index > 0) {
-                inputRefs.current[index - 1]?.focus();
-            } else {
-                const newCode = [...code];
-                newCode[index] = '';
-                setCode(newCode);
-            }
-        } else if (e.key === 'ArrowLeft' && index > 0) {
-            inputRefs.current[index - 1]?.focus();
-        } else if (e.key === 'ArrowRight' && index < 5) {
-            inputRefs.current[index + 1]?.focus();
-        }
-    };
+              <SubmitButton type="submit" disabled={loading}>
+                {loading ? <LoadingSpinner /> : 'Gửi'}
+              </SubmitButton>
+            </Form>
+          )}
 
+          {currentStep === 2 && (
+            <Form onSubmit={handleCodeSubmit}>
+              <FormGroup>
+                <Input
+                  type="text"
+                  placeholder="Nhập mã 6 số"
+                  value={code}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                    setCode(value);
+                    setError('');
+                  }}
+                  error={error}
+                  autoComplete="off"
+                  inputMode="numeric"
+                  maxLength="6"
+                />
+                {error && <ErrorMessage>{error}</ErrorMessage>}
+              </FormGroup>
 
-    // Handle code verification
-    const handleCodeSubmit = async (e) => {
-        e.preventDefault();
-        setError('');
+              <TimerText>
+                {canResend ? (
+                  <>
+                    Không nhận được mã?{' '}
+                    <ResendButton onClick={handleResendCode} type="button">
+                      Gửi lại
+                    </ResendButton>
+                  </>
+                ) : (
+                  `Gửi lại mã sau ${timer}s`
+                )}
+              </TimerText>
 
-        const fullCode = code.join('');
-        if (fullCode.length !== 6) {
-            showToast('warning', 'Cảnh báo!', 'Vui lòng nhập đầy đủ 6 số');
-            return;
-        }
+              <SubmitButton type="submit" disabled={loading}>
+                {loading ? <LoadingSpinner /> : 'Xác nhận'}
+              </SubmitButton>
+            </Form>
+          )}
 
-        setLoading(true);
+          {currentStep === 3 && (
+            <Form onSubmit={handlePasswordSubmit}>
+              <FormGroup>
+                <Input
+                  type="password"
+                  placeholder="Mật khẩu mới"
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    setError('');
+                  }}
+                  error={error}
+                  autoComplete="new-password"
+                />
+              </FormGroup>
 
-        setTimeout(() => {
-            setLoading(false);
+              <FormGroup>
+                <Input
+                  type="password"
+                  placeholder="Xác nhận mật khẩu"
+                  value={confirmPassword}
+                  onChange={(e) => {
+                    setConfirmPassword(e.target.value);
+                    setError('');
+                  }}
+                  error={error}
+                  autoComplete="new-password"
+                />
+                {error && <ErrorMessage>{error}</ErrorMessage>}
+              </FormGroup>
 
-            // Demo: accept "123456"
-            if (fullCode === '123456') {
-                setCurrentStep(3);
-                showToast('success', 'Thành công!', 'Mã xác nhận chính xác!');
-            } else {
-                setError('Mã xác nhận không đúng');
-                showToast('error', 'Lỗi!', 'Mã xác nhận không đúng. Thử lại!');
-                setCode(['', '', '', '', '', '']);
-                inputRefs.current[0]?.focus();
-            }
-        }, 1500);
-    };
-
-    // Handle resend code
-    const handleResendCode = () => {
-        setTimer(60);
-        setCanResend(false);
-        setCode(['', '', '', '', '', '']);
-        inputRefs.current[0]?.focus();
-        showToast('info', 'Thông báo', 'Mã xác nhận mới đã được gửi!');
-    };
-
-    // Handle password submission
-    const handlePasswordSubmit = async (e) => {
-        e.preventDefault();
-        setError('');
-
-        if (!password) {
-            showToast('error', 'Lỗi!', 'Vui lòng nhập mật khẩu mới');
-            return;
-        }
-
-        if (password.length < 6) {
-            showToast('error', 'Lỗi!', 'Mật khẩu phải có ít nhất 6 ký tự');
-            return;
-        }
-
-        if (password !== confirmPassword) {
-            showToast('error', 'Lỗi!', 'Mật khẩu xác nhận không khớp');
-            return;
-        }
-
-        setLoading(true);
-
-        setTimeout(() => {
-            setLoading(false);
-            setSuccessMessage(true);
-
-            Swal.fire({
-                icon: 'success',
-                title: 'Thành công!',
-                text: 'Mật khẩu của bạn đã được đặt lại thành công!',
-                confirmButtonText: 'Đăng nhập ngay',
-                confirmButtonColor: '#58CC02',
-                timer: 5000,
-                timerProgressBar: true,
-            }).then(() => {
-                navigate('/login');
-            });
-        }, 1500);
-    };
-
-    return (
-        <PageWrapper theme={theme}>
-            <Toast toast={toast} onClose={hideToast} />
-
-            <ThemeToggle theme={theme} onClick={toggleTheme}>
-                {theme === 'light' ? '🌙' : '☀️'}
-            </ThemeToggle>
-
-            <LeftSection>
-                <IllustrationContainer>
-                    <IllustrationEmoji>🔐</IllustrationEmoji>
-                    <IllustrationTitle theme={theme}>
-                        Đừng lo lắng!
-                    </IllustrationTitle>
-                    <IllustrationText theme={theme}>
-                        Chúng tôi sẽ giúp bạn lấy lại mật khẩu một cách nhanh chóng và an toàn.
-                    </IllustrationText>
-                </IllustrationContainer>
-            </LeftSection>
-
-            <RightSection>
-                <FormContainer>
-                    <FormCard theme={theme}>
-                        <Logo>
-                            <LogoIcon>🦉</LogoIcon>
-                            <LogoText>EnglishMaster</LogoText>
-                        </Logo>
-
-                        <BackLink to="/login" theme={theme}>
-                            <span>←</span>
-                            Quay lại đăng nhập
-                        </BackLink>
-
-                        {!successMessage ? (
-                            <>
-                                <Title theme={theme}>
-                                    {currentStep === 1 && 'Quên mật khẩu?'}
-                                    {currentStep === 2 && 'Nhập mã xác nhận'}
-                                    {currentStep === 3 && 'Tạo mật khẩu mới'}
-                                </Title>
-                                <Subtitle theme={theme}>
-                                    {currentStep === 1 && 'Nhập email của bạn và chúng tôi sẽ gửi mã xác nhận'}
-                                    {currentStep === 2 && `Chúng tôi đã gửi mã 6 số đến ${email}`}
-                                    {currentStep === 3 && 'Hãy tạo một mật khẩu mạnh và dễ nhớ'}
-                                </Subtitle>
-
-                                <StepIndicator>
-                                    <Step active={currentStep === 1} theme={theme} />
-                                    <Step active={currentStep === 2} theme={theme} />
-                                    <Step active={currentStep === 3} theme={theme} />
-                                </StepIndicator>
-
-                                {currentStep === 1 && (
-                                    <Form onSubmit={handleEmailSubmit}>
-                                        <FormGroup>
-                                            <Label theme={theme}>Email</Label>
-                                            <InputWrapper>
-                                                <InputIcon theme={theme}>📧</InputIcon>
-                                                <Input
-                                                    type="email"
-                                                    placeholder="example@email.com"
-                                                    value={email}
-                                                    onChange={(e) => setEmail(e.target.value)}
-                                                    theme={theme}
-                                                    error={error}
-                                                />
-                                            </InputWrapper>
-                                            {error && <ErrorMessage>{error}</ErrorMessage>}
-                                        </FormGroup>
-
-                                        <SubmitButton type="submit" disabled={loading}>
-                                            {loading ? <LoadingSpinner /> : 'Gửi mã xác nhận'}
-                                        </SubmitButton>
-                                    </Form>
-                                )}
-
-                                {currentStep === 2 && (
-                                    <Form onSubmit={handleCodeSubmit}>
-                                        <CodeInputContainer>
-                                            {code.map((digit, index) => (
-                                                <CodeInput
-                                                    key={index}
-                                                    ref={(el) => (inputRefs.current[index] = el)}
-                                                    type="text"
-                                                    inputMode="numeric"
-                                                    maxLength="1"
-                                                    value={digit}
-                                                    onBeforeInput={(e) => handleBeforeInput(index, e)}
-                                                    onChange={(e) => handleCodeChange(index, e)}
-                                                    onKeyDown={(e) => handleCodeKeyDown(index, e)}
-                                                    onPaste={(e) => handleCodePaste(e, index)}
-                                                    onFocus={(e) => e.target.select()}
-                                                    theme={theme}
-                                                    error={error}
-                                                    autoComplete="off"
-                                                />
-                                            ))}
-                                        </CodeInputContainer>
-                                        {error && <ErrorMessage style={{ textAlign: 'center' }}>{error}</ErrorMessage>}
-
-                                        <TimerText theme={theme}>
-                                            {canResend ? (
-                                                <>
-                                                    Không nhận được mã?{' '}
-                                                    <ResendButton onClick={handleResendCode} type="button">
-                                                        Gửi lại
-                                                    </ResendButton>
-                                                </>
-                                            ) : (
-                                                `Gửi lại mã sau ${timer}s`
-                                            )}
-                                        </TimerText>
-
-                                        <SubmitButton type="submit" disabled={loading}>
-                                            {loading ? <LoadingSpinner /> : 'Xác nhận'}
-                                        </SubmitButton>
-                                    </Form>
-                                )}
-
-                                {currentStep === 3 && (
-                                    <Form onSubmit={handlePasswordSubmit}>
-                                        <FormGroup>
-                                            <Label theme={theme}>Mật khẩu mới</Label>
-                                            <InputWrapper>
-                                                <InputIcon theme={theme}>🔒</InputIcon>
-                                                <Input
-                                                    type="password"
-                                                    placeholder="Nhập mật khẩu mới"
-                                                    value={password}
-                                                    onChange={(e) => setPassword(e.target.value)}
-                                                    theme={theme}
-                                                    error={error}
-                                                />
-                                            </InputWrapper>
-                                        </FormGroup>
-
-                                        <FormGroup>
-                                            <Label theme={theme}>Xác nhận mật khẩu</Label>
-                                            <InputWrapper>
-                                                <InputIcon theme={theme}>🔒</InputIcon>
-                                                <Input
-                                                    type="password"
-                                                    placeholder="Nhập lại mật khẩu"
-                                                    value={confirmPassword}
-                                                    onChange={(e) => setConfirmPassword(e.target.value)}
-                                                    theme={theme}
-                                                    error={error}
-                                                />
-                                            </InputWrapper>
-                                            {error && <ErrorMessage>{error}</ErrorMessage>}
-                                        </FormGroup>
-
-                                        <SubmitButton type="submit" disabled={loading}>
-                                            {loading ? <LoadingSpinner /> : 'Đặt lại mật khẩu'}
-                                        </SubmitButton>
-                                    </Form>
-                                )}
-                            </>
-                        ) : (
-                            <SuccessMessage>
-                                <SuccessIcon>🎉</SuccessIcon>
-                                <SuccessText theme={theme}>
-                                    Đặt lại mật khẩu thành công!
-                                </SuccessText>
-                                <SuccessSubtext theme={theme}>
-                                    Đang chuyển đến trang đăng nhập...
-                                </SuccessSubtext>
-                            </SuccessMessage>
-                        )}
-
-                        {!successMessage && (
-                            <LoginText theme={theme}>
-                                Nhớ mật khẩu?{' '}
-                                <LoginLink to="/login">Đăng nhập ngay</LoginLink>
-                            </LoginText>
-                        )}
-                    </FormCard>
-                </FormContainer>
-            </RightSection>
-        </PageWrapper>
-    );
+              <SubmitButton type="submit" disabled={loading}>
+                {loading ? <LoadingSpinner /> : 'Đặt lại mật khẩu'}
+              </SubmitButton>
+            </Form>
+          )}
+        </FormContainer>
+      </RightSection>
+    </PageWrapper>
+  );
 };
 
 export default ForgotPassword;
