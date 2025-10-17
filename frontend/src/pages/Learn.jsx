@@ -507,6 +507,10 @@ const Learn = () => {
     }
   };
 
+  const handleGuideClick = (unitId) => {
+    navigate(`/guidebook/${unitId}/1`);
+  };
+
   const getLessonIcon = (lesson) => {
     if (lesson.completed) return '⭐';
     if (lesson.current) return lesson.icon;
@@ -622,7 +626,7 @@ const Learn = () => {
                 <UnitTitle>Phần {unit.unitNumber}, Cửa {unitIndex === 0 ? '1-10' : '11-20'}</UnitTitle>
                 <UnitDescription>{unit.title}</UnitDescription>
               </UnitInfo>
-              <GuideButton>
+              <GuideButton onClick={() => handleGuideClick(unit.id)}>
                 📋 Hướng dẫn
               </GuideButton>
             </UnitHeader>
