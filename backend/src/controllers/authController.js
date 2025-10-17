@@ -86,7 +86,64 @@ const register = async (req, res) => {
 
 // Login - sẽ implement sau
 const login = async (req, res) => {
-  res.json({ message: 'Login endpoint - coming soon' });
+  try {
+    const { email, password } = req.body;
+
+    // Kiểm tra input
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Vui lòng nhập email và mật khẩu'
+      });
+    }
+
+    // Tìm user theo email hoặc phone
+    const user = await User.findOne({
+      $or: [{ email }, { phone: email }]
+    }).select('+password');
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Email hoặc mật khẩu không đúng'
+      });
+    }
+
+    // Kiểm tra mật khẩu
+    const isPasswordValid = await user.comparePassword(password);
+
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        success: false,
+        message: 'Email hoặc mật khẩu không đúng'
+      });
+    }
+    const token = generateToken(user._id);
+
+    // Trả về thông tin user (không có password)
+    res.status(200).json({
+      success: true,
+      message: 'Đăng nhập thành công',
+      data: {
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          phone: user.phone,
+          role: user.role,
+          createdAt: user.createdAt
+        },
+        token
+      }
+    });
+
+  } catch (error) {
+    console.error('Lỗi đăng nhập:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Đã xảy ra lỗi khi đăng nhập'
+    });
+  }
 };
 
 module.exports = { register, login };
