@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import styled from 'styled-components';
 import Toast from '../components/Toast'; 
 import useToast from '../hooks/useToast'; 
+import { authService } from '../services/authService';
 
 // ========== STYLED COMPONENTS ==========
 
@@ -547,18 +548,25 @@ const Login = () => {
 
     setLoading(true);
 
-    setTimeout(() => {
-      console.log('Login data:', formData);
-      setLoading(false);
-      
+    try {
+      const response = await authService.login({
+        email: formData.email,
+        password: formData.password,
+      });
+
       showToast('success', 'Thành công!', 'Đăng nhập thành công!');
       
+      // Chờ 1 giây rồi chuyển hướng
       setTimeout(() => {
         navigate('/learn');
       }, 1000);
-    }, 1500);
+    } catch (error) {
+      console.error('Login error:', error);
+      showToast('error', 'Lỗi!', error.message || 'Đăng nhập thất bại');
+    } finally {
+      setLoading(false);
+    }
   };
-
   // Handle social login
   const handleSocialLogin = (provider) => {
     console.log(`Login with ${provider}`);

@@ -43,7 +43,7 @@ import AdminQuizzes from './pages/AdminQuizzes';
 import AdminSettings from './pages/AdminSettings';
 import AdminEmail from './pages/AdminEmail';
 import AdminBackup from './pages/AdminBackup';
-
+import ProtectedRoute from './components/ProtectedRoute';
 //Import Teacher Pages
 import TeacherNotifications from './pages/TeacherNotifications';
 import TeacherAttendance from './pages/TeacherAttendance';
@@ -87,7 +87,23 @@ function App() {
           <Route path="/join-class" element={<JoinClass />} />
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/welcome" element={<Welcome />} />
-          <Route path="/learn" element={<Learn />} />
+          <Route 
+            path="/learn" 
+            element={
+              <ProtectedRoute>
+                <Learn />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/lesson/:id" 
+            element={
+              <ProtectedRoute>
+                <Lesson />
+              </ProtectedRoute>
+            } 
+          />
+
 
           <Route path="/create-card" element={<CreateCardWithNoteType />} />
           <Route path="/advanced-features" element={<AdvancedFeatures />} />
