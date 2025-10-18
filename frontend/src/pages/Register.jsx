@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import Toast from '../components/Toast';
 import useToast from '../hooks/useToast';
 import logo from '../assets/logo.png';
+import { authService } from '../services/authService';
 
 // ========== STYLED COMPONENTS ==========
 
@@ -562,21 +563,30 @@ const Register = () => {
     e.preventDefault();
 
     if (!validateForm()) {
-      showToast('error', 'Lỗi!', 'Vui lòng điền đầy đủ thông tin hợp lệ');
+      showToast('error', 'Lỗi!', 'Vui lòng kiểm tra lại thông tin');
       return;
     }
 
     setLoading(true);
 
-    setTimeout(() => {
-      console.log('Register data:', formData);
-      setLoading(false);
+    try {
+      const response = await authService.register({
+        username: formData.username,
+        email: formData.email,
+        password: formData.password,
+      });
+
       showToast('success', 'Thành công!', 'Đăng ký thành công! Đang chuyển đến trang đăng nhập...');
 
       setTimeout(() => {
         navigate('/login');
       }, 2000);
-    }, 1500);
+    } catch (error) {
+      console.error('Register error:', error);
+      showToast('error', 'Lỗi!', error.message || 'Đăng ký thất bại');
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Handle social register

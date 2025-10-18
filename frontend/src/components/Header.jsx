@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import Swal from 'sweetalert2';
-
+import { authService } from '../services/authService';
 // ========== STYLED COMPONENTS ==========
 
 const HeaderContainer = styled.header`
@@ -334,36 +334,33 @@ const Header = ({
   };
 
   const handleLogout = () => {
-    setShowDropdown(false);
+  setShowDropdown(false);
 
-    Swal.fire({
-      title: 'Xác nhận đăng xuất',
-      text: 'Bạn có chắc muốn đăng xuất khỏi hệ thống?',
-      icon: 'question',
-      showCancelButton: true,
-      confirmButtonColor: '#ef4444',
-      cancelButtonColor: '#6b7280',
-      confirmButtonText: 'Đăng xuất',
-      cancelButtonText: 'Hủy',
-      backdrop: true,
-      allowOutsideClick: true,
-    }).then((result) => {
-      if (result.isConfirmed) {
-        Swal.fire({
-          icon: 'success',
-          title: 'Đã đăng xuất!',
-          text: 'Hẹn gặp lại bạn!',
-          timer: 2000,
-          showConfirmButton: false,
-        }).then(() => {
-          // Clear session/token here
-          localStorage.removeItem('token');
-          sessionStorage.clear();
-          navigate('/login');
-        });
-      }
-    });
-  };
+  Swal.fire({
+    title: 'Xác nhận đăng xuất',
+    text: 'Bạn có chắc muốn đăng xuất khỏi hệ thống?',
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonColor: '#ef4444',
+    cancelButtonColor: '#6b7280',
+    confirmButtonText: 'Đăng xuất',
+    cancelButtonText: 'Hủy',
+  }).then((result) => {
+    if (result.isConfirmed) {
+      authService.logout();
+      
+      Swal.fire({
+        icon: 'success',
+        title: 'Đã đăng xuất!',
+        text: 'Hẹn gặp lại bạn!',
+        timer: 2000,
+        showConfirmButton: false,
+      }).then(() => {
+        navigate('/');
+      });
+    }
+  });
+};
 
   return (
     <HeaderContainer theme={theme} scrolled={scrolled}>

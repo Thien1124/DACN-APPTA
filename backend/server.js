@@ -1,8 +1,13 @@
 require('dotenv').config();
 
 const express = require('express');
+
 const passport = require('passport');
 const cookieParser = require('cookie-parser');
+const cors = require('cors');
+
+
+const bodyParser = require('body-parser');
 const cors = require('cors');
 
 const connectDatabase = require('./config/database');
@@ -12,6 +17,7 @@ const passportConfig = require('./src/config/passport');
 
 const app = express();
 const PORT = process.env.PORT || 1124;
+
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:3000';
 
 // Debug: Show environment info
@@ -21,8 +27,10 @@ console.log('NODE_ENV:', process.env.NODE_ENV || 'development');
 console.log('CLIENT_URL:', CLIENT_URL);
 console.log('---');
 
+
 // Connect to MongoDB
 connectDatabase();
+
 
 // Middlewares
 app.use(express.json());
@@ -38,6 +46,21 @@ app.use(cors({
 // Initialize Passport
 app.use(passport.initialize());
 passportConfig();
+
+// CORS Configuration
+const corsOptions = {
+  origin: ['http://localhost:3000', 'http://localhost:3001'], // Frontend URLs
+  credentials: true,
+  optionsSuccessStatus: 200,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+};
+
+// Middleware
+app.use(cors(corsOptions)); // ✅ Thêm CORS
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -159,4 +182,8 @@ app.use((err, req, res, next) => {
 // Start server
 app.listen(PORT, () => {
   console.log(`Server đang chạy tại http://localhost:${PORT}`);
+
+  console.log(`✅ Server đang chạy tại http://localhost:${PORT}`);
+  console.log(`✅ CORS enabled for: http://localhost:3000`);
+
 });

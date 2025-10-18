@@ -4,6 +4,8 @@ import styled, { keyframes } from 'styled-components';
 import streak from '../assets/streak.png';
 import lock from '../assets/lock.png';
 import missiontoday from '../assets/missiontoday.png';
+import { authService } from '../services/authService';
+
 // ========== ANIMATIONS ==========
 const fadeIn = keyframes`
   from { opacity: 0; transform: translateX(20px); }
@@ -382,6 +384,9 @@ const RightSidebar = ({
 }) => {
   const navigate = useNavigate();
 
+  // Kiểm tra xem người dùng đã đăng nhập chưa
+  const isLoggedIn = authService.isAuthenticated();
+
   const progress = (dailyGoal.current / dailyGoal.target) * 100;
   const isCompleted = progress >= 100;
 
@@ -447,7 +452,7 @@ const RightSidebar = ({
       </StreakCard>
 
       {/* Create Profile */}
-      {showProfile && (
+      {showProfile && !isLoggedIn && (
         <ProfileSection>
           <ProfileTitle>Tạo hồ sơ để lưu tiến trình của bạn!</ProfileTitle>
           <ProfileText>

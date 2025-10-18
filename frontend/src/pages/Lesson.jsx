@@ -100,23 +100,46 @@ const Header = styled.div`
   top: 0;
   left: 0;
   right: 0;
-  background: white;
-  padding: 0.625rem 1rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 1.25rem 2.5rem;
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 1.5rem;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   z-index: 100;
+
+  @media (max-width: 1024px) {
+    padding: 1rem 2rem;
+    gap: 1.25rem;
+  }
 
   @media (max-width: 768px) {
     padding: 0.875rem 1rem;
+    gap: 1rem;
   }
-    
 `;
+
+const HeaderContent = styled.div`
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+
+  @media (max-width: 1024px) {
+    gap: 1.25rem;
+  }
+
+  @media (max-width: 768px) {
+    gap: 1rem;
+  }
+`;
+
 const CloseButton = styled.button`
   background: none;
   border: none;
-  color: #6b7280;
+  color: #afafaf;
   font-size: 1.75rem;
   cursor: pointer;
   width: 44px;
@@ -124,13 +147,13 @@ const CloseButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 8px;
+  border-radius: 50%;
   transition: all 0.3s ease;
   flex-shrink: 0;
 
   &:hover {
     background: #f3f4f6;
-    color: #1f2937;
+    color: #6b7280;
   }
 
   @media (max-width: 768px) {
@@ -142,24 +165,28 @@ const CloseButton = styled.button`
 
 const ProgressBarContainer = styled.div`
   flex: 1;
-  height: 16px;
+  height: 18px;
   background: #e5e7eb;
-  border-radius: 20px;
+  border-radius: 100px;
   overflow: hidden;
   position: relative;
+
+  @media (max-width: 768px) {
+    height: 16px;
+  }
 `;
 
 const ProgressBarFill = styled.div`
   height: 100%;
   background: linear-gradient(90deg, #58CC02 0%, #45a302 100%);
   width: ${props => props.progress}%;
-  transition: width 0.5s ease;
-  border-radius: 20px;
+  transition: width 0.5s cubic-bezier(0.4, 0.0, 0.2, 1);
+  border-radius: 100px;
 `;
 
 const HeartsContainer = styled.div`
   display: flex;
-  align-items:  center;
+  align-items: center;
   gap: 0.375rem;
   color: #ef4444;
   font-weight: 700;
@@ -173,7 +200,7 @@ const HeartsContainer = styled.div`
 const Container = styled.div`
   max-width: 900px;
   margin: 0 auto;
-  padding: 90px 2rem 180px;
+  padding: 7rem 2rem 140px;  // Tăng padding-top để không bị Header che
   width: 100%;
   flex: 1;
   display: flex;
@@ -182,7 +209,7 @@ const Container = styled.div`
   animation: ${fadeIn} 0.6s ease;
 
   @media (max-width: 768px) {
-    padding: 80px 1rem 180px;
+    padding: 6rem 1rem 160px;  // Padding-top cho mobile
   }
 `;
 
@@ -368,42 +395,61 @@ const Footer = styled.div`
   bottom: 0;
   left: 0;
   right: 0;
-  background: white;
-  padding: 1rem 2rem;
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+  padding: 1.5rem 2.5rem;
   display: flex;
-  justify-content: center;
-  gap: 1rem;
+  justify-content: space-between;
+  align-items: center;
+  background: white;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
   z-index: 100;
 
+  @media (max-width: 1024px) {
+    padding: 1.5rem 2rem;
+  }
+
   @media (max-width: 768px) {
-    padding: 0.875rem 1rem;
-    flex-direction: column;
+    padding: 1.25rem 1rem;
+    flex-direction: column-reverse;
+    gap: 1rem;
+  }
+`;
+
+const FooterContent = styled.div`
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  @media (max-width: 768px) {
+    flex-direction: column-reverse;
+    gap: 1rem;
   }
 `;
 
 const SkipButton = styled.button`
-  background: transparent;
+  background: white;
   border: 2px solid #e5e7eb;
-  color: #6b7280;
-  padding: 0.875rem 1.75rem;
-  border-radius: 12px;
+  color: #afafaf;
+  padding: 0.875rem 2rem;
+  border-radius: 16px;
   font-size: 0.9375rem;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  min-width: 150px;
 
   &:hover {
     border-color: #d1d5db;
     background: #f9fafb;
+    color: #6b7280;
   }
 
   @media (max-width: 768px) {
-    padding: 0.75rem 1.5rem;
-    font-size: 0.875rem;
+    width: 100%;
+    padding: 0.875rem 1.5rem;
   }
 `;
 
@@ -415,113 +461,44 @@ const CheckButton = styled.button`
     return '#58CC02';
   }};
   border: none;
-  color: white;
-  padding: 0.875rem 2.25rem;
-  border-radius: 12px;
+  color: ${props => props.disabled ? '#afafaf' : 'white'};
+  padding: 0.875rem 3rem;
+  border-radius: 16px;
   font-size: 0.9375rem;
   font-weight: 700;
   cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
-  transition: all 0.3s ease;
-  box-shadow: ${props => props.disabled ? 'none' : '0 4px 16px rgba(88, 204, 2, 0.3)'};
+  transition: all 0.2s ease;
+  box-shadow: ${props => props.disabled ? 'none' : '0 4px 0 #46A302'};
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  min-width: 170px;
+  min-width: 150px;
 
   &:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(88, 204, 2, 0.4);
+    box-shadow: 0 6px 0 #46A302;
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 #46A302;
   }
 
   @media (max-width: 768px) {
-    padding: 0.75rem 1.75rem;
-    font-size: 0.875rem;
+    width: 100%;
+    padding: 0.875rem 2rem;
   }
 `;
 
-const MatchPairsContainer = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
-  margin: 2rem 0;
-
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-`;
-
-const PairColumn = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-`;
-
-const PairCard = styled.button`
-  background: white;
-  border: 3px solid ${props => {
-    if (props.matched) return '#58CC02';
-    if (props.selected) return '#1CB0F6';
-    return '#e5e7eb';
-  }};
-  border-radius: 12px;
-  padding: 1rem 1.5rem;
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #1f2937;
-  cursor: ${props => props.matched ? 'not-allowed' : 'pointer'};
-  transition: all 0.3s ease;
-  text-align: left;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  opacity: ${props => props.matched ? 0.5 : 1};
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-
-  &:hover:not(:disabled) {
-    border-color: ${props => props.matched ? '#58CC02' : '#1CB0F6'};
-    transform: ${props => props.matched ? 'none' : 'translateY(-2px)'};
-  }
-
-  @media (max-width: 768px) {
-    padding: 0.875rem 1.25rem;
-    font-size: 1rem;
-  }
-`;
-
-const PairNumber = styled.div`
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  background: ${props => props.matched ? '#58CC02' : '#f3f4f6'};
-  color: ${props => props.matched ? 'white' : '#6b7280'};
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 0.875rem;
-  flex-shrink: 0;
-
-  @media (max-width: 768px) {
-    width: 28px;
-    height: 28px;
-    font-size: 0.8125rem;
-  }
-`;
-
-const MatchIcon = styled.div`
-  font-size: 1.25rem;
-  margin-left: auto;
-`;
 const FeedbackBanner = styled.div`
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
   background: ${props => props.isCorrect ? '#d7ffb8' : '#ffdfe0'};
-  padding: 0.5rem 4rem;
+  padding: 1.5rem 2.5rem;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   z-index: 101;
   animation: ${slideUp} 0.4s ease-out;
   border-top: 1px solid ${props => props.isCorrect ? '#58CC02' : '#ef4444'};
@@ -539,41 +516,20 @@ const FeedbackBanner = styled.div`
   }
 `;
 
-const ContinueButton = styled.button`
-  background: ${props => props.isCorrect ? '#58CC02' : '#ff4b4b'};
-  border: none;
-  color: white;
-  padding: 1.125rem 3.5rem;
-  border-radius: 16px;
-  font-size: 1.25rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  box-shadow: 0 4px 0 ${props => props.isCorrect ? '#46A302' : '#dc2626'};
-  min-width: 200px;
-  flex-shrink: 0;
-  position: absolute;
-  right: 4rem;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 0 ${props => props.isCorrect ? '#46A302' : '#dc2626'};
-  }
-
-  &:active {
-    transform: translateY(2px);
-    box-shadow: 0 2px 0 ${props => props.isCorrect ? '#46A302' : '#dc2626'};
-  }
+const FeedbackWrapper = styled.div`
+  max-width: 1200px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 
   @media (max-width: 768px) {
-    width: 100%;
-    padding: 1rem 2rem;
-    font-size: 1.125rem;
-    position: static;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
   }
 `;
+
 const FeedbackContent = styled.div`
   display: flex;
   align-items: center;
@@ -603,43 +559,13 @@ const FeedbackIconWrapper = styled.div`
   }
 `;
 
-
-const FeedbackIcon = styled.div`
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: ${props => props.isCorrect ? '#58CC02' : '#ef4444'};
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.75rem;
-  font-weight: 700;
-
-  @media (max-width: 768px) {
-    width: 40px;
-    height: 40px;
-    font-size: 1.5rem;
-  }
-`;
-
-const FeedbackText = styled.div`
-  color: ${props => props.isCorrect ? '#047857' : '#991b1b'};
-  font-size: 1.25rem;
-  font-weight: 700;
-
-  @media (max-width: 768px) {
-    font-size: 1.125rem;
-  }
-`;
-
 const CheckmarkIcon = styled.div`
   width: 28px;
   height: 52px;
   border-right: 7px solid white;
   border-bottom: 7px solid white;
   transform: rotate(45deg);
-  animation: ${checkmark} 0.5s ease-out;
+  animation: ${checkmark} 0.4s cubic-bezier(0.65, 0, 0.35, 1);
   margin-bottom: 10px;
   margin-left: 5px;
 
@@ -722,270 +648,36 @@ const FeedbackSubtext = styled.p`
   }
 `;
 
-const ReportLink = styled.button`
-  background: none;
+const ContinueButton = styled.button`
+  background: ${props => props.isCorrect ? '#58CC02' : '#ff4b4b'};
   border: none;
-  color: #1cb0f6;
-  font-size: 1rem;
-  font-weight: 700;
-  cursor: pointer;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.25rem 0.5rem;
-  border-radius: 8px;
-  transition: all 0.3s ease;
-  margin-top: 0.25rem;
-  opacity: 0.6;
-  width: fit-content;
-
-  &:hover {
-    opacity: 1;
-  }
-
-  @media (max-width: 768px) {
-    font-size: 0.9375rem;
-    padding: 0.25rem 0.5rem;
-  }
-`;
-
-
-
-const ReportIcon = styled.img`
-  width: 18px;
-  height: 18px;
-  object-fit: contain;
-  opacity: 0.7;
-  transition: opacity 0.3s ease;
-
-  ${ReportLink}:hover & {
-    opacity: 1;
-  }
-
-  @media (max-width: 768px) {
-    width: 16px;
-    height: 16px;
-  }
-`;
-
-
-
-const ModalOverlay = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  animation: ${modalFadeIn} 0.3s ease;
-  padding: 1rem;
-  overflow-y: auto;
-`;
-
-const ModalContent = styled.div`
-  background: white;
+  color: white;
+  padding: 1rem 3rem;
   border-radius: 16px;
-  padding: 1.5rem;
-  max-width: 450px;
-  width: 100%;
-  max-height: 85vh;
-  overflow-y: auto;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  animation: ${modalSlideUp} 0.4s ease;
-  margin: auto;
-
-  /* Custom scrollbar */
-  &::-webkit-scrollbar {
-    width: 6px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 10px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: #888;
-    border-radius: 10px;
-  }
-
-  &::-webkit-scrollbar-thumb:hover {
-    background: #555;
-  }
-
-  @media (max-width: 768px) {
-    padding: 1.25rem;
-    max-width: 95%;
-    max-height: 90vh;
-  }
-`;
-
-const ModalHeader = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1rem;
-`;
-
-const ModalTitle = styled.h2`
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #1f2937;
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-
-  @media (max-width: 768px) {
-    font-size: 1.125rem;
-  }
-`;
-
-const ModalCloseButton = styled.button`
-  background: none;
-  border: none;
-  color: #6b7280;
-  font-size: 1.5rem;
-  cursor: pointer;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 8px;
-  transition: all 0.3s ease;
-  flex-shrink: 0;
-
-  &:hover {
-    background: #f3f4f6;
-    color: #1f2937;
-  }
-`;
-
-const ModalDescription = styled.p`
-  font-size: 0.9375rem;
-  color: #6b7280;
-  margin: 0 0 1rem 0;
-  line-height: 1.5;
-
-  @media (max-width: 768px) {
-    font-size: 0.875rem;
-  }
-`;
-
-const ReportOptions = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.625rem;
-  margin-bottom: 1rem;
-`;
-
-const ReportOption = styled.button`
-  background: ${props => props.selected ? '#E0F2FE' : 'white'};
-  border: 2px solid ${props => props.selected ? '#1CB0F6' : '#e5e7eb'};
-  color: #1f2937;
-  padding: 0.75rem;
-  border-radius: 10px;
-  font-size: 0.9375rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  text-align: left;
-
-  &:hover {
-    border-color: #1CB0F6;
-    background: #E0F2FE;
-  }
-
-  @media (max-width: 768px) {
-    font-size: 0.875rem;
-    padding: 0.625rem;
-  }
-`;
-
-const TextAreaWrapper = styled.div`
-  margin-bottom: 1rem;
-`;
-
-const TextAreaLabel = styled.label`
-  display: block;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #374151;
-  margin-bottom: 0.375rem;
-`;
-
-const TextArea = styled.textarea`
-  width: 100%;
-  padding: 0.75rem;
-  border: 2px solid #e5e7eb;
-  border-radius: 10px;
-  font-size: 0.9375rem;
-  font-family: inherit;
-  color: #1f2937;
-  resize: vertical;
-  min-height: 80px;
-  max-height: 120px;
-  transition: all 0.3s ease;
-
-  &:focus {
-    outline: none;
-    border-color: #1CB0F6;
-  }
-
-  &::placeholder {
-    color: #9ca3af;
-  }
-
-  @media (max-width: 768px) {
-    font-size: 0.875rem;
-    min-height: 70px;
-  }
-`;
-
-const ModalActions = styled.div`
-  display: flex;
-  gap: 0.625rem;
-  justify-content: flex-end;
-
-  @media (max-width: 768px) {
-    flex-direction: column;
-  }
-`;
-
-const ModalButton = styled.button`
-  background: ${props => props.primary ? '#1CB0F6' : 'transparent'};
-  border: 2px solid ${props => props.primary ? '#1CB0F6' : '#e5e7eb'};
-  color: ${props => props.primary ? 'white' : '#6b7280'};
-  padding: 0.75rem 1.5rem;
-  border-radius: 10px;
-  font-size: 0.9375rem;
+  font-size: 1.125rem;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.3s ease;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
+  box-shadow: 0 4px 0 ${props => props.isCorrect ? '#46A302' : '#dc2626'};
+  min-width: 180px;
+  flex-shrink: 0;
 
-  &:hover:not(:disabled) {
+  &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px ${props => props.primary ? 'rgba(28, 176, 246, 0.3)' : 'rgba(0, 0, 0, 0.1)'};
+    box-shadow: 0 6px 0 ${props => props.isCorrect ? '#46A302' : '#dc2626'};
   }
 
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    transform: none;
+  &:active {
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 ${props => props.isCorrect ? '#46A302' : '#dc2626'};
   }
 
   @media (max-width: 768px) {
     width: 100%;
-    padding: 0.625rem 1.25rem;
-    font-size: 0.875rem;
+    padding: 1rem 2rem;
+    font-size: 1rem;
   }
 `;
 
@@ -1151,7 +843,7 @@ const SelectedWord = styled.div`
 
 const StreakBadge = styled.div`
   position: fixed;
-  top: 90px;
+  top: 100px;  // Tăng lên để không bị Header che
   right: 2rem;
   background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
   color: white;
@@ -1167,33 +859,10 @@ const StreakBadge = styled.div`
   gap: 0.5rem;
 
   @media (max-width: 768px) {
-    top: 80px;
+    top: 90px;
     right: 1rem;
     padding: 0.625rem 1rem;
     font-size: 1rem;
-  }
-`;
-
-// Thêm StreakText component
-const StreakText = styled.div`
-  position: fixed;
-  top: 16px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: transparent;
-  color: #58CC02;
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  font-weight: 700;
-  z-index: 99;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  animation: ${scaleIn} 0.5s ease;
-
-  @media (max-width: 768px) {
-    top: 12px;
-    font-size: 0.8125rem;
   }
 `;
 
@@ -1684,7 +1353,7 @@ const CompletionButton = styled.button`
 `;
 const ReviewNoticeBanner = styled.div`
   position: fixed;
-  top: 80px;
+  top: 90px;  // Tăng lên để không bị Header che
   left: 50%;
   transform: translateX(-50%);
   background: linear-gradient(135deg, #FF9600 0%, #FF6B00 100%);
@@ -1703,7 +1372,7 @@ const ReviewNoticeBanner = styled.div`
   width: auto;
 
   @media (max-width: 768px) {
-    top: 70px;
+    top: 80px;
     padding: 0.875rem 1.5rem;
     font-size: 1rem;
     max-width: 90%;
@@ -2565,16 +2234,16 @@ return (
   <PageWrapper>
     <Toast toast={toast} onClose={hideToast} />
     {showReviewNotice && (
-        <ReviewNoticeBanner>
-          <ReviewNoticeIcon>🔄</ReviewNoticeIcon>
-          <ReviewNoticeText>
-            <ReviewNoticeTitle>Xem lại câu sai</ReviewNoticeTitle>
-            <ReviewNoticeSubtitle>
-              Còn <ReviewNoticeCount>{reviewCount}</ReviewNoticeCount> câu cần làm lại
-            </ReviewNoticeSubtitle>
-          </ReviewNoticeText>
-        </ReviewNoticeBanner>
-      )}
+      <ReviewNoticeBanner>
+        <ReviewNoticeIcon>🔄</ReviewNoticeIcon>
+        <ReviewNoticeText>
+          <ReviewNoticeTitle>Xem lại câu sai</ReviewNoticeTitle>
+          <ReviewNoticeSubtitle>
+            Còn <ReviewNoticeCount>{reviewCount}</ReviewNoticeCount> câu cần làm lại
+          </ReviewNoticeSubtitle>
+        </ReviewNoticeText>
+      </ReviewNoticeBanner>
+    )}
     {showCompletion ? (
       <CompletionOverlay>
         <CelebrationIcon>✨</CelebrationIcon>
@@ -2612,12 +2281,6 @@ return (
       </CompletionOverlay>
     ) : (
       <>
-        {consecutiveCorrect >= 3 && (
-          <StreakText>
-            {consecutiveCorrect} LẦN LIÊN TIẾP
-          </StreakText>
-        )}
-
         {streak >= 3 && (
           <StreakBadge>
             🔥 {streak} câu đúng
@@ -2625,13 +2288,15 @@ return (
         )}
 
         <Header>
-          <CloseButton onClick={handleClose}>✕</CloseButton>
-          <ProgressBarContainer>
-            <ProgressBarFill progress={progress} />
-          </ProgressBarContainer>
-          <HeartsContainer>
-            ❤️ {hearts}
-          </HeartsContainer>
+          <HeaderContent>
+            <CloseButton onClick={handleClose}>✕</CloseButton>
+            <ProgressBarContainer>
+              <ProgressBarFill progress={progress} />
+            </ProgressBarContainer>
+            <HeartsContainer>
+              ❤️ {hearts}
+            </HeartsContainer>
+          </HeaderContent>
         </Header>
 
         <Container>
@@ -2645,51 +2310,55 @@ return (
 
         {!showFeedback && (
           <Footer>
-            <SkipButton onClick={handleSkip}>Bỏ qua</SkipButton>
-            <CheckButton
-              disabled={
-                !question ? true :
-                question.type === 'match_pairs' 
-                  ? matchedPairs.length !== (question.leftColumn.length + question.rightColumn.length)
-                  : question.type === 'translate_build' 
-                    ? selectedWords.length === 0 
-                    : !selectedAnswer
-              }
-              onClick={handleCheck}
-            >
-              Kiểm tra
-            </CheckButton>
+            <FooterContent>
+              <SkipButton onClick={handleSkip}>Bỏ qua</SkipButton>
+              <CheckButton
+                disabled={
+                  !question ? true :
+                  question.type === 'match_pairs' 
+                    ? matchedPairs.length !== (question.leftColumn.length + question.rightColumn.length)
+                    : question.type === 'translate_build' 
+                      ? selectedWords.length === 0 
+                      : !selectedAnswer
+                }
+                onClick={handleCheck}
+              >
+                Kiểm tra
+              </CheckButton>
+            </FooterContent>
           </Footer>
         )}
 
         {showFeedback && (
           <FeedbackBanner isCorrect={!isSkipped && isCorrectAnswer()}>
-            <FeedbackContent>
-              <FeedbackIconWrapper isCorrect={!isSkipped && isCorrectAnswer()}>
-                {(!isSkipped && isCorrectAnswer()) ? (
-                  <CheckmarkIcon />
-                ) : (
-                  <CrossIcon />
-                )}
-              </FeedbackIconWrapper>
-              <FeedbackTextWrapper>
-                <FeedbackTitle isCorrect={!isSkipped && isCorrectAnswer()}>
-                  {(!isSkipped && isCorrectAnswer()) ? 'Tuyệt vời!' : 'Đáp án đúng:'}
-                </FeedbackTitle>
-                {(!isSkipped && !isCorrectAnswer() || isSkipped) && (
-                  <FeedbackSubtext>
-                    {getCorrectAnswerText()}
-                  </FeedbackSubtext>
-                )}
-                <ReportLink onClick={handleOpenReportModal}>
-                  <ReportIcon src={reportIcon} alt="Report" />
-                  BÁO CÁO
-                </ReportLink>
-              </FeedbackTextWrapper>
-            </FeedbackContent>
-            <ContinueButton isCorrect={!isSkipped && isCorrectAnswer()} onClick={handleContinue}>
-              Tiếp tục
-            </ContinueButton>
+            <FeedbackWrapper>
+              <FeedbackContent>
+                <FeedbackIconWrapper isCorrect={!isSkipped && isCorrectAnswer()}>
+                  {(!isSkipped && isCorrectAnswer()) ? (
+                    <CheckmarkIcon />
+                  ) : (
+                    <CrossIcon />
+                  )}
+                </FeedbackIconWrapper>
+                <FeedbackTextWrapper>
+                  <FeedbackTitle isCorrect={!isSkipped && isCorrectAnswer()}>
+                    {(!isSkipped && isCorrectAnswer()) ? 'Tuyệt vời!' : 'Đáp án đúng:'}
+                  </FeedbackTitle>
+                  {(!isSkipped && !isCorrectAnswer() || isSkipped) && (
+                    <FeedbackSubtext>
+                      {getCorrectAnswerText()}
+                    </FeedbackSubtext>
+                  )}
+                  <ReportLink onClick={handleOpenReportModal}>
+                    <ReportIcon src={reportIcon} alt="Report" />
+                    BÁO CÁO
+                  </ReportLink>
+                </FeedbackTextWrapper>
+              </FeedbackContent>
+              <ContinueButton isCorrect={!isSkipped && isCorrectAnswer()} onClick={handleContinue}>
+                Tiếp tục
+              </ContinueButton>
+            </FeedbackWrapper>
           </FeedbackBanner>
         )}
 
@@ -2805,3 +2474,333 @@ return (
 };
 
 export default Lesson;
+
+const MatchPairsContainer = styled.div`
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 2rem;
+  justify-content: center;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+`;
+
+const PairColumn = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  flex: 1;
+  max-width: 400px;
+
+  @media (max-width: 768px) {
+    max-width: 100%;
+  }
+`;
+
+const PairCard = styled.button`
+  background: white;
+  border: 3px solid ${props => {
+    if (props.matched) return '#58CC02';
+    if (props.selected) return '#1CB0F6';
+    return '#e5e7eb';
+  }};
+  border-radius: 16px;
+  padding: 1.25rem 1.5rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1f2937;
+  cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  position: relative;
+  box-shadow: ${props => {
+    if (props.matched) return '0 6px 20px rgba(88, 204, 2, 0.3)';
+    return '0 2px 8px rgba(0, 0, 0, 0.06)';
+  }};
+  opacity: ${props => props.matched ? 0.7 : 1};
+
+  &:hover:not(:disabled) {
+    border-color: ${props => props.matched ? '#58CC02' : '#1CB0F6'};
+    transform: ${props => props.disabled ? 'none' : 'translateY(-2px)'};
+  }
+
+  @media (max-width: 768px) {
+    padding: 1rem 1.25rem;
+    font-size: 1rem;
+  }
+`;
+
+const PairNumber = styled.div`
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: ${props => props.matched ? '#58CC02' : '#f3f4f6'};
+  color: ${props => props.matched ? 'white' : '#6b7280'};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.875rem;
+  flex-shrink: 0;
+
+  @media (max-width: 768px) {
+    width: 28px;
+    height: 28px;
+    font-size: 0.8125rem;
+  }
+`;
+
+const MatchIcon = styled.div`
+  position: absolute;
+  right: 1rem;
+  color: #58CC02;
+  font-size: 1.5rem;
+  font-weight: 700;
+
+  @media (max-width: 768px) {
+    font-size: 1.25rem;
+    right: 0.75rem;
+  }
+`;
+
+// Thêm styled components cho Report Modal
+const ReportLink = styled.button`
+  background: none;
+  border: none;
+  color: #6b7280;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: all 0.3s ease;
+
+  &:hover {
+    color: #ef4444;
+  }
+
+  @media (max-width: 768px) {
+    font-size: 0.8125rem;
+  }
+`;
+
+const ReportIcon = styled.img`
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+
+  @media (max-width: 768px) {
+    width: 16px;
+    height: 16px;
+  }
+`;
+
+const ModalOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: ${modalFadeIn} 0.3s ease;
+  padding: 1rem;
+`;
+
+const ModalContent = styled.div`
+  background: white;
+  border-radius: 20px;
+  padding: 2rem;
+  max-width: 600px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: ${modalSlideUp} 0.4s ease;
+
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+  }
+
+  @media (max-width: 768px) {
+    padding: 1.5rem;
+    max-width: 95%;
+  }
+`;
+
+const ModalHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+`;
+
+const ModalTitle = styled.h2`
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  @media (max-width: 768px) {
+    font-size: 1.5rem;
+  }
+`;
+
+const ModalCloseButton = styled.button`
+  background: none;
+  border: none;
+  color: #6b7280;
+  font-size: 2rem;
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: #f3f4f6;
+    color: #1f2937;
+  }
+`;
+
+const ModalDescription = styled.p`
+  font-size: 1rem;
+  color: #6b7280;
+  margin: 0 0 1.5rem 0;
+  line-height: 1.5;
+
+  @media (max-width: 768px) {
+    font-size: 0.9375rem;
+  }
+`;
+
+const ReportOptions = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+`;
+
+const ReportOption = styled.button`
+  background: ${props => props.selected ? '#EBF8FF' : 'white'};
+  border: 2px solid ${props => props.selected ? '#1CB0F6' : '#e5e7eb'};
+  color: #1f2937;
+  padding: 1rem 1.25rem;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: left;
+
+  &:hover {
+    border-color: #1CB0F6;
+    background: #EBF8FF;
+  }
+
+  @media (max-width: 768px) {
+    padding: 0.875rem 1rem;
+    font-size: 0.9375rem;
+  }
+`;
+
+const TextAreaWrapper = styled.div`
+  margin-bottom: 1.5rem;
+`;
+
+const TextAreaLabel = styled.label`
+  display: block;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 0.5rem;
+`;
+
+const TextArea = styled.textarea`
+  width: 100%;
+  min-height: 100px;
+  padding: 0.875rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-family: inherit;
+  resize: vertical;
+  transition: all 0.3s ease;
+
+  &:focus {
+    outline: none;
+    border-color: #1CB0F6;
+    background: #EBF8FF;
+  }
+
+  &::placeholder {
+    color: #9ca3af;
+  }
+
+  @media (max-width: 768px) {
+    font-size: 0.9375rem;
+    min-height: 80px;
+  }
+`;
+
+const ModalActions = styled.div`
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+  }
+`;
+
+const ModalButton = styled.button`
+  background: ${props => props.primary ? '#1CB0F6' : 'white'};
+  border: 2px solid ${props => props.primary ? '#1CB0F6' : '#e5e7eb'};
+  color: ${props => props.primary ? 'white' : '#6b7280'};
+  padding: 0.875rem 2rem;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  opacity: ${props => props.disabled ? 0.5 : 1};
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px ${props => props.primary ? 'rgba(28, 176, 246, 0.3)' : 'rgba(0, 0, 0, 0.1)'};
+  }
+
+  @media (max-width: 768px) {
+    width: 100%;
+    padding: 0.875rem 1.5rem;
+  }
+`;
