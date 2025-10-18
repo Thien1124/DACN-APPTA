@@ -66,6 +66,30 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 
+// Import các routes mới
+const courseRoutes = require('./src/routes/courseRoutes');
+const unitRoutes = require('./src/routes/unitRoutes');
+const lessonRoutes = require('./src/routes/lessonRoutes');
+const vocabularyRoutes = require('./src/routes/vocabularyRoutes');
+const exerciseRoutes = require('./src/routes/exerciseRoutes');
+const achievementRoutes = require('./src/routes/achievementRoutes');
+const testRoutes = require('./src/routes/testRoutes');
+const deckRoutes = require('./src/routes/deckRoutes');
+const flashcardRoutes = require('./src/routes/flashcardRoutes');
+const leaderboardRoutes = require('./src/routes/leaderboardRoutes');
+
+// Sử dụng các routes mới
+app.use('/api/courses', courseRoutes);
+app.use('/api/units', unitRoutes);
+app.use('/api/lessons', lessonRoutes);
+app.use('/api/vocabularies', vocabularyRoutes);
+app.use('/api/exercises', exerciseRoutes);
+app.use('/api/achievements', achievementRoutes);
+app.use('/api/tests', testRoutes);
+app.use('/api/decks', deckRoutes);
+app.use('/api/flashcards', flashcardRoutes);
+app.use('/api/leaderboard', leaderboardRoutes);
+
 // Health root route
 app.get('/', (req, res) => {
   res.json({
