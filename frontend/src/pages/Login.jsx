@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import Toast from '../components/Toast'; 
 import useToast from '../hooks/useToast'; 
 import { authService } from '../services/authService';
+import Swal from 'sweetalert2';
 
 // ========== STYLED COMPONENTS ==========
 
@@ -491,16 +492,19 @@ const LoadingSpinner = styled.div`
 
 const Login = () => {
   const navigate = useNavigate();
-  const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
   const { toast, showToast, hideToast } = useToast();
-  
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
-  
-  const [errors, setErrors] = useState({});
+
+  const [errors, setErrors] = useState({
+    email: '',
+    password: '',
+  });
 
   // Handle input change
   const handleChange = (e) => {
@@ -554,61 +558,100 @@ const Login = () => {
         password: formData.password,
       });
 
+      // Kiểm tra user data
+      const user = response.data?.user;
+      
+      if (!user) {
+        throw new Error('Không nhận được thông tin người dùng');
+      }
+
+      // Kiểm tra tài khoản đã kích hoạt chưa
+      if (!user.isActive) {
+        setLoading(false);
+        
+        await Swal.fire({
+          icon: 'warning',
+          title: 'Tài khoản chưa kích hoạt',
+          html: `
+            <p>Vui lòng kiểm tra email <strong>${user.email}</strong> để kích hoạt tài khoản.</p>
+            <p style="margin-top: 1rem; font-size: 0.875rem; color: #6b7280;">
+              Chưa nhận được email? 
+            </p>
+          `,
+          showCancelButton: true,
+          confirmButtonText: 'Gửi lại OTP',
+          cancelButtonText: 'Đóng',
+          confirmButtonColor: '#58CC02',
+          cancelButtonColor: '#6b7280'
+        }).then(async (result) => {
+          if (result.isConfirmed) {
+            try {
+              await authService.resendOTP(user.email);
+              showToast('success', 'Đã gửi!', 'Vui lòng kiểm tra email của bạn');
+            } catch (error) {
+              showToast('error', 'Lỗi!', error.message);
+            }
+          }
+        });
+        
+        // Đăng xuất và xóa token
+        authService.logout();
+        return;
+      }
+
       showToast('success', 'Thành công!', 'Đăng nhập thành công!');
       
-      // Chờ 1 giây rồi chuyển hướng
+      // Chờ 1 giây rồi chuyển hướng theo role
       setTimeout(() => {
-        navigate('/learn');
+        // Chuyển hướng dựa trên role
+        if (user.role === 'admin') {
+          navigate('/admin');
+        } else {
+          navigate('/learn');
+        }
       }, 1000);
+      
     } catch (error) {
       console.error('Login error:', error);
+      setLoading(false);
       
       // Xử lý các loại lỗi cụ thể
       let errorMessage = 'Đăng nhập thất bại. Vui lòng thử lại!';
       
       if (error.response) {
-        // Lỗi từ server trả về
         const status = error.response.status;
         const data = error.response.data;
         
         switch (status) {
           case 401:
             errorMessage = 'Email hoặc mật khẩu không chính xác!';
-            // Highlight các trường bị lỗi
             setErrors({
               email: 'Email hoặc mật khẩu không đúng',
               password: 'Email hoặc mật khẩu không đúng'
             });
             break;
+          case 403:
+            // Trường hợp tài khoản chưa kích hoạt đã được xử lý ở trên
+            if (data.data?.needsVerification) {
+              return; // Đã xử lý rồi, không cần hiển thị toast
+            }
+            errorMessage = data.message || 'Tài khoản của bạn đã bị khóa!';
+            break;
           case 404:
             errorMessage = 'Tài khoản không tồn tại!';
             setErrors({ email: 'Tài khoản không tồn tại' });
             break;
-          case 403:
-            errorMessage = 'Tài khoản của bạn đã bị khóa!';
-            break;
-          case 422:
-            errorMessage = data?.message || 'Thông tin đăng nhập không hợp lệ!';
-            break;
-          case 500:
-            errorMessage = 'Lỗi máy chủ. Vui lòng thử lại sau!';
-            break;
           default:
-            errorMessage = data?.message || error.message || 'Đăng nhập thất bại!';
+            errorMessage = data.message || errorMessage;
         }
-      } else if (error.request) {
-        // Lỗi không nhận được response từ server
-        errorMessage = 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng!';
-      } else {
-        // Lỗi khác
-        errorMessage = error.message || 'Đã có lỗi xảy ra!';
+      } else if (error.message) {
+        errorMessage = error.message;
       }
       
       showToast('error', 'Đăng nhập thất bại!', errorMessage);
-    } finally {
-      setLoading(false);
     }
   };
+
   // Handle social login - Cập nhật
   const handleSocialLogin = (provider) => {
     const backendUrl = process.env.REACT_APP_API_URL ;

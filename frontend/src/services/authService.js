@@ -30,41 +30,24 @@ export const authService = {
       const response = await api.post('/auth/login', credentials);
       
       if (response.data.success) {
-        // Lưu token và user info vào localStorage
-        if (response.data.data.token) {
-          localStorage.setItem('token', response.data.data.token);
-          localStorage.setItem('user', JSON.stringify(response.data.data.user));
-        }
+        // Lưu token và thông tin user vào localStorage
+        localStorage.setItem('token', response.data.data.token);
+        localStorage.setItem('user', JSON.stringify(response.data.data.user));
         return response.data;
       } else {
         throw new Error(response.data.message || 'Đăng nhập thất bại');
       }
     } catch (error) {
-      console.error('Login error details:', error);
-      
-      if (error.response?.data?.message) {
-        throw new Error(error.response.data.message);
-      }
-      
-      if (error.response?.data?.errors) {
-        throw new Error(error.response.data.errors.join(', '));
-      }
-      
-      throw new Error(error.message || 'Đăng nhập thất bại');
+      throw new Error(error.response?.data?.message || error.message || 'Đăng nhập thất bại');
     }
   },
 
-  // Đăng xuất (blacklist token)
+  // Đăng xuất
   logout: async () => {
     try {
-      const token = localStorage.getItem('token');
-      if (token) {
-        await api.post('/auth/logout'); // Backend sẽ blacklist token
-      }
-      
+      await api.post('/auth/logout');
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      
       return { success: true };
     } catch (error) {
       // Vẫn xóa local storage ngay cả khi API fail
@@ -85,6 +68,18 @@ export const authService = {
     return !!localStorage.getItem('token');
   },
 
+  // Kiểm tra role admin
+  isAdmin: () => {
+    const user = authService.getCurrentUser();
+    return user?.role === 'admin';
+  },
+
+  // Kiểm tra tài khoản đã kích hoạt
+  isActive: () => {
+    const user = authService.getCurrentUser();
+    return user?.isActive === true;
+  },
+
   // Quên mật khẩu - gửi OTP
   forgotPassword: async (email) => {
     try {
@@ -96,31 +91,28 @@ export const authService = {
   },
 
   // Reset mật khẩu với OTP
-  resetPassword: async (email, otp, newPassword, confirmPassword) => {
+  resetPassword: async (data) => {
     try {
-      const response = await api.post('/auth/reset-password', {
-        email,
-        otp,
-        newPassword,
-        confirmPassword
-      });
+      const response = await api.post('/auth/reset-password', data);
       return response.data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'Đặt lại mật khẩu thất bại');
+      throw new Error(error.response?.data?.message || 'Reset mật khẩu thất bại');
     }
   },
 
-  // Xác thực OTP sau đăng ký
-  verifyOTP: async (email, otp) => {
+  // Xác thực OTP
+  verifyOTP: async (data) => {
     try {
-      const response = await api.post('/auth/verify-otp', { email, otp });
+      const response = await api.post('/auth/verify-otp', data);
       
-      if (response.data.success && response.data.data.token) {
-        localStorage.setItem('token', response.data.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.data.user));
+      if (response.data.success) {
+        // Cập nhật user info sau khi verify
+        if (response.data.data?.user) {
+          localStorage.setItem('user', JSON.stringify(response.data.data.user));
+        }
+        return response.data;
       }
-      
-      return response.data;
+      throw new Error(response.data.message || 'Xác thực OTP thất bại');
     } catch (error) {
       throw new Error(error.response?.data?.message || 'Xác thực OTP thất bại');
     }
@@ -136,31 +128,17 @@ export const authService = {
     }
   },
 
-  // Lấy thông tin profile từ API
+  // Lấy thông tin profile
   getProfile: async () => {
     try {
       const response = await api.get('/users/profile');
-      return response.data;
-    } catch (error) {
-      throw new Error(error.response?.data?.message || error.message || 'Lấy profile thất bại');
-    }
-  },
-
-  // Cập nhật profile
-  updateProfile: async (data) => {
-    try {
-      const response = await api.put('/users/profile', data);
-      
-      // Cập nhật localStorage nếu có user data mới
       if (response.data.success && response.data.data?.user) {
-        const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
-        const updatedUser = { ...currentUser, ...response.data.data.user };
-        localStorage.setItem('user', JSON.stringify(updatedUser));
+        // Cập nhật localStorage với thông tin mới nhất
+        localStorage.setItem('user', JSON.stringify(response.data.data.user));
       }
-      
       return response.data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || error.message || 'Cập nhật profile thất bại');
+      throw new Error(error.response?.data?.message || 'Không thể lấy thông tin profile');
     }
-  },
+  }
 };

@@ -360,53 +360,87 @@ const AdminSidebar = ({ theme = 'light', onThemeToggle }) => {
       ],
     },
     {
-      section: 'Quản lý',
+      section: 'Quản lý người dùng',
       items: [
         {
           icon: '👥',
           text: 'Người dùng',
           path: '/admin/users',
-          badge: { text: '156', variant: 'info' },
+          badge: null,
         },
-        {
-          icon: '🎓',
-          text: 'Lớp học',
-          path: '/admin/classes',
-          badge: { text: '45', variant: 'info' },
-        },
+      ],
+    },
+    {
+      section: 'Quản lý nội dung',
+      items: [
         {
           icon: '📚',
+          text: 'Khóa học',
+          path: '/admin/courses',
+          badge: null,
+        },
+        {
+          icon: '📦',
+          text: 'Units',
+          path: '/admin/units',
+          badge: null,
+        },
+        {
+          icon: '📖',
           text: 'Bài học',
           path: '/admin/lessons',
           badge: null,
         },
         {
           icon: '📝',
-          text: 'Đề thi',
-          path: '/admin/exams',
+          text: 'Từ vựng',
+          path: '/admin/vocabularies',
+          badge: null,
+        },
+        {
+          icon: '🎯',
+          text: 'Bài tập',
+          path: '/admin/exercises',
+          badge: null,
+        },
+        {
+          icon: '📋',
+          text: 'Bài test',
+          path: '/admin/tests',
           badge: null,
         },
       ],
     },
     {
-      section: 'Nội dung',
+      section: 'Flashcard & Deck',
       items: [
         {
           icon: '🗂️',
+          text: 'Decks',
+          path: '/admin/decks',
+          badge: null,
+        },
+        {
+          icon: '🎴',
           text: 'Flashcards',
           path: '/admin/flashcards',
           badge: null,
         },
+      ],
+    },
+    {
+      section: 'Gamification',
+      items: [
         {
-          icon: '📖',
-          text: 'Wordbank',
-          path: '/admin/wordbank',
+          icon: '🏆',
+          text: 'Thành tích',
+          path: '/admin/achievements',
           badge: null,
         },
         {
-          icon: '🎯',
-          text: 'Quiz',
-          path: '/admin/quizzes',
+          icon: '🎖️',
+          text: 'Bảng xếp hạng',
+          path: '/admin/leaderboard',
           badge: null,
         },
       ],
@@ -432,20 +466,7 @@ const AdminSidebar = ({ theme = 'light', onThemeToggle }) => {
           path: '/admin/notifications',
           badge: { text: '5', variant: 'danger' },
         },
-        {
-          icon: '📧',
-          text: 'Email',
-          path: '/admin/email',
-          badge: null,
-        },
-        {
-          icon: '💾',
-          text: 'Backup',
-          path: '/admin/backup',
-          badge: null,
-        },
       ],
-    
     },
   ];
 

@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import { authService } from '../services/authService';
 
 const PageWrapper = styled.div`
   display: flex;
@@ -21,22 +22,43 @@ const OAuthSuccess = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Lấy token từ cookie (backend đã set)
-    const token = getCookie('token');
-    
+    // Lấy token từ URL hoặc cookie
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token') || getCookie('token');
+
     if (token) {
       localStorage.setItem('token', token);
       
-      // Xóa cookie sau khi lưu vào localStorage
-      document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-      
-      // Lấy thông tin user từ localStorage hoặc gọi API
-      // Giả sử backend đã lưu user info trong token
-      setTimeout(() => {
-        navigate('/learn'); // Chuyển đến trang học
-      }, 1500);
+      // Lấy thông tin user từ backend
+      authService.getProfile()
+        .then(response => {
+          if (response.success && response.data?.user) {
+            const user = response.data.user;
+            
+            // Kiểm tra isActive
+            if (!user.isActive) {
+              alert('Tài khoản của bạn chưa được kích hoạt. Vui lòng kiểm tra email.');
+              navigate('/login');
+              return;
+            }
+            
+            // Chuyển hướng dựa trên role
+            setTimeout(() => {
+              if (user.role === 'admin') {
+                navigate('/admin');
+              } else {
+                navigate('/learn');
+              }
+            }, 1500);
+          } else {
+            navigate('/login?error=oauth');
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching user profile:', error);
+          navigate('/login?error=oauth');
+        });
     } else {
-      // Nếu không có token, chuyển về login với lỗi
       navigate('/login?error=oauth');
     }
   }, [navigate]);

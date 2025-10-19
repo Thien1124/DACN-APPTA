@@ -5,6 +5,7 @@ import Toast from '../components/Toast';
 import useToast from '../hooks/useToast';
 import logo from '../assets/logo.png';
 import { authService } from '../services/authService';
+import Swal from 'sweetalert2';
 
 // ========== STYLED COMPONENTS ==========
 
@@ -501,15 +502,9 @@ const LoadingSpinner = styled.div`
 const Register = () => {
   const navigate = useNavigate();
   const { toast, showToast, hideToast } = useToast();
-  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   
-  // ✅ Thêm state cho OTP verification
-  const [showOtpModal, setShowOtpModal] = useState(false);
-  const [otp, setOtp] = useState('');
-  const [otpLoading, setOtpLoading] = useState(false);
-  const [registeredEmail, setRegisteredEmail] = useState('');
-
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -569,7 +564,7 @@ const Register = () => {
     e.preventDefault();
 
     if (!validateForm()) {
-      showToast('error', 'Lỗi!', 'Vui lòng kiểm tra lại thông tin');
+      showToast('error', 'Lỗi!', 'Vui lòng kiểm tra lại thông tin đăng ký');
       return;
     }
 
@@ -577,79 +572,42 @@ const Register = () => {
 
     try {
       const response = await authService.register({
-        name: formData.name.trim(),
-        email: formData.email.trim(),
+        name: formData.name,
+        email: formData.email,
         password: formData.password,
-        age: parseInt(formData.age),
+        age: formData.age ? parseInt(formData.age) : undefined,
       });
 
-      if (response.success) {
-        // ✅ Kiểm tra nếu cần verify OTP
-        if (response.data?.user?.needsVerification) {
-          setRegisteredEmail(formData.email);
-          setShowOtpModal(true);
-          showToast('success', 'Thành công!', response.message);
-        } else {
-          // Đăng ký thành công không cần OTP
-          showToast('success', 'Thành công!', 'Đăng ký thành công! Đang chuyển đến trang đăng nhập...');
-          setTimeout(() => {
-            navigate('/login');
-          }, 2000);
-        }
-      }
+      setLoading(false);
+
+      // Hiển thị thông báo thành công và hướng dẫn kích hoạt
+      await Swal.fire({
+        icon: 'success',
+        title: 'Đăng ký thành công!',
+        html: `
+          <p>Một email xác thực đã được gửi đến <strong>${formData.email}</strong></p>
+          <p style="margin-top: 1rem; font-size: 0.875rem; color: #6b7280;">
+            Vui lòng kiểm tra hộp thư và nhập mã OTP để kích hoạt tài khoản.
+          </p>
+        `,
+        confirmButtonText: 'Đồng ý',
+        confirmButtonColor: '#58CC02',
+      });
+
+      // Chuyển đến trang login
+      navigate('/login');
+
     } catch (error) {
       console.error('Register error:', error);
-      showToast('error', 'Lỗi!', error.message || 'Đăng ký thất bại');
-    } finally {
       setLoading(false);
-    }
-  };
 
-  // ✅ Handle verify OTP
-  const handleVerifyOtp = async () => {
-    if (!otp || otp.length !== 6) {
-      showToast('error', 'Lỗi!', 'Vui lòng nhập mã OTP 6 số');
-      return;
-    }
-
-    setOtpLoading(true);
-
-    try {
-      const response = await authService.verifyOTP(registeredEmail, otp);
-
-      if (response.success) {
-        showToast('success', 'Thành công!', 'Xác thực thành công! Đang chuyển đến trang học...');
-        
-        // Lưu token và user info
-        if (response.data?.token) {
-          localStorage.setItem('token', response.data.token);
-          localStorage.setItem('user', JSON.stringify(response.data.user));
-        }
-
-        setTimeout(() => {
-          navigate('/welcome'); // Hoặc '/dashboard'
-        }, 1500);
-      }
-    } catch (error) {
-      console.error('Verify OTP error:', error);
-      showToast('error', 'Lỗi!', error.message || 'Xác thực OTP thất bại');
-    } finally {
-      setOtpLoading(false);
-    }
-  };
-
-  // ✅ Handle resend OTP
-  const handleResendOtp = async () => {
-    try {
-      const response = await authService.resendOTP(registeredEmail);
+      let errorMessage = 'Đăng ký thất bại. Vui lòng thử lại!';
       
-      if (response.success) {
-        showToast('success', 'Thành công!', 'Mã OTP mới đã được gửi đến email của bạn');
-        setOtp(''); // Clear OTP input
+      if (error.message) {
+        errorMessage = error.message;
       }
-    } catch (error) {
-      console.error('Resend OTP error:', error);
-      showToast('error', 'Lỗi!', error.message || 'Gửi lại OTP thất bại');
+
+      showToast('error', 'Đăng ký thất bại!', errorMessage);
     }
   };
 
@@ -834,191 +792,8 @@ const Register = () => {
         </RegisterContainer>
       </RightSection>
 
-      {/* ✅ OTP Modal */}
-      {showOtpModal && (
-        <OtpModalOverlay onClick={() => setShowOtpModal(false)}>
-          <OtpModalContent onClick={(e) => e.stopPropagation()}>
-            <OtpModalTitle>Xác thực Email</OtpModalTitle>
-            <OtpModalText>
-              Mã OTP đã được gửi đến email:<br />
-              <strong>{registeredEmail}</strong>
-            </OtpModalText>
-            
-            <OtpInput
-              type="text"
-              placeholder="••••••"
-              value={otp}
-              onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-              maxLength="6"
-            />
-
-            <OtpButtons>
-              <OtpButton 
-                primary 
-                onClick={handleVerifyOtp}
-                disabled={otpLoading || otp.length !== 6}
-              >
-                {otpLoading ? <LoadingSpinner /> : 'Xác nhận'}
-              </OtpButton>
-              <OtpButton onClick={handleResendOtp}>
-                Gửi lại OTP
-              </OtpButton>
-            </OtpButtons>
-
-            <OtpCloseButton onClick={() => setShowOtpModal(false)}>
-              ✕
-            </OtpCloseButton>
-          </OtpModalContent>
-        </OtpModalOverlay>
-      )}
-
     </PageWrapper>
   );
 };
 
 export default Register;
-
-// ✅ Thêm styled components cho OTP Modal
-
-const OtpModalOverlay = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2000;
-  padding: 1rem;
-`;
-
-const OtpModalContent = styled.div`
-  background: white;
-  border-radius: 20px;
-  padding: 2.5rem;
-  max-width: 400px;
-  width: 100%;
-  position: relative;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  animation: fadeInScale 0.3s ease;
-
-  @keyframes fadeInScale {
-    from {
-      opacity: 0;
-      transform: scale(0.9);
-    }
-    to {
-      opacity: 1;
-      transform: scale(1);
-    }
-  }
-`;
-
-const OtpModalTitle = styled.h2`
-  font-size: 1.75rem;
-  color: #3c3c3c;
-  margin-bottom: 1rem;
-  text-align: center;
-  font-weight: 800;
-`;
-
-const OtpModalText = styled.p`
-  font-size: 0.9375rem;
-  color: #6b7280;
-  text-align: center;
-  line-height: 1.6;
-  margin-bottom: 1.5rem;
-
-  strong {
-    color: #1CB0F6;
-    font-weight: 700;
-  }
-`;
-
-const OtpInput = styled.input`
-  width: 100%;
-  padding: 1rem;
-  font-size: 2rem;
-  text-align: center;
-  border: 2px solid #e5e5e5;
-  border-radius: 14px;
-  margin-bottom: 1.5rem;
-  letter-spacing: 0.8rem;
-  font-weight: 700;
-  color: #3c3c3c;
-
-  &::placeholder {
-    font-size: 1.5rem;
-    letter-spacing: 0.5rem;
-    color: #d1d5db;
-  }
-
-  &:focus {
-    outline: none;
-    border-color: #1CB0F6;
-    box-shadow: 0 0 0 3px rgba(28, 176, 246, 0.1);
-  }
-`;
-
-const OtpButtons = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-`;
-
-const OtpButton = styled.button`
-  width: 100%;
-  padding: 1rem;
-  font-size: 1rem;
-  font-weight: 700;
-  border-radius: 14px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  border: ${props => props.primary ? 'none' : '2px solid #e5e5e5'};
-  background: ${props => props.primary ? 'linear-gradient(135deg, #58cc02 0%, #45a302 100%)' : 'white'};
-  color: ${props => props.primary ? 'white' : '#3c3c3c'};
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-
-  &:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: ${props => props.primary 
-      ? '0 5px 16px rgba(88, 204, 2, 0.35)' 
-      : '0 3px 10px rgba(0, 0, 0, 0.08)'
-    };
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-`;
-
-const OtpCloseButton = styled.button`
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.05);
-  border: none;
-  border-radius: 8px;
-  font-size: 1.25rem;
-  color: #6b7280;
-  cursor: pointer;
-  transition: all 0.3s ease;
-
-  &:hover {
-    background: rgba(0, 0, 0, 0.1);
-  }
-`;
