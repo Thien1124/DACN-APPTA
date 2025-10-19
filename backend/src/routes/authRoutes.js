@@ -1,7 +1,6 @@
 const express = require('express');
 const passport = require('passport');
 const router = express.Router();
-
 const authController = require('../controllers/authController');
 const { validateRegistration, validateLogin } = require('../middleware/validation');
 const { authenticate } = require('../middleware/auth');
@@ -21,37 +20,46 @@ router.post('/reset-password', authController.resetPassword);
 
 // Google OAuth
 router.get('/google',
-  passport.authenticate('google', { scope: ['profile', 'email'] })
+  passport.authenticate('google', { 
+    scope: ['profile', 'email'],
+    session: false,
+    accessType: 'offline', // ✅ Thêm để có refresh token
+    prompt: 'consent' // ✅ Luôn hiển thị consent screen
+  })
 );
 
 router.get('/google/callback',
+  (req, res, next) => {
+    console.log('📥 Google callback URL:', req.url);
+    console.log('📥 Query params:', req.query);
+    next();
+  },
   passport.authenticate('google', { 
-    session: false, 
-    failureRedirect: `${process.env.CLIENT_URL}/login?error=oauth` 
+    session: false,
+    failureRedirect: `${process.env.CLIENT_URL}/login?error=google_oauth`
   }),
   authController.oauthSuccessRedirect
 );
 
 // Facebook OAuth
 router.get('/facebook',
-  passport.authenticate('facebook', { scope: ['email'] })
+  passport.authenticate('facebook', { 
+    scope: ['public_profile', 'email'],
+    session: false 
+  })
 );
 
 router.get('/facebook/callback',
+  (req, res, next) => {
+    console.log('📥 Facebook callback URL:', req.url);
+    console.log('📥 Query params:', req.query);
+    next();
+  },
   passport.authenticate('facebook', { 
-    session: false, 
-    failureRedirect: `${process.env.CLIENT_URL}/login?error=oauth` 
+    session: false,
+    failureRedirect: `${process.env.CLIENT_URL}/login?error=facebook_oauth`
   }),
   authController.oauthSuccessRedirect
 );
-
-const { register,login } = require('../controllers/authController');
-const { validateRegistration,validateLogin } = require('../middleware/validation');
-
-// Route đăng ký
-router.post('/register', validateRegistration, register);
-// ✅ Route đăng nhập
-router.post('/login', validateLogin, login);
-
 
 module.exports = router;

@@ -27,18 +27,29 @@ export const authService = {
   // Đăng nhập
   login: async (credentials) => {
     try {
-      const response = await api.post('/auth/login', credentials);
+      
+      const response = await api.post('/auth/login', {
+        email: credentials.email.trim().toLowerCase(),
+        password: credentials.password
+      });
       
       if (response.data.success) {
-        // Lưu token và thông tin user vào localStorage
-        localStorage.setItem('token', response.data.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.data.user));
+        // Lưu token và user
+        if (response.data.data?.token) {
+          localStorage.setItem('token', response.data.data.token);
+        }
+        if (response.data.data?.user) {
+          localStorage.setItem('user', JSON.stringify(response.data.data.user));
+        }
         return response.data;
       } else {
         throw new Error(response.data.message || 'Đăng nhập thất bại');
       }
     } catch (error) {
-      throw new Error(error.response?.data?.message || error.message || 'Đăng nhập thất bại');
+      console.error('🔥 authService.login error:', error);
+      
+      // ✅ Quan trọng: Throw lại error để component có thể catch
+      throw error; // Giữ nguyên error object với error.response
     }
   },
 
@@ -128,17 +139,49 @@ export const authService = {
     }
   },
 
+  // ✅ Cập nhật profile
+  updateProfile: async (data) => {
+    try {
+      const response = await api.put('/users/profile', data);
+      
+      if (response.data.success && response.data.data?.user) {
+        // Cập nhật localStorage với thông tin mới
+        const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+        const updatedUser = {
+          ...currentUser,
+          ...response.data.data.user
+        };
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+      }
+      
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
   // Lấy thông tin profile
   getProfile: async () => {
     try {
       const response = await api.get('/users/profile');
       if (response.data.success && response.data.data?.user) {
-        // Cập nhật localStorage với thông tin mới nhất
+        // ✅ Cập nhật localStorage với thông tin mới nhất
         localStorage.setItem('user', JSON.stringify(response.data.data.user));
       }
       return response.data;
     } catch (error) {
       throw new Error(error.response?.data?.message || 'Không thể lấy thông tin profile');
+    }
+  },
+
+  // ✅ Lấy thông tin user hiện tại từ API
+  getCurrentUserProfile: async () => {
+    try {
+      const response = await api.get('/users/profile');
+      return response.data;
+    } catch (error) {
+      console.error('Get current user error:', error);
+      throw error;
     }
   }
 };

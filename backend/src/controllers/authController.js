@@ -34,8 +34,8 @@ const parseExpireToMs = (expire) => {
 const generateToken = (userId) => {
   return jwt.sign(
     { id: userId },
-    process.env.JWT_SECRET || 'default-secret-key',
-    { expiresIn: process.env.JWT_EXPIRE || '1d' }
+    process.env.JWT_SECRET,
+    { expiresIn: process.env.JWT_EXPIRE || '7d' }
   );
 };
 
@@ -550,95 +550,37 @@ const oauthSuccessRedirect = (req, res) => {
   try {
     const user = req.user;
     
+    console.log('🎯 OAuth callback handler called');
+    console.log('👤 User object:', user ? {
+      id: user._id,
+      email: user.email,
+      provider: user.provider
+    } : 'null');
+    
     if (!user) {
+      console.error('❌ No user found in OAuth callback');
       return res.redirect(
-        `${process.env.CLIENT_URL || 'http://localhost:3000'}/login?error=oauth`
+        `${process.env.CLIENT_URL || 'http://localhost:3000'}/login?error=no_user`
       );
     }
 
+    console.log('✅ OAuth success for user:', user.email);
+
+    // Generate JWT token
     const token = generateToken(user._id);
+    console.log('🔑 Token generated:', token.substring(0, 20) + '...');
 
-    const isProduction = process.env.NODE_ENV === 'production';
-    const secure = isProduction;
-    const sameSite = secure ? 'None' : 'Lax';
-    const maxAge = parseExpireToMs(process.env.JWT_EXPIRE || '1d');
-
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure,
-      sameSite,
-      maxAge
-    });
-
-    const redirectBase = process.env.CLIENT_URL || 'http://localhost:3000';
-    return res.redirect(`${redirectBase}/oauth-success`);
+    // Redirect đến frontend success page
+    const redirectUrl = `${process.env.CLIENT_URL || 'http://localhost:3000'}/oauth/success?token=${token}`;
+    console.log('🔀 Redirecting to:', redirectUrl);
+    
+    return res.redirect(redirectUrl);
     
   } catch (err) {
-    console.error('Lỗi xử lý OAuth redirect:', err);
+    console.error('❌ OAuth redirect error:', err);
     return res.redirect(
-      `${process.env.CLIENT_URL || 'http://localhost:3000'}/login?error=oauth`
+      `${process.env.CLIENT_URL || 'http://localhost:3000'}/login?error=server_error`
     );
-
-// Login - sẽ implement sau
-const login = async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    // Kiểm tra input
-    if (!email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: 'Vui lòng nhập email và mật khẩu'
-      });
-    }
-
-    // Tìm user theo email hoặc phone
-    const user = await User.findOne({
-      $or: [{ email }, { phone: email }]
-    }).select('+password');
-
-    if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: 'Email hoặc mật khẩu không đúng'
-      });
-    }
-
-    // Kiểm tra mật khẩu
-    const isPasswordValid = await user.comparePassword(password);
-
-    if (!isPasswordValid) {
-      return res.status(401).json({
-        success: false,
-        message: 'Email hoặc mật khẩu không đúng'
-      });
-    }
-    const token = generateToken(user._id);
-
-    // Trả về thông tin user (không có password)
-    res.status(200).json({
-      success: true,
-      message: 'Đăng nhập thành công',
-      data: {
-        user: {
-          id: user._id,
-          name: user.name,
-          email: user.email,
-          phone: user.phone,
-          role: user.role,
-          createdAt: user.createdAt
-        },
-        token
-      }
-    });
-
-  } catch (error) {
-    console.error('Lỗi đăng nhập:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Đã xảy ra lỗi khi đăng nhập'
-    });
-
   }
 };
 

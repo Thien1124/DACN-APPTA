@@ -406,6 +406,7 @@ const Profile = () => {
     name: '',
     username: '',
     email: '',
+    avatar: null, // ✅ Thêm avatar
     joinDate: '',
     following: 0,
     followers: 0,
@@ -414,33 +415,61 @@ const Profile = () => {
 
   // Fetch user profile from backend
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const response = await authService.getProfile();
-        if (response.success && response.data?.user) {
-          const user = response.data.user;
-          setUserData({
-            name: user.name || 'User',
-            username: user.username || user.name || 'user123',
-            email: user.email || '',
-            joinDate: user.createdAt 
-              ? `Đã tham gia ${new Date(user.createdAt).toLocaleDateString('vi-VN', { month: 'long', year: 'numeric' })}`
-              : 'Đã tham gia gần đây',
-            following: user.following || 0,
-            followers: user.followers || 0,
-            languages: user.languages || ['🇺🇸']
-          });
-        }
-      } catch (error) {
-        console.error('Error fetching profile:', error);
-        showToast('error', 'Lỗi!', error.message || 'Không thể tải thông tin hồ sơ');
-      } finally {
-        setLoading(false);
-      }
+    fetchProfile();
+
+    // ✅ Listen for avatar update events
+    const handleAvatarUpdate = (event) => {
+      console.log('Avatar updated event received:', event.detail); // Debug
+      
+      setUserData(prev => ({
+        ...prev,
+        avatar: event.detail.avatar
+      }));
     };
 
-    fetchProfile();
+    window.addEventListener('avatarUpdated', handleAvatarUpdate);
+
+    return () => {
+      window.removeEventListener('avatarUpdated', handleAvatarUpdate);
+    };
   }, []);
+
+  const fetchProfile = async () => {
+    try {
+      const response = await authService.getProfile();
+      if (response.success && response.data?.user) {
+        const user = response.data.user;
+        setUserData({
+          name: user.name || 'User',
+          username: user.username || user.name || 'user123',
+          email: user.email || '',
+          avatar: user.avatar || null, // ✅ Lấy avatar từ API
+          joinDate: user.createdAt 
+            ? `Đã tham gia ${new Date(user.createdAt).toLocaleDateString('vi-VN', { month: 'long', year: 'numeric' })}`
+            : 'Đã tham gia gần đây',
+          following: user.following || 0,
+          followers: user.followers || 0,
+          languages: user.languages || ['🇺🇸']
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      showToast('error', 'Lỗi!', error.message || 'Không thể tải thông tin hồ sơ');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ✅ Tạo full avatar URL
+  const getAvatarUrl = () => {
+    if (!userData.avatar) return null;
+    
+    if (userData.avatar.startsWith('http')) {
+      return userData.avatar;
+    }
+    
+    return `${process.env.REACT_APP_API_URL.replace('/api', '')}${userData.avatar}`;
+  };
 
   // Mock stats (có thể thay bằng API call riêng sau này)
   const stats = [
@@ -553,9 +582,19 @@ const Profile = () => {
           {/* Profile Header */}
           <ProfileHeader>
             <UserInfo>
-              <UserAvatar>
-                {userData.name.charAt(0).toUpperCase()}
-              </UserAvatar>
+              {/* ✅ Hiển thị avatar hoặc initial */}
+              {getAvatarUrl() ? (
+                <UserAvatar style={{ 
+                  backgroundImage: `url(${getAvatarUrl()})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center'
+                }} />
+              ) : (
+                <UserAvatar>
+                  {userData.name.charAt(0).toUpperCase()}
+                </UserAvatar>
+              )}
+              
               <UserDetails>
                 <UserName>{userData.name}</UserName>
                 <Username>{userData.username}</Username>

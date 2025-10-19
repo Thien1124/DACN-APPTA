@@ -5,6 +5,7 @@ import Toast from '../components/Toast';
 import useToast from '../hooks/useToast';
 import { authService } from '../services/authService';
 import LeftSidebar from '../components/LeftSidebar';
+import Avatar from '../components/Avatar'; // ✅ Import Avatar
 
 const ProfileSettings = () => {
   const navigate = useNavigate();
@@ -18,6 +19,7 @@ const ProfileSettings = () => {
     name: '',
     username: '',
     email: '',
+    avatar: null, // ✅ Thêm avatar vào state
     currentPassword: '',
     newPassword: ''
   });
@@ -29,15 +31,18 @@ const ProfileSettings = () => {
         const response = await authService.getProfile();
         if (response.success && response.data?.user) {
           const user = response.data.user;
-          setFormData(prev => ({
-            ...prev,
+          setFormData({
             name: user.name || '',
-            username: user.username || user.name || '', // fallback to name if no username
-            email: user.email || ''
-          }));
+            username: user.username || user.email.split('@')[0],
+            email: user.email || '',
+            avatar: user.avatar || null, // ✅ Lấy avatar từ API
+            currentPassword: '',
+            newPassword: ''
+          });
         }
       } catch (error) {
-        showToast('error', 'Lỗi!', error.message || 'Không thể tải thông tin hồ sơ');
+        console.error('Error fetching profile:', error);
+        showToast('error', 'Lỗi', 'Không thể tải thông tin profile');
       } finally {
         setLoadingProfile(false);
       }
@@ -54,30 +59,61 @@ const ProfileSettings = () => {
     }));
   };
 
-  const handleSave = async () => {
+  // ✅ Xử lý khi avatar thay đổi
+  const handleAvatarChange = (newAvatarPath) => {
+    console.log('Avatar changed:', newAvatarPath); // Debug
+    
+    setFormData(prev => ({
+      ...prev,
+      avatar: newAvatarPath // Lưu path thay vì URL
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!formData.name.trim()) {
+      showToast('error', 'Lỗi', 'Tên không được để trống');
+      return;
+    }
+
+    if (formData.newPassword && !formData.currentPassword) {
+      showToast('error', 'Lỗi', 'Vui lòng nhập mật khẩu hiện tại');
+      return;
+    }
+
+    // ✅ Validate password length
+    if (formData.newPassword && formData.newPassword.length < 6) {
+      showToast('error', 'Lỗi', 'Mật khẩu mới phải có ít nhất 6 ký tự');
+      return;
+    }
+
     setLoading(true);
+
     try {
       const updateData = {
-        name: formData.name
+        name: formData.name,
       };
 
-      // Nếu có đổi mật khẩu
+      // ✅ Chỉ gửi password nếu có thay đổi
       if (formData.currentPassword && formData.newPassword) {
-        if (formData.newPassword.length < 6) {
-          showToast('error', 'Lỗi!', 'Mật khẩu mới phải có ít nhất 6 ký tự');
-          setLoading(false);
-          return;
-        }
         updateData.currentPassword = formData.currentPassword;
         updateData.newPassword = formData.newPassword;
       }
 
-      // Call API to update profile
+      console.log('Updating profile with:', updateData); // Debug
+
       const response = await authService.updateProfile(updateData);
-      
+
       if (response.success) {
-        showToast('success', 'Thành công!', 'Hồ sơ của bạn đã được cập nhật');
-        // Clear password fields
+        showToast('success', 'Thành công', 'Cập nhật profile thành công');
+        
+        // ✅ Cập nhật localStorage
+        const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+        currentUser.name = formData.name;
+        localStorage.setItem('user', JSON.stringify(currentUser));
+
+        // Reset password fields
         setFormData(prev => ({
           ...prev,
           currentPassword: '',
@@ -85,7 +121,10 @@ const ProfileSettings = () => {
         }));
       }
     } catch (error) {
-      showToast('error', 'Lỗi!', error.message || 'Cập nhật thất bại');
+      console.error('Update profile error:', error); // Debug
+      
+      const errorMessage = error.response?.data?.message || 'Không thể cập nhật profile';
+      showToast('error', 'Lỗi', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -94,6 +133,8 @@ const ProfileSettings = () => {
   if (loadingProfile) {
     return (
       <PageWrapper>
+        <Toast toast={toast} onClose={hideToast} />
+        
         <ContentWrapper>
           <LeftArea>
             <LeftSidebar active="settings" />
@@ -105,6 +146,13 @@ const ProfileSettings = () => {
       </PageWrapper>
     );
   }
+
+  // ✅ Tạo avatarUrl đầy đủ
+  const avatarUrl = formData.avatar 
+    ? (formData.avatar.startsWith('http') 
+        ? formData.avatar 
+        : `${process.env.REACT_APP_API_URL.replace('/api', '')}${formData.avatar}`)
+    : null;
 
   return (
     <PageWrapper>
@@ -126,94 +174,120 @@ const ProfileSettings = () => {
             </HeaderSection>
 
             <Section>
+              {/* ✅ Sử dụng Avatar component với upload */}
               <AvatarSection>
-                <Avatar>
-                  {formData.name.charAt(0).toUpperCase() || '?'}
-                </Avatar>
+                <Avatar
+                  size={100}
+                  image={avatarUrl}
+                  name={formData.name}
+                  borderWidth={4}
+                  shadow={true}
+                  editable={true} // ✅ Cho phép upload
+                  allowDelete={!!formData.avatar} // ✅ Cho phép xóa nếu có avatar
+                  onAvatarChange={handleAvatarChange} // ✅ Callback khi thay đổi
+                />
                 <AvatarInfo>
-                  <AvatarTitle>Ảnh đại diện</AvatarTitle>
-                  <ChangeAvatarButton>Thay đổi</ChangeAvatarButton>
+                  <AvatarTitle>{formData.name || 'Người dùng'}</AvatarTitle>
+                  <AvatarSubtitle>Nhấp vào ảnh để thay đổi</AvatarSubtitle>
                 </AvatarInfo>
               </AvatarSection>
 
-              <FormGroup>
-                <Label>Tên</Label>
-                <Input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  placeholder="Nhập tên của bạn"
-                />
-              </FormGroup>
-
-              <FormGroup>
-                <Label>Tên đăng nhập</Label>
-                <Input
-                  type="text"
-                  name="username"
-                  value={formData.username}
-                  onChange={handleChange}
-                  placeholder="Nhập tên đăng nhập"
-                />
-              </FormGroup>
-
-              <FormGroup>
-                <Label>Email</Label>
-                <Input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  disabled
-                />
-                <HintText>Email không thể thay đổi</HintText>
-              </FormGroup>
-
-              <Divider />
-
-              <SectionTitle>Đổi mật khẩu</SectionTitle>
-
-              <FormGroup>
-                <Label>Mật khẩu hiện tại</Label>
-                <InputWrapper>
+              <Form onSubmit={handleSubmit}>
+                <FormGroup>
+                  <Label>Tên hiển thị</Label>
                   <Input
-                    type={showCurrentPassword ? 'text' : 'password'}
-                    name="currentPassword"
-                    value={formData.currentPassword}
+                    type="text"
+                    name="name"
+                    value={formData.name}
                     onChange={handleChange}
-                    placeholder="Nhập mật khẩu hiện tại"
+                    placeholder="Nhập tên của bạn"
                   />
-                  <PasswordToggleButton
-                    type="button"
-                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                  >
-                    {showCurrentPassword ? '👁️' : '👁️‍🗨️'}
-                  </PasswordToggleButton>
-                </InputWrapper>
-              </FormGroup>
+                </FormGroup>
 
-              <FormGroup>
-                <Label>Mật khẩu mới</Label>
-                <InputWrapper>
+                <FormGroup>
+                  <Label>Tên người dùng</Label>
                   <Input
-                    type={showNewPassword ? 'text' : 'password'}
-                    name="newPassword"
-                    value={formData.newPassword}
-                    onChange={handleChange}
-                    placeholder="Nhập mật khẩu mới (tối thiểu 6 ký tự)"
+                    type="text"
+                    name="username"
+                    value={formData.username}
+                    disabled
+                    style={{ background: '#f3f4f6', cursor: 'not-allowed' }}
                   />
-                  <PasswordToggleButton
-                    type="button"
-                    onClick={() => setShowNewPassword(!showNewPassword)}
-                  >
-                    {showNewPassword ? '👁️' : '👁️‍🗨️'}
-                  </PasswordToggleButton>
-                </InputWrapper>
-              </FormGroup>
+                  <HelpText>Tên người dùng không thể thay đổi</HelpText>
+                </FormGroup>
 
-              <SaveButton onClick={handleSave} disabled={loading}>
-                {loading ? 'Đang lưu...' : 'Lưu thay đổi'}
-              </SaveButton>
+                <FormGroup>
+                  <Label>Email</Label>
+                  <Input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    disabled
+                    style={{ background: '#f3f4f6', cursor: 'not-allowed' }}
+                  />
+                  <HelpText>Email không thể thay đổi</HelpText>
+                </FormGroup>
+
+                <Divider>
+                  <DividerText>Thay đổi mật khẩu</DividerText>
+                </Divider>
+
+                <FormGroup>
+                  <Label>Mật khẩu hiện tại</Label>
+                  <PasswordWrapper>
+                    <Input
+                      type={showCurrentPassword ? 'text' : 'password'}
+                      name="currentPassword"
+                      value={formData.currentPassword}
+                      onChange={handleChange}
+                      placeholder="Nhập mật khẩu hiện tại"
+                    />
+                    
+                    <ToggleButton 
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setShowCurrentPassword(!showCurrentPassword);
+                      }}
+                    >
+                      {showCurrentPassword ? '👁️' : '👁️‍🗨️'}
+                    </ToggleButton>
+                  </PasswordWrapper>
+                </FormGroup>
+
+                <FormGroup>
+                  <Label>Mật khẩu mới</Label>
+                  <PasswordWrapper>
+                    <Input
+                      type={showNewPassword ? 'text' : 'password'}
+                      name="newPassword"
+                      value={formData.newPassword}
+                      onChange={handleChange}
+                      placeholder="Nhập mật khẩu mới"
+                    />
+                    
+                    <ToggleButton 
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setShowNewPassword(!showNewPassword);
+                      }}
+                    >
+                      {showNewPassword ? '👁️' : '👁️‍🗨️'}
+                    </ToggleButton>
+                  </PasswordWrapper>
+                  <HelpText>Mật khẩu phải có ít nhất 6 ký tự</HelpText>
+                </FormGroup>
+
+                <ButtonGroup>
+                  <CancelButton type="button" onClick={() => navigate('/settings')}>
+                    Hủy
+                  </CancelButton>
+                  <SaveButton type="submit" disabled={loading}>
+                    {loading ? 'Đang lưu...' : 'Lưu thay đổi'}
+                  </SaveButton>
+                </ButtonGroup>
+              </Form>
             </Section>
           </Container>
         </RightArea>
@@ -222,9 +296,7 @@ const ProfileSettings = () => {
   );
 };
 
-export default ProfileSettings;
-
-/* Styled Components */
+// ========== STYLED COMPONENTS ==========
 const PageWrapper = styled.div`
   min-height: 100vh;
   background: #f8fafc;
@@ -292,6 +364,10 @@ const BackButton = styled.button`
     transform: translateX(-4px);
   }
 `;
+const Form = styled.form`
+  display: flex;
+  flex-direction: column;
+`;
 
 const Title = styled.h1`
   font-size: 2rem;
@@ -318,70 +394,26 @@ const AvatarSection = styled.div`
   display: flex;
   align-items: center;
   gap: 1.5rem;
+  padding: 2rem;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border-radius: 16px;
   margin-bottom: 2rem;
-  padding-bottom: 2rem;
-  border-bottom: 2px solid #f3f4f6;
-`;
-
-const Avatar = styled.div`
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #1CB0F6 0%, #0d9ed8 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 3rem;
-  color: white;
-  cursor: pointer;
-  position: relative;
-  transition: all 0.3s ease;
-
-  &:hover {
-    transform: scale(1.05);
-    box-shadow: 0 8px 24px rgba(28, 176, 246, 0.3);
-  }
-
-  &:hover::after {
-    content: '📷';
-    position: absolute;
-    font-size: 2rem;
-    background: rgba(0, 0, 0, 0.5);
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
 `;
 
 const AvatarInfo = styled.div`
   flex: 1;
 `;
 
-const AvatarTitle = styled.h3`
+const AvatarTitle = styled.div`
   font-size: 1.25rem;
   font-weight: 700;
   color: #1f2937;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
 `;
 
-const ChangeAvatarButton = styled.button`
-  padding: 0.75rem 1.5rem;
-  background: #1CB0F6;
-  color: white;
-  border: none;
-  border-radius: 12px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.3s ease;
-
-  &:hover {
-    background: #0d9ed8;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(28, 176, 246, 0.3);
-  }
+const AvatarSubtitle = styled.div`
+  font-size: 0.875rem;
+  color: #6b7280;
 `;
 
 const FormGroup = styled.div`
@@ -423,17 +455,17 @@ const Input = styled.input`
   }
 `;
 
-const HintText = styled.p`
+const HelpText = styled.p`
   margin-top: 0.5rem;
   font-size: 0.875rem;
   color: #6b7280;
 `;
 
-const InputWrapper = styled.div`
+const PasswordWrapper = styled.div`
   position: relative;
 `;
 
-const PasswordToggleButton = styled.button`
+const ToggleButton = styled.button`
   position: absolute;
   right: 1rem;
   top: 50%;
@@ -447,6 +479,11 @@ const PasswordToggleButton = styled.button`
   &:hover {
     transform: translateY(-50%) scale(1.1);
   }
+
+  /* ✅ Thêm để ngăn submit form */
+  &:focus {
+    outline: none;
+  }
 `;
 
 const Divider = styled.div`
@@ -455,15 +492,39 @@ const Divider = styled.div`
   margin: 2rem 0;
 `;
 
-const SectionTitle = styled.h3`
-  font-size: 1.125rem;
-  font-weight: 700;
-  color: #1f2937;
-  margin-bottom: 1.5rem;
+const DividerText = styled.span`
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #9ca3af;
+  background: #fff;
+  padding: 0 0.5rem;
+  position: relative;
+  top: -10px;
+`;
+
+const ButtonGroup = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+`;
+
+const CancelButton = styled.button`
+  padding: 0.75rem 1.5rem;
+  background: #f3f4f6;
+  color: #374151;
+  border: none;
+  border-radius: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: #e5e7eb;
+  }
 `;
 
 const SaveButton = styled.button`
-  padding: 1rem 2rem;
+  padding: 0.75rem 1.5rem;
   background: linear-gradient(135deg, #58CC02 0%, #45a302 100%);
   color: white;
   border: none;
@@ -472,7 +533,6 @@ const SaveButton = styled.button`
   font-weight: 700;
   cursor: pointer;
   transition: all 0.3s ease;
-  margin-top: 1rem;
 
   &:hover {
     transform: translateY(-2px);
@@ -489,3 +549,5 @@ const SaveButton = styled.button`
     transform: none;
   }
 `;
+
+export default ProfileSettings;

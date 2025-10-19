@@ -8,9 +8,10 @@ const api = axios.create({
   },
 });
 
-// Request interceptor - thêm token vào header
+// Request interceptor
 api.interceptors.request.use(
   (config) => {
+    
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -22,15 +23,37 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor - xử lý lỗi chung
+// Response interceptor
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    
+    return response;
+  },
   (error) => {
-    if (error.response?.status === 401) {
-      // Token hết hạn - redirect về login
-      localStorage.removeItem('token');
-      window.location.href = '/login';
+    console.error('❌ Response error:', error);
+    
+    if (error.response) {
+      console.error(`🔴 Status: ${error.response.status}`);
+      console.error('🔴 Data:', error.response.data);
+      console.error('🔴 Headers:', error.response.headers);
+    } else if (error.request) {
+      console.error('🔴 No response received:', error.request);
+    } else {
+      console.error('🔴 Error message:', error.message);
     }
+    
+    // Xử lý 401 Unauthorized
+    if (error.response?.status === 401) {
+      const currentPath = window.location.pathname;
+      
+      if (currentPath !== '/login' && currentPath !== '/register') {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+      }
+    }
+    
+    // ✅ Luôn reject để component có thể catch
     return Promise.reject(error);
   }
 );

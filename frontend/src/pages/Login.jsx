@@ -544,6 +544,8 @@ const Login = () => {
   // Handle submit
   const handleSubmit = async (e) => {
     e.preventDefault();
+    e.stopPropagation(); // Ngăn event bubbling
+
 
     if (!validateForm()) {
       showToast('error', 'Lỗi!', 'Vui lòng kiểm tra lại thông tin đăng nhập');
@@ -553,12 +555,13 @@ const Login = () => {
     setLoading(true);
 
     try {
+      
       const response = await authService.login({
-        email: formData.email,
+        email: formData.email.trim(),
         password: formData.password,
       });
 
-      // Kiểm tra user data
+      
       const user = response.data?.user;
       
       if (!user) {
@@ -589,21 +592,18 @@ const Login = () => {
               await authService.resendOTP(user.email);
               showToast('success', 'Đã gửi!', 'Vui lòng kiểm tra email của bạn');
             } catch (error) {
-              showToast('error', 'Lỗi!', error.message);
+              showToast('error', 'Lỗi!', error.message || 'Không thể gửi lại OTP');
             }
           }
         });
         
-        // Đăng xuất và xóa token
         authService.logout();
         return;
       }
 
       showToast('success', 'Thành công!', 'Đăng nhập thành công!');
       
-      // Chờ 1 giây rồi chuyển hướng theo role
       setTimeout(() => {
-        // Chuyển hướng dựa trên role
         if (user.role === 'admin') {
           navigate('/admin');
         } else {
@@ -612,43 +612,76 @@ const Login = () => {
       }, 1000);
       
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('❌ Login error:', error); // Debug
+      console.error('📋 Error details:', {
+        response: error.response,
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data
+      }); // Debug chi tiết
+
       setLoading(false);
       
-      // Xử lý các loại lỗi cụ thể
       let errorMessage = 'Đăng nhập thất bại. Vui lòng thử lại!';
+      let fieldErrors = {};
       
       if (error.response) {
         const status = error.response.status;
         const data = error.response.data;
         
+       
         switch (status) {
+          case 400:
+            errorMessage = data.message || 'Thông tin đăng nhập không hợp lệ';
+            break;
+            
           case 401:
             errorMessage = 'Email hoặc mật khẩu không chính xác!';
-            setErrors({
-              email: 'Email hoặc mật khẩu không đúng',
+            fieldErrors = {
               password: 'Email hoặc mật khẩu không đúng'
-            });
+            };
             break;
+            
           case 403:
-            // Trường hợp tài khoản chưa kích hoạt đã được xử lý ở trên
             if (data.data?.needsVerification) {
-              return; // Đã xử lý rồi, không cần hiển thị toast
+              return; // Đã xử lý ở trên
             }
             errorMessage = data.message || 'Tài khoản của bạn đã bị khóa!';
             break;
+            
           case 404:
             errorMessage = 'Tài khoản không tồn tại!';
-            setErrors({ email: 'Tài khoản không tồn tại' });
+            fieldErrors = { email: 'Tài khoản không tồn tại' };
             break;
+            
+          case 500:
+            errorMessage = 'Lỗi server. Vui lòng thử lại sau!';
+            break;
+            
           default:
             errorMessage = data.message || errorMessage;
         }
+        
+        // Set field errors nếu có
+        if (Object.keys(fieldErrors).length > 0) {
+          setErrors(fieldErrors);
+        }
+        
+      } else if (error.request) {
+        // Request được gửi nhưng không nhận được response
+        errorMessage = 'Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng!';
+        console.error('🌐 No response received:', error.request);
+        
       } else if (error.message) {
         errorMessage = error.message;
       }
       
+     
+      // Hiển thị toast error
       showToast('error', 'Đăng nhập thất bại!', errorMessage);
+      
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -747,7 +780,7 @@ const Login = () => {
                     </svg>
                   ) : (
                     <svg viewBox="0 0 24 24">
-                      <path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"/>
+                      <path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-4.75 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"/>
                     </svg>
                   )}
                 </PasswordToggle>
