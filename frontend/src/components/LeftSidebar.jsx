@@ -278,7 +278,7 @@ const LeftSidebar = () => {
 
   return (
     <SidebarContainer>
-      <Logo onClick={() => navigate('/dashboard')}>
+      <Logo onClick={() => navigate('/learn')}>
         <LogoImage src={logo} alt="EnglishMaster" />
         <LogoText>EnglishMaster</LogoText>
       </Logo>

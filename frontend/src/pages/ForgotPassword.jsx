@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import styled from 'styled-components';
 import Toast from '../components/Toast';
 import useToast from '../hooks/useToast';
+import { authService } from '../services/authService';
 
 // ========== STYLED COMPONENTS ==========
 
@@ -320,7 +321,7 @@ const ForgotPassword = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
-  const [timer, setTimer] = useState(60);
+  const [timer, setTimer] = useState(600); // 10 minutes for reset OTP
   const [canResend, setCanResend] = useState(false);
 
   // Timer countdown
@@ -335,7 +336,7 @@ const ForgotPassword = () => {
     }
   }, [currentStep, timer]);
 
-  // Handle email submission
+  // Handle email submission -> call backend to send OTP
   const handleEmailSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -353,62 +354,37 @@ const ForgotPassword = () => {
     }
 
     setLoading(true);
-
-    setTimeout(() => {
+    try {
+      const resp = await authService.forgotPassword(email.trim());
+      if (resp && resp.success) {
+        showToast('success', 'Thành công!', resp.message || 'Mã xác nhận đã được gửi đến email của bạn');
+        setCurrentStep(2);
+        setTimer(600); // 10 minutes
+        setCanResend(false);
+        setCode('');
+        setPassword('');
+        setConfirmPassword('');
+      } else {
+        throw new Error(resp?.message || 'Không thể gửi mã OTP');
+      }
+    } catch (err) {
+      console.error('Forgot password error:', err);
+      showToast('error', 'Lỗi!', err.message || 'Không thể gửi mã OTP');
+    } finally {
       setLoading(false);
-      setCurrentStep(2);
-      setTimer(60);
-      setCanResend(false);
-      showToast('success', 'Thành công!', 'Mã xác nhận đã được gửi đến email của bạn');
-    }, 1500);
+    }
   };
 
-  // Handle code verification
-  const handleCodeSubmit = async (e) => {
+  // Handle reset (verify OTP + set new password)
+  const handleResetSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
-    if (!code) {
-      setError('Vui lòng nhập mã xác nhận');
-      showToast('warning', 'Cảnh báo!', 'Vui lòng nhập mã xác nhận');
-      return;
-    }
-
-    if (code.length !== 6) {
-      setError('Mã xác nhận phải có 6 số');
+    if (!code || code.length !== 6) {
+      setError('Vui lòng nhập mã xác nhận 6 số');
       showToast('warning', 'Cảnh báo!', 'Mã xác nhận phải có 6 số');
       return;
     }
-
-    setLoading(true);
-
-    setTimeout(() => {
-      setLoading(false);
-
-      // Giả lập kiểm tra mã (trong thực tế sẽ gọi API)
-      if (code === '123456') {
-        setCurrentStep(3);
-        showToast('success', 'Thành công!', 'Mã xác nhận chính xác!');
-      } else {
-        setError('Mã xác nhận không đúng');
-        showToast('error', 'Lỗi!', 'Mã xác nhận không đúng');
-        setCode('');
-      }
-    }, 1500);
-  };
-
-  // Handle resend code
-  const handleResendCode = () => {
-    setTimer(60);
-    setCanResend(false);
-    setCode('');
-    showToast('info', 'Thông báo', 'Mã xác nhận mới đã được gửi!');
-  };
-
-  // Handle password submission
-  const handlePasswordSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
 
     if (!password) {
       setError('Vui lòng nhập mật khẩu mới');
@@ -429,16 +405,42 @@ const ForgotPassword = () => {
     }
 
     setLoading(true);
-
-    setTimeout(() => {
+    try {
+      const resp = await authService.resetPassword(email.trim(), code, password, confirmPassword);
+      if (resp && resp.success) {
+        showToast('success', 'Thành công!', resp.message || 'Đặt lại mật khẩu thành công!');
+        setTimeout(() => {
+          navigate('/login');
+        }, 1500);
+      } else {
+        throw new Error(resp?.message || 'Đặt lại mật khẩu thất bại');
+      }
+    } catch (err) {
+      console.error('Reset password error:', err);
+      showToast('error', 'Lỗi!', err.message || 'Đặt lại mật khẩu thất bại');
+    } finally {
       setLoading(false);
-      showToast('success', 'Thành công!', 'Đặt lại mật khẩu thành công!');
+    }
+  };
 
-      // Chuyển về trang login sau 2 giây
-      setTimeout(() => {
-        navigate('/login');
-      }, 2000);
-    }, 1500);
+  // Handle resend code -> call backend again
+  const handleResendCode = async () => {
+    if (!email) return;
+    setCanResend(false);
+    setTimer(600);
+    setCode('');
+    try {
+      const resp = await authService.forgotPassword(email.trim());
+      if (resp && resp.success) {
+        showToast('success', 'Thành công!', resp.message || 'Mã xác nhận mới đã được gửi!');
+      } else {
+        throw new Error(resp?.message || 'Không thể gửi lại mã');
+      }
+    } catch (err) {
+      console.error('Resend OTP error:', err);
+      showToast('error', 'Lỗi!', err.message || 'Gửi lại OTP thất bại');
+      setCanResend(true);
+    }
   };
 
   return (
@@ -463,13 +465,11 @@ const ForgotPassword = () => {
         <FormContainer>
           <Title>
             {currentStep === 1 && 'Quên mật khẩu'}
-            {currentStep === 2 && 'Nhập mã xác nhận'}
-            {currentStep === 3 && 'Tạo mật khẩu mới'}
+            {currentStep === 2 && 'Nhập mã & tạo mật khẩu mới'}
           </Title>
           <Subtitle>
             {currentStep === 1 && 'Chúng tôi sẽ gửi hướng dẫn đặt lại mật khẩu của bạn qua email.'}
             {currentStep === 2 && `Chúng tôi đã gửi mã 6 số đến ${email}`}
-            {currentStep === 3 && 'Hãy tạo một mật khẩu mạnh và dễ nhớ'}
           </Subtitle>
 
           {currentStep === 1 && (
@@ -496,7 +496,7 @@ const ForgotPassword = () => {
           )}
 
           {currentStep === 2 && (
-            <Form onSubmit={handleCodeSubmit}>
+            <Form onSubmit={handleResetSubmit}>
               <FormGroup>
                 <Input
                   type="text"
@@ -515,27 +515,6 @@ const ForgotPassword = () => {
                 {error && <ErrorMessage>{error}</ErrorMessage>}
               </FormGroup>
 
-              <TimerText>
-                {canResend ? (
-                  <>
-                    Không nhận được mã?{' '}
-                    <ResendButton onClick={handleResendCode} type="button">
-                      Gửi lại
-                    </ResendButton>
-                  </>
-                ) : (
-                  `Gửi lại mã sau ${timer}s`
-                )}
-              </TimerText>
-
-              <SubmitButton type="submit" disabled={loading}>
-                {loading ? <LoadingSpinner /> : 'Xác nhận'}
-              </SubmitButton>
-            </Form>
-          )}
-
-          {currentStep === 3 && (
-            <Form onSubmit={handlePasswordSubmit}>
               <FormGroup>
                 <Input
                   type="password"
@@ -562,8 +541,20 @@ const ForgotPassword = () => {
                   error={error}
                   autoComplete="new-password"
                 />
-                {error && <ErrorMessage>{error}</ErrorMessage>}
               </FormGroup>
+
+              <TimerText>
+                {canResend ? (
+                  <>
+                    Không nhận được mã?{' '}
+                    <ResendButton onClick={handleResendCode} type="button">
+                      Gửi lại
+                    </ResendButton>
+                  </>
+                ) : (
+                  `Gửi lại mã sau ${timer}s`
+                )}
+              </TimerText>
 
               <SubmitButton type="submit" disabled={loading}>
                 {loading ? <LoadingSpinner /> : 'Đặt lại mật khẩu'}
