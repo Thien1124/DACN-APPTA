@@ -562,15 +562,62 @@ const Login = () => {
       }, 1000);
     } catch (error) {
       console.error('Login error:', error);
-      showToast('error', 'Lỗi!', error.message || 'Đăng nhập thất bại');
+      
+      // Xử lý các loại lỗi cụ thể
+      let errorMessage = 'Đăng nhập thất bại. Vui lòng thử lại!';
+      
+      if (error.response) {
+        // Lỗi từ server trả về
+        const status = error.response.status;
+        const data = error.response.data;
+        
+        switch (status) {
+          case 401:
+            errorMessage = 'Email hoặc mật khẩu không chính xác!';
+            // Highlight các trường bị lỗi
+            setErrors({
+              email: 'Email hoặc mật khẩu không đúng',
+              password: 'Email hoặc mật khẩu không đúng'
+            });
+            break;
+          case 404:
+            errorMessage = 'Tài khoản không tồn tại!';
+            setErrors({ email: 'Tài khoản không tồn tại' });
+            break;
+          case 403:
+            errorMessage = 'Tài khoản của bạn đã bị khóa!';
+            break;
+          case 422:
+            errorMessage = data?.message || 'Thông tin đăng nhập không hợp lệ!';
+            break;
+          case 500:
+            errorMessage = 'Lỗi máy chủ. Vui lòng thử lại sau!';
+            break;
+          default:
+            errorMessage = data?.message || error.message || 'Đăng nhập thất bại!';
+        }
+      } else if (error.request) {
+        // Lỗi không nhận được response từ server
+        errorMessage = 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng!';
+      } else {
+        // Lỗi khác
+        errorMessage = error.message || 'Đã có lỗi xảy ra!';
+      }
+      
+      showToast('error', 'Đăng nhập thất bại!', errorMessage);
     } finally {
       setLoading(false);
     }
   };
-  // Handle social login
+  // Handle social login - Cập nhật
   const handleSocialLogin = (provider) => {
-    console.log(`Login with ${provider}`);
-    showToast('info', 'Thông báo', `Đang đăng nhập bằng ${provider}...`);
+    const backendUrl = process.env.REACT_APP_API_URL ;
+    
+    if (provider === 'Google') {
+      window.location.href = `${backendUrl}/auth/google`;
+    } else if (provider === 'Facebook') {
+      window.location.href = `${backendUrl}/auth/facebook`;
+    }
   };
 
   // Handle close

@@ -4,6 +4,7 @@ import styled, { keyframes } from 'styled-components';
 import streak from '../assets/streak.png';
 import lock from '../assets/lock.png';
 import missiontoday from '../assets/missiontoday.png';
+import Swal from 'sweetalert2';
 import { authService } from '../services/authService';
 
 // ========== ANIMATIONS ==========
@@ -67,6 +68,107 @@ const SidebarContainer = styled.div`
   }
 `;
 
+const StreakCount = styled.div`
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #7c2d12;
+  line-height: 1;
+  margin-bottom: 0.25rem;
+`;
+
+const StreakDescription = styled.div`
+  font-size: 0.875rem;
+  color: #9a3412;
+  font-weight: 600;
+`;
+
+const StreakHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+`;
+const StreakSection = styled.div`
+  background: linear-gradient(135deg, #fed7aa 0%, #fdba74 100%);
+  border: 2px solid #fb923c;
+  border-radius: 16px;
+  padding: 1.25rem;
+  text-align: center;
+`;
+const StreakTitle = styled.div`
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #9a3412;
+`;
+
+
+const GoalIcon = styled.div`
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  flex-shrink: 0;
+`;
+
+const GoalContent = styled.div`
+  flex: 1;
+`;
+const GoalSection = styled.div`
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  padding: 1.25rem;
+  border: 2px solid rgba(229, 231, 235, 0.5);
+`;
+
+const GoalHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+`;
+
+const GoalTitle = styled.h3`
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #374151;
+  margin: 0;
+`;
+
+const EditButton = styled.button`
+  background: none;
+  border: none;
+  color: #1CB0F6;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    color: #0d9ed8;
+    transform: scale(1.05);
+  }
+`;
+
+const GoalCard = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: #f9fafb;
+  padding: 1rem;
+  border-radius: 12px;
+`;
+const UnlockDescription = styled.p`
+  font-size: 0.875rem;
+  color: #78350f;
+  margin: 0;
+  line-height: 1.5;
+`;
 const UnlockSection = styled.div`
   background: linear-gradient(135deg, #DDF4FF 0%, #e0f2fe 100%);
   border-radius: 16px;
@@ -375,6 +477,35 @@ const FooterLink = styled.a`
   }
 `;
 
+const LogoutSection = styled.div`
+  margin-top: auto;
+  padding: 1rem 0;
+`;
+
+const LogoutButton = styled.button`
+  width: 100%;
+  padding: 0.875rem;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(239, 68, 68, 0.3);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+`;
+
 // ========== COMPONENT ==========
 const RightSidebar = ({ 
   lessonsToUnlock = 8,
@@ -390,6 +521,33 @@ const RightSidebar = ({
   const progress = (dailyGoal.current / dailyGoal.target) * 100;
   const isCompleted = progress >= 100;
 
+  const handleLogout = async () => {
+    const result = await Swal.fire({
+      title: 'Đăng xuất?',
+      text: 'Bạn có chắc muốn đăng xuất?',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Đăng xuất',
+      cancelButtonText: 'Hủy'
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await authService.logout();
+        navigate('/login');
+      } catch (error) {
+        console.error('Logout failed:', error);
+        navigate('/login');
+      }
+    }
+  };
+
+  const handleSettings = () => {
+    navigate('/settings');
+  };
+
   return (
     <SidebarContainer>
       {/* Unlock Leaderboard */}
@@ -398,63 +556,48 @@ const RightSidebar = ({
           <UnlockTitleIcon src={lock} alt="Lock" />
           Mở khóa Bảng xếp hạng!
         </UnlockTitle>
-        <UnlockItem>
-          <UnlockIcon>
-            <UnlockIconImage src={lock} alt="Lock" />
-          </UnlockIcon>
-          <UnlockText>
-            Hoàn thành thêm {lessonsToUnlock} bài học để bắt đầu thi đua
-          </UnlockText>
-        </UnlockItem>
+        <UnlockDescription>
+          Hoàn thành {lessonsToUnlock} bài học nữa để thi đấu
+        </UnlockDescription>
       </UnlockSection>
 
-      {/* Daily Goals */}
-      <DailyGoalSection>
-        <DailyGoalHeader>
-          <DailyGoalTitle>
-            <DailyGoalIcon src={missiontoday} alt="Mission" />
-            Nhiệm vụ hằng ngày
-          </DailyGoalTitle>
-          <ViewAllLink onClick={() => navigate('/quests')}>
-            Xem tất cả
-          </ViewAllLink>
-        </DailyGoalHeader>
+      {/* Daily Goal */}
+      <GoalSection>
+        <GoalHeader>
+          <GoalTitle>Mục tiêu hàng ngày</GoalTitle>
+          <EditButton onClick={handleSettings}>CHỈNH SỬA</EditButton>
+        </GoalHeader>
         
-        <GoalProgress>
-          <GoalLabel>
-            <span>
-              <span>💎</span>
-              {dailyGoal.label}
-            </span>
-            <span style={{ 
-              color: isCompleted ? '#58CC02' : '#FFD700', 
-              fontWeight: 700 
-            }}>
-              {dailyGoal.current} / {dailyGoal.target}
-            </span>
-          </GoalLabel>
-          <ProgressBar>
-            <ProgressFill progress={progress} />
-          </ProgressBar>
-          <ProgressText completed={isCompleted}>
-            {isCompleted ? 'Hoàn thành! 🎉' : `Còn ${dailyGoal.target - dailyGoal.current} nữa!`}
-          </ProgressText>
-        </GoalProgress>
-      </DailyGoalSection>
+        <GoalCard>
+          <GoalIcon>
+            {isCompleted ? '✓' : '🎯'}
+          </GoalIcon>
+          <GoalContent>
+            <GoalLabel>{dailyGoal.label}</GoalLabel>
+            <ProgressBar>
+              <ProgressFill progress={progress} completed={isCompleted} />
+            </ProgressBar>
+            <ProgressText completed={isCompleted}>
+              {dailyGoal.current}/{dailyGoal.target} KN
+            </ProgressText>
+          </GoalContent>
+        </GoalCard>
+      </GoalSection>
 
-      {/* Streak Info */}
-      <StreakCard>
-        <StreakIconWrapper>
+      {/* Streak Section */}
+      <StreakSection>
+        <StreakHeader>
+          <StreakTitle>Chuỗi ngày streak</StreakTitle>
           <StreakIcon src={streak} alt="Streak" />
-        </StreakIconWrapper>
-        <StreakNumber>{streakCount}</StreakNumber>
-        <StreakText>Ngày Streak</StreakText>
-      </StreakCard>
+        </StreakHeader>
+        <StreakCount>{streakCount}</StreakCount>
+        <StreakDescription>ngày liên tiếp</StreakDescription>
+      </StreakSection>
 
-      {/* Create Profile */}
-      {showProfile && !isLoggedIn && (
+      {/* Profile Section - Only show if not logged in */}
+      {!isLoggedIn && showProfile && (
         <ProfileSection>
-          <ProfileTitle>Tạo hồ sơ để lưu tiến trình của bạn!</ProfileTitle>
+          <ProfileTitle>Tạo hồ sơ để lưu tiến độ!</ProfileTitle>
           <ProfileText>
             Đồng bộ tiến độ trên mọi thiết bị và không bao giờ mất dữ liệu học tập
           </ProfileText>
@@ -469,6 +612,15 @@ const RightSidebar = ({
         </ProfileSection>
       )}
 
+      {/* Logout Button - Only show if logged in */}
+      {isLoggedIn && (
+        <LogoutSection>
+          <LogoutButton onClick={handleLogout}>
+            Đăng xuất
+          </LogoutButton>
+        </LogoutSection>
+      )}
+
       {/* Footer Links */}
       <FooterLinks>
         <FooterLink onClick={() => navigate('/about')}>Giới thiệu</FooterLink>
@@ -477,7 +629,7 @@ const RightSidebar = ({
         <FooterLink onClick={() => navigate('/careers')}>Công việc</FooterLink>
         <FooterLink onClick={() => navigate('/investors')}>Nhà đầu tư</FooterLink>
         <FooterLink onClick={() => navigate('/terms')}>Điều khoản</FooterLink>
-        <FooterLink onClick={() => navigate('/privacy')}>Quyền riêng tư</FooterLink>
+        <FooterLink onClick={() => navigate('/privacy')}>Bảo mật</FooterLink>
       </FooterLinks>
     </SidebarContainer>
   );
