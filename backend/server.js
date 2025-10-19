@@ -1,7 +1,6 @@
 require('dotenv').config();
 
 const express = require('express');
-
 const passport = require('passport');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
@@ -42,6 +41,9 @@ app.use(cors({
   origin: CLIENT_URL,
   credentials: true
 }));
+
+// Serve static files (Task 9: Avatar images)
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Initialize Passport
 app.use(passport.initialize());
@@ -145,6 +147,25 @@ app.get('/', (req, res) => {
             Authorization: 'Bearer <token>'
           }
         },
+        forgotPassword: {
+          method: 'POST',
+          path: '/api/auth/forgot-password',
+          description: 'Quên mật khẩu - Gửi OTP qua email',
+          body: {
+            email: 'string (required)'
+          }
+        },
+        resetPassword: {
+          method: 'POST',
+          path: '/api/auth/reset-password',
+          description: 'Đặt lại mật khẩu với OTP',
+          body: {
+            email: 'string (required)',
+            otp: 'string (required)',
+            newPassword: 'string (required)',
+            confirmPassword: 'string (required)'
+          }
+        },
         googleAuth: {
           method: 'GET',
           path: '/api/auth/google',
@@ -168,15 +189,41 @@ app.get('/', (req, res) => {
         updateProfile: {
           method: 'PUT',
           path: '/api/users/profile',
-          description: 'Cập nhật thông tin profile',
+          description: 'Cập nhật thông tin profile (Task 8)',
           headers: {
             Authorization: 'Bearer <token>'
           },
           body: {
             name: 'string (optional)',
-            age: 'number (optional)',
-            avatar: 'string (optional)'
+            age: 'number (optional)'
           }
+        },
+        uploadAvatar: {
+          method: 'POST',
+          path: '/api/users/avatar',
+          description: 'Upload avatar (Task 9)',
+          headers: {
+            Authorization: 'Bearer <token>',
+            'Content-Type': 'multipart/form-data'
+          },
+          body: {
+            avatar: 'file (required, max 5MB, JPEG/PNG/GIF/WEBP)'
+          }
+        },
+        deleteAvatar: {
+          method: 'DELETE',
+          path: '/api/users/avatar',
+          description: 'Xóa avatar (Task 9)',
+          headers: {
+            Authorization: 'Bearer <token>'
+          }
+        }
+      },
+      staticFiles: {
+        avatars: {
+          path: '/uploads/avatars/:filename',
+          description: 'Truy cập ảnh avatar đã upload',
+          example: 'http://localhost:1124/uploads/avatars/677abc123_1729333635456.jpg'
         }
       }
     }
@@ -206,8 +253,7 @@ app.use((err, req, res, next) => {
 // Start server
 app.listen(PORT, () => {
   console.log(`Server đang chạy tại http://localhost:${PORT}`);
-
+  console.log(`Static files được serve tại: http://localhost:${PORT}/uploads`);
   console.log(`✅ Server đang chạy tại http://localhost:${PORT}`);
   console.log(`✅ CORS enabled for: http://localhost:3000`);
-
 });
