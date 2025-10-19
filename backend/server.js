@@ -4,10 +4,11 @@ const express = require('express');
 const passport = require('passport');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
+const path = require('path');
+const authenticate = require('./src/middleware/authenticate');
 
 
 const bodyParser = require('body-parser');
-const cors = require('cors');
 
 const connectDatabase = require('./config/database');
 const authRoutes = require('./src/routes/authRoutes');
@@ -228,6 +229,82 @@ app.get('/', (req, res) => {
       }
     }
   });
+});
+
+/**
+ * PUT /api/users/profile
+ * Task 8: Cập nhật thông tin profile
+ * Yêu cầu: JWT token
+ * Body: { name?, age?, currentPassword?, newPassword? }
+ */
+app.put('/api/users/profile', authenticate, async (req, res) => {
+  try {
+    const { name, age, currentPassword, newPassword } = req.body;
+    const user = req.user;
+
+    // Cập nhật name
+    if (name !== undefined) {
+      if (!name || name.trim().length < 2) {
+        return res.status(400).json({
+          success: false,
+          message: 'Tên phải có ít nhất 2 ký tự'
+        });
+      }
+      user.name = name.trim();
+    }
+
+
+    // ✅ Xử lý đổi mật khẩu
+    if (currentPassword && newPassword) {
+      // Kiểm tra mật khẩu hiện tại
+      const isPasswordValid = await user.comparePassword(currentPassword);
+      
+      if (!isPasswordValid) {
+        return res.status(401).json({
+          success: false,
+          message: 'Mật khẩu hiện tại không đúng'
+        });
+      }
+
+      // Validate mật khẩu mới
+      if (newPassword.length < 6) {
+        return res.status(400).json({
+          success: false,
+          message: 'Mật khẩu mới phải có ít nhất 6 ký tự'
+        });
+      }
+
+      // Cập nhật mật khẩu mới
+      user.password = newPassword; // Sẽ được hash bởi pre-save hook
+    }
+
+    user.updatedAt = Date.now();
+    await user.save();
+
+    console.log(`User ${user.email} đã cập nhật profile`);
+
+    res.json({
+      success: true,
+      message: 'Cập nhật profile thành công',
+      data: {
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          age: user.age,
+          avatar: user.avatar,
+          role: user.role,
+          updatedAt: user.updatedAt
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Lỗi cập nhật profile:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Đã xảy ra lỗi khi cập nhật profile'
+    });
+  }
 });
 
 // 404 handler
