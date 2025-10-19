@@ -83,6 +83,36 @@ const validateLogin = (req, res, next) => {
   next();
 };
 
+
+module.exports = { 
+  validateRegistration,
+  validateLogin 
+
+//  Thêm validation cho login
+const validateLogin = (req, res, next) => {
+  const { email, password } = req.body;
+  const errors = [];
+
+  // Kiểm tra email
+  if (!email || email.trim() === '') {
+    errors.push('Email không được để trống');
+  }
+
+  // Kiểm tra password
+  if (!password || password.trim() === '') {
+    errors.push('Mật khẩu không được để trống');
+  }
+
+  if (errors.length > 0) {
+    return res.status(400).json({
+      success: false,
+      errors
+    });
+  }
+
+  next();
+};
+
 module.exports = { 
   validateRegistration,
   validateLogin 

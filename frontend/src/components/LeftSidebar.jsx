@@ -232,7 +232,7 @@ const LeftSidebar = () => {
       id: 'pronunciation', 
       icon: speaking123, 
       text: 'Phát âm', 
-      path: '/pronunciation'
+      path: '/characters'
     },
     { 
       id: 'leaderboard', 
@@ -278,7 +278,7 @@ const LeftSidebar = () => {
 
   return (
     <SidebarContainer>
-      <Logo onClick={() => navigate('/dashboard')}>
+      <Logo onClick={() => navigate('/learn')}>
         <LogoImage src={logo} alt="EnglishMaster" />
         <LogoText>EnglishMaster</LogoText>
       </Logo>
@@ -319,17 +319,7 @@ const LeftSidebar = () => {
           <br />
           Version 1.0.0
         </FooterText>
-        <SocialLinks>
-          <SocialIcon href="https://facebook.com" target="_blank">
-            📘
-          </SocialIcon>
-          <SocialIcon href="https://twitter.com" target="_blank">
-            🐦
-          </SocialIcon>
-          <SocialIcon href="https://instagram.com" target="_blank">
-            📷
-          </SocialIcon>
-        </SocialLinks>
+        
       </SidebarFooter>
     </SidebarContainer>
   );

@@ -1,9 +1,12 @@
 require('dotenv').config();
 
 const express = require('express');
-const path = require('path');
 const passport = require('passport');
 const cookieParser = require('cookie-parser');
+const cors = require('cors');
+
+
+const bodyParser = require('body-parser');
 const cors = require('cors');
 
 const connectDatabase = require('./config/database');
@@ -13,6 +16,7 @@ const passportConfig = require('./src/config/passport');
 
 const app = express();
 const PORT = process.env.PORT || 1124;
+
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:3000';
 
 // Debug: Show environment info
@@ -22,8 +26,10 @@ console.log('NODE_ENV:', process.env.NODE_ENV || 'development');
 console.log('CLIENT_URL:', CLIENT_URL);
 console.log('---');
 
+
 // Connect to MongoDB
 connectDatabase();
+
 
 // Middlewares
 app.use(express.json());
@@ -43,9 +49,48 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(passport.initialize());
 passportConfig();
 
+// CORS Configuration
+const corsOptions = {
+  origin: ['http://localhost:3000', 'http://localhost:3001'], // Frontend URLs
+  credentials: true,
+  optionsSuccessStatus: 200,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+};
+
+// Middleware
+app.use(cors(corsOptions)); // ✅ Thêm CORS
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+
+// Import các routes mới
+const courseRoutes = require('./src/routes/courseRoutes');
+const unitRoutes = require('./src/routes/unitRoutes');
+const lessonRoutes = require('./src/routes/lessonRoutes');
+const vocabularyRoutes = require('./src/routes/vocabularyRoutes');
+const exerciseRoutes = require('./src/routes/exerciseRoutes');
+const achievementRoutes = require('./src/routes/achievementRoutes');
+const testRoutes = require('./src/routes/testRoutes');
+const deckRoutes = require('./src/routes/deckRoutes');
+const flashcardRoutes = require('./src/routes/flashcardRoutes');
+const leaderboardRoutes = require('./src/routes/leaderboardRoutes');
+
+// Sử dụng các routes mới
+app.use('/api/courses', courseRoutes);
+app.use('/api/units', unitRoutes);
+app.use('/api/lessons', lessonRoutes);
+app.use('/api/vocabularies', vocabularyRoutes);
+app.use('/api/exercises', exerciseRoutes);
+app.use('/api/achievements', achievementRoutes);
+app.use('/api/tests', testRoutes);
+app.use('/api/decks', deckRoutes);
+app.use('/api/flashcards', flashcardRoutes);
+app.use('/api/leaderboard', leaderboardRoutes);
 
 // Health root route
 app.get('/', (req, res) => {
@@ -209,4 +254,6 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`Server đang chạy tại http://localhost:${PORT}`);
   console.log(`Static files được serve tại: http://localhost:${PORT}/uploads`);
+  console.log(`✅ Server đang chạy tại http://localhost:${PORT}`);
+  console.log(`✅ CORS enabled for: http://localhost:3000`);
 });
