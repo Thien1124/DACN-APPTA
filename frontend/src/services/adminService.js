@@ -394,5 +394,36 @@ export const adminService = {
       const response = await api.post('/leaderboard/reset-monthly');
       return response.data;
     }
+  },
+
+  // ========== USERS ==========
+  users: {
+    getAll: async (params = {}) => {
+      const queryString = new URLSearchParams({
+        page: params.page || 1,
+        limit: params.limit || 10,
+        ...(params.role !== 'all' && { role: params.role }),
+        ...(params.isActive !== 'all' && { isActive: params.isActive === 'active' }),
+        ...(params.search && { search: params.search })
+      }).toString();
+
+      const response = await api.get(`/users?${queryString}`);
+      return response.data;
+    },
+
+    toggleActive: async (userId) => {
+      const response = await api.patch(`/users/${userId}/toggle-active`);
+      return response.data;
+    },
+
+    changeRole: async (userId, newRole) => {
+      const response = await api.patch(`/users/${userId}/change-role`, { role: newRole });
+      return response.data;
+    },
+
+    delete: async (userId) => {
+      const response = await api.delete(`/users/${userId}`);
+      return response.data;
+    }
   }
 };
