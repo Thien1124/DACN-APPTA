@@ -371,6 +371,9 @@ function App() {
             </ProtectedRoute>
           } />
 
+          {/* Thêm route cho OAuth success */}
+          <Route path="/oauth/success" element={<OAuthSuccess />} />
+
           {/* ========== 404 NOT FOUND ========== */}
           <Route path="*" element={
             <div style={{

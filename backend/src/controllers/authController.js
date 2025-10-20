@@ -544,43 +544,54 @@ const resetPassword = async (req, res) => {
 };
 
 /**
- * Xử lý callback OAuth
+ * Xử lý callback OAuth - Thêm async vào đây
  */
-const oauthSuccessRedirect = (req, res) => {
+const oauthSuccessRedirect = async (req, res) => {
   try {
+    console.log('📍 OAuth callback handler called');
+    
     const user = req.user;
-    
-    console.log('🎯 OAuth callback handler called');
-    console.log('👤 User object:', user ? {
-      id: user._id,
-      email: user.email,
-      provider: user.provider
-    } : 'null');
-    
     if (!user) {
       console.error('❌ No user found in OAuth callback');
-      return res.redirect(
-        `${process.env.CLIENT_URL || 'http://localhost:3000'}/login?error=no_user`
-      );
+      return res.redirect(`${process.env.CLIENT_URL}/login?error=no_user`);
     }
 
-    console.log('✅ OAuth success for user:', user.email);
+    // Ensure user is active and verified for OAuth users
+    user.isActive = true;
+    user.emailVerified = true;
+    await user.save(); // Cần async để dùng await ở đây
 
-    // Generate JWT token
+    console.log('✅ User found:', user.email);
+
+    // Generate token
     const token = generateToken(user._id);
-    console.log('🔑 Token generated:', token.substring(0, 20) + '...');
 
-    // Redirect đến frontend success page
-    const redirectUrl = `${process.env.CLIENT_URL || 'http://localhost:3000'}/oauth/success?token=${token}`;
-    console.log('🔀 Redirecting to:', redirectUrl);
+    // Prepare user data
+    const userData = {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      avatar: user.avatar,
+      provider: user.provider,
+      isActive: true,
+      emailVerified: true,
+      createdAt: user.createdAt
+    };
+
+    // Encode user data
+    const encodedUser = encodeURIComponent(JSON.stringify(userData));
+
+    // Add timestamp to prevent caching
+    const timestamp = Date.now();
+    const redirectUrl = `${process.env.CLIENT_URL}/oauth/success?token=${token}&user=${encodedUser}&t=${timestamp}`;
     
+    console.log('✅ Redirecting to:', redirectUrl);
     return res.redirect(redirectUrl);
-    
+
   } catch (err) {
     console.error('❌ OAuth redirect error:', err);
-    return res.redirect(
-      `${process.env.CLIENT_URL || 'http://localhost:3000'}/login?error=server_error`
-    );
+    return res.redirect(`${process.env.CLIENT_URL}/login?error=server_error`);
   }
 };
 

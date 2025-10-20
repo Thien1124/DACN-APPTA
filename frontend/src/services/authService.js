@@ -183,5 +183,15 @@ export const authService = {
       console.error('Get current user error:', error);
       throw error;
     }
+  },
+
+  // Handle social login
+  handleSocialLogin: (provider) => {
+    const backendUrl = process.env.REACT_APP_API_URL || 'http://localhost:1124/api';
+    const providerPath = provider.toLowerCase();
+    const authUrl = `${backendUrl}/auth/${providerPath}`;
+    
+    console.log('🔄 Redirecting to:', authUrl);
+    window.location.href = authUrl;
   }
 };

@@ -6,6 +6,7 @@ import Toast from '../components/Toast';
 import useToast from '../hooks/useToast';
 import Swal from 'sweetalert2';
 import api from '../utils/api';
+import {adminService} from '../services/adminService';
 
 // ========== STYLED COMPONENTS ==========
 
@@ -226,18 +227,22 @@ const AdminUsers = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const params = new URLSearchParams({
+      
+      const response = await adminService.users.getAll({
         page: currentPage,
         limit: 10,
-        ...(roleFilter !== 'all' && { role: roleFilter }),
-        ...(statusFilter !== 'all' && { isActive: statusFilter === 'active' }),
-        ...(searchTerm && { search: searchTerm })
+        role: roleFilter,
+        isActive: statusFilter,
+        search: searchTerm
       });
 
-      const response = await api.get(`/users?${params}`);
-      
-      setUsers(response.data.data?.users || []);
-      setTotalPages(response.data.data?.totalPages || 1);
+      if (response.success) {
+        setUsers(response.data.users);
+        setTotalPages(response.data.totalPages);
+      } else {
+        throw new Error(response.message);
+      }
+
     } catch (error) {
       console.error('Error fetching users:', error);
       showToast('error', 'Lỗi', 'Không thể tải danh sách người dùng');
@@ -246,50 +251,60 @@ const AdminUsers = () => {
     }
   };
 
-  const handleToggleActive = async (user) => {
-    const result = await Swal.fire({
-      title: `${user.isActive ? 'Vô hiệu hóa' : 'Kích hoạt'} tài khoản?`,
-      text: `Bạn có chắc muốn ${user.isActive ? 'vô hiệu hóa' : 'kích hoạt'} tài khoản "${user.name}"?`,
-      icon: 'question',
-      showCancelButton: true,
-      confirmButtonColor: user.isActive ? '#ef4444' : '#10b981',
-      cancelButtonColor: '#6b7280',
-      confirmButtonText: user.isActive ? 'Vô hiệu hóa' : 'Kích hoạt',
-      cancelButtonText: 'Hủy'
-    });
-
-    if (result.isConfirmed) {
-      try {
-        await api.patch(`/users/${user._id}/toggle-active`);
-        showToast('success', 'Thành công', `Đã ${user.isActive ? 'vô hiệu hóa' : 'kích hoạt'} tài khoản`);
-        fetchUsers();
-      } catch (error) {
-        showToast('error', 'Lỗi', error.response?.data?.message || 'Không thể cập nhật trạng thái');
-      }
-    }
-  };
+  // Role options for dropdown
+  const roleOptions = [
+    { value: 'user', label: 'Học viên' },
+    { value: 'teacher', label: 'Giảng viên' },
+    { value: 'admin', label: 'Quản trị viên' }
+  ];
 
   const handleChangeRole = async (user) => {
-    const result = await Swal.fire({
+    const { value: newRole } = await Swal.fire({
       title: 'Thay đổi vai trò',
-      text: `Thay đổi vai trò của "${user.name}" thành ${user.role === 'admin' ? 'User' : 'Admin'}?`,
-      icon: 'question',
+      text: `Chọn vai trò mới cho "${user.name}"`,
+      input: 'select',
+      inputOptions: {
+        user: 'Học viên',
+        teacher: 'Giảng viên', 
+        admin: 'Quản trị viên'
+      },
+      inputValue: user.role,
       showCancelButton: true,
-      confirmButtonColor: '#8b5cf6',
-      cancelButtonColor: '#6b7280',
-      confirmButtonText: 'Thay đổi',
-      cancelButtonText: 'Hủy'
+      confirmButtonText: 'Lưu thay đổi',
+      cancelButtonText: 'Hủy',
+      confirmButtonColor: '#3b82f6',
+      cancelButtonColor: '#6b7280'
     });
 
-    if (result.isConfirmed) {
+    if (newRole) {
       try {
-        await api.patch(`/users/${user._id}/change-role`, {
-          role: user.role === 'admin' ? 'user' : 'admin'
-        });
+        await adminService.users.changeRole(user._id, newRole);
         showToast('success', 'Thành công', 'Đã thay đổi vai trò');
         fetchUsers();
       } catch (error) {
         showToast('error', 'Lỗi', error.response?.data?.message || 'Không thể thay đổi vai trò');
+      }
+    }
+  };
+
+  const handleToggleActive = async (user) => {
+    const result = await Swal.fire({
+      title: `${user.isActive ? 'Vô hiệu hóa' : 'Kích hoạt'} tài khoản`,
+      text: `Bạn có chắc muốn ${user.isActive ? 'vô hiệu hóa' : 'kích hoạt'} tài khoản của "${user.name}"?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: user.isActive ? 'Vô hiệu hóa' : 'Kích hoạt',
+      cancelButtonText: 'Hủy',
+      confirmButtonColor: user.isActive ? '#ef4444' : '#10b981'
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await adminService.users.toggleActive(user._id);
+        showToast('success', 'Thành công', `Đã ${user.isActive ? 'vô hiệu hóa' : 'kích hoạt'} tài khoản`);
+        fetchUsers();
+      } catch (error) {
+        showToast('error', 'Lỗi', error.response?.data?.message || 'Không thể thay đổi trạng thái');
       }
     }
   };
@@ -308,7 +323,7 @@ const AdminUsers = () => {
 
     if (result.isConfirmed) {
       try {
-        await api.delete(`/users/${user._id}`);
+        await adminService.users.delete(user._id);
         showToast('success', 'Đã xóa', 'Đã xóa tài khoản');
         fetchUsers();
       } catch (error) {
@@ -365,43 +380,27 @@ const AdminUsers = () => {
         <Table>
           <thead>
             <tr>
-              <Th theme={theme}>Người dùng</Th>
+              <Th theme={theme}>Tên</Th>
+              <Th theme={theme}>Email</Th>
               <Th theme={theme}>Vai trò</Th>
               <Th theme={theme}>Trạng thái</Th>
-              <Th theme={theme}>Ngày tạo</Th>
-              <Th theme={theme}>XP</Th>
-              <Th theme={theme}>Hành động</Th>
+              <Th theme={theme}>Thao tác</Th>
             </tr>
           </thead>
           <tbody>
             {users.map((user) => (
               <tr key={user._id}>
-                <Td theme={theme}>
-                  <UserInfo>
-                    <UserAvatar>
-                      {user.name.charAt(0).toUpperCase()}
-                    </UserAvatar>
-                    <UserDetails>
-                      <UserName theme={theme}>{user.name}</UserName>
-                      <UserEmail theme={theme}>{user.email}</UserEmail>
-                    </UserDetails>
-                  </UserInfo>
-                </Td>
+                <Td theme={theme}>{user.name}</Td>
+                <Td theme={theme}>{user.email}</Td>
                 <Td theme={theme}>
                   <Badge variant={user.role === 'admin' ? 'admin' : 'user'}>
-                    {user.role === 'admin' ? '👑 Admin' : '👤 User'}
+                    {user.role === 'admin' ? 'Admin' : 'User'}
                   </Badge>
                 </Td>
                 <Td theme={theme}>
                   <Badge variant={user.isActive ? 'active' : 'inactive'}>
-                    {user.isActive ? '✅ Active' : '❌ Inactive'}
+                    {user.isActive ? 'Active' : 'Inactive'}
                   </Badge>
-                </Td>
-                <Td theme={theme}>
-                  {new Date(user.createdAt).toLocaleDateString('vi-VN')}
-                </Td>
-                <Td theme={theme}>
-                  {user.totalXP || 0} XP
                 </Td>
                 <Td theme={theme}>
                   <ActionButtons>
@@ -410,7 +409,7 @@ const AdminUsers = () => {
                       onClick={() => handleChangeRole(user)}
                       title="Thay đổi vai trò"
                     >
-                      🔄 Role
+                      Role
                     </ActionButton>
                     <ActionButton 
                       variant="edit" 
@@ -424,7 +423,7 @@ const AdminUsers = () => {
                       onClick={() => handleDelete(user)}
                       title="Xóa"
                     >
-                      🗑️
+                      X
                     </ActionButton>
                   </ActionButtons>
                 </Td>

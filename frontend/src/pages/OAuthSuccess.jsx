@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import { authService } from '../services/authService';
+import useToast from '../hooks/useToast';
 
 const Container = styled.div`
   min-height: 100vh;
@@ -51,59 +52,48 @@ const Message = styled.p`
 const OAuthSuccess = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { showToast } = useToast();
 
   useEffect(() => {
     const handleOAuthSuccess = async () => {
       try {
-        // Lấy token từ URL query params
         const token = searchParams.get('token');
+        const encodedUser = searchParams.get('user');
 
-        if (!token) {
-          console.error('❌ No token found in URL');
-          setTimeout(() => {
-            navigate('/login?error=oauth');
-          }, 2000);
-          return;
+        if (!token || !encodedUser) {
+          console.error('❌ Missing token or user info');
+          throw new Error('Invalid OAuth response');
         }
 
-        console.log('✅ Token received:', token.substring(0, 20) + '...');
+        console.log('✅ Token received');
 
-        // Lưu token vào localStorage
+        // Save token
         localStorage.setItem('token', token);
 
-        // Lấy thông tin user
-        const userResponse = await authService.getCurrentUserProfile();
-        
-        if (userResponse.success && userResponse.data) {
-          const user = userResponse.data;
-          
-          // Lưu user info
-          localStorage.setItem('user', JSON.stringify(user));
-          
-          console.log('✅ OAuth login success:', user.email);
+        // Parse and save user info
+        const user = JSON.parse(decodeURIComponent(encodedUser));
+        localStorage.setItem('user', JSON.stringify(user));
 
-          // Redirect theo role
-          setTimeout(() => {
-            if (user.role === 'admin') {
-              navigate('/admin');
-            } else {
-              navigate('/learn');
-            }
-          }, 1500);
-        } else {
-          throw new Error('Failed to get user info');
-        }
+        console.log('✅ User info saved:', user.email);
+
+        // Redirect based on role after short delay
+        setTimeout(() => {
+          if (user.role === 'admin') {
+            navigate('/admin');
+          } else {
+            navigate('/learn');
+          }
+        }, 1500);
 
       } catch (error) {
         console.error('❌ OAuth success handler error:', error);
-        setTimeout(() => {
-          navigate('/login?error=oauth');
-        }, 2000);
+        showToast('error', 'Lỗi đăng nhập', 'Vui lòng thử lại');
+        navigate('/login?error=oauth');
       }
     };
 
     handleOAuthSuccess();
-  }, [navigate, searchParams]);
+  }, [navigate, searchParams, showToast]);
 
   return (
     <Container>

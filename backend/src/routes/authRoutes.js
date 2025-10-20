@@ -18,20 +18,26 @@ router.post('/resend-otp', authController.resendOTP);
 router.post('/forgot-password', authController.forgotPassword);
 router.post('/reset-password', authController.resetPassword);
 
-// Google OAuth
+// Google OAuth routes
 router.get('/google',
+  (req, res, next) => {
+    console.log('📍 Starting Google OAuth flow');
+    next();
+  },
   passport.authenticate('google', { 
     scope: ['profile', 'email'],
     session: false,
-    accessType: 'offline', // ✅ Thêm để có refresh token
-    prompt: 'consent' // ✅ Luôn hiển thị consent screen
+    accessType: 'offline',
+    prompt: 'consent'
   })
 );
 
 router.get('/google/callback',
   (req, res, next) => {
-    console.log('📥 Google callback URL:', req.url);
-    console.log('📥 Query params:', req.query);
+    console.log('📍 Google callback received:', {
+      query: req.query,
+      code: req.query.code
+    });
     next();
   },
   passport.authenticate('google', { 
@@ -41,21 +47,27 @@ router.get('/google/callback',
   authController.oauthSuccessRedirect
 );
 
-// Facebook OAuth
+// Facebook OAuth routes
 router.get('/facebook',
-  passport.authenticate('facebook', { 
-    scope: ['public_profile', 'email'],
-    session: false 
+  (req, res, next) => {
+    console.log('📍 Starting Facebook OAuth flow');
+    next();
+  },
+  passport.authenticate('facebook', {
+    scope: ['email', 'public_profile'],
+    session: false,
+    authType: 'rerequest'
   })
 );
 
 router.get('/facebook/callback',
   (req, res, next) => {
-    console.log('📥 Facebook callback URL:', req.url);
-    console.log('📥 Query params:', req.query);
+    console.log('📍 Facebook callback received:', {
+      query: req.query
+    });
     next();
   },
-  passport.authenticate('facebook', { 
+  passport.authenticate('facebook', {
     session: false,
     failureRedirect: `${process.env.CLIENT_URL}/login?error=facebook_oauth`
   }),

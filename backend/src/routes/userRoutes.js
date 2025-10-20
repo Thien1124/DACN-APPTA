@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { authenticate } = require('../middleware/auth');
+const { authenticate, authorize } = require('../middleware/auth');
 const upload = require('../middleware/upload');
 const User = require('../models/User');
-const fs = require('fs');
 const path = require('path');
+const fs = require('fs');
 
 /**
  * GET /api/users/profile
@@ -195,6 +195,148 @@ router.delete('/avatar', authenticate, async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Đã xảy ra lỗi khi xóa avatar'
+    });
+  }
+});
+
+// Get all users (admin only)
+router.get('/', authenticate, authorize('admin'), async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    // Build query
+    let query = {};
+    
+    if (req.query.role && req.query.role !== 'all') {
+      query.role = req.query.role;
+    }
+
+    if (req.query.isActive !== undefined) {
+      query.isActive = req.query.isActive === 'true';
+    }
+
+    if (req.query.search) {
+      const searchRegex = new RegExp(req.query.search, 'i');
+      query.$or = [
+        { name: searchRegex },
+        { email: searchRegex }
+      ];
+    }
+
+    const [users, total] = await Promise.all([
+      User.find(query)
+        .select('-password')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      User.countDocuments(query)
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        users,
+        currentPage: page,
+        totalPages: Math.ceil(total / limit),
+        totalUsers: total
+      }
+    });
+  } catch (error) {
+    console.error('Get users error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Không thể lấy danh sách người dùng'
+    });
+  }
+});
+
+// Toggle user active status
+router.patch('/:id/toggle-active', authenticate, authorize('admin'), async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy người dùng'
+      });
+    }
+
+    user.isActive = !user.isActive;
+    await user.save();
+
+    res.json({
+      success: true,
+      message: `Đã ${user.isActive ? 'kích hoạt' : 'vô hiệu hóa'} tài khoản`,
+      data: user
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Không thể thay đổi trạng thái người dùng'
+    });
+  }
+});
+
+// Change user role
+router.patch('/:id/change-role', authenticate, authorize('admin'), async (req, res) => {
+  try {
+    const { role } = req.body;
+    if (!['user', 'teacher', 'admin'].includes(role)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Role không hợp lệ'
+      });
+    }
+
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy người dùng'
+      });
+    }
+
+    user.role = role;
+    await user.save();
+
+    res.json({
+      success: true,
+      message: 'Đã thay đổi role người dùng',
+      data: user
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Không thể thay đổi role người dùng'
+    });
+  }
+});
+
+// Delete user
+router.delete('/:id', authenticate, authorize('admin'), async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy người dùng'
+      });
+    }
+
+    await user.deleteOne();
+
+    res.json({
+      success: true,
+      message: 'Đã xóa người dùng'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Không thể xóa người dùng'
     });
   }
 });

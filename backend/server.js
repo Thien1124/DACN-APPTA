@@ -45,7 +45,7 @@ app.use(cors({
 
 // Serve static files (Task 9: Avatar images)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
+app.use('/api/users', userRoutes);
 // Initialize Passport
 app.use(passport.initialize());
 passportConfig();

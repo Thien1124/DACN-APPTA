@@ -39,11 +39,7 @@ const userSchema = new mongoose.Schema({
     enum: ['local', 'google', 'facebook'],
     default: 'local'
   },
-  providerId: {
-    type: String,
-    index: true,
-    sparse: true
-  },
+  providerId: String,
   avatar: {
     type: String
   },
@@ -88,7 +84,7 @@ const userSchema = new mongoose.Schema({
 
   role: {
     type: String,
-    enum: ['user', 'admin'],
+    enum: ['user', 'teacher', 'admin'],
     default: 'user'
   },
   isActive: {
