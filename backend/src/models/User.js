@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
+const bcrypt = require('bcrypt'); 
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -39,7 +39,11 @@ const userSchema = new mongoose.Schema({
     enum: ['local', 'google', 'facebook'],
     default: 'local'
   },
-  providerId: String,
+  providerId: {
+    type: String,
+    index: true,
+    sparse: true
+  },
   avatar: {
     type: String
   },
@@ -82,9 +86,25 @@ const userSchema = new mongoose.Schema({
     }
   },
 
+  // 2FA fields (Task 10) - MỚI THÊM
+  twoFactorAuth: {
+    enabled: {
+      type: Boolean,
+      default: false
+    },
+    secret: {
+      type: String,
+      select: false // Không trả về khi query user
+    },
+    backupCodes: {
+      type: [String],
+      select: false // Không trả về khi query user
+    }
+  },
+
   role: {
     type: String,
-    enum: ['user', 'teacher', 'admin'],
+    enum: ['user', 'admin'],
     default: 'user'
   },
   isActive: {
@@ -118,7 +138,7 @@ userSchema.methods.comparePassword = async function(candidatePassword) {
 // Method: Tạo mã OTP ngẫu nhiên 6 số (cho đăng ký)
 userSchema.methods.generateOTP = function() {
   const code = Math.floor(100000 + Math.random() * 900000).toString();
-  const expiresAt = new Date(Date.now() + 1 * 60 * 1000); // 1 phút
+  const expiresAt = new Date(Date.now() + 1 * 60 * 1000);
   
   this.otp = {
     code: code,
@@ -132,7 +152,7 @@ userSchema.methods.generateOTP = function() {
 // Method: Tạo mã OTP cho reset password (10 phút)
 userSchema.methods.generatePasswordResetOTP = function() {
   const code = Math.floor(100000 + Math.random() * 900000).toString();
-  const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 phút
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
   
   this.passwordResetOTP = {
     code: code,
@@ -174,7 +194,6 @@ userSchema.methods.verifyOTP = function(inputCode) {
     };
   }
   
-  // OTP đúng
   this.otp = undefined;
   this.isActive = true;
   this.emailVerified = true;
@@ -216,7 +235,6 @@ userSchema.methods.verifyPasswordResetOTP = function(inputCode) {
     };
   }
   
-  // OTP đúng - xóa OTP reset
   this.passwordResetOTP = undefined;
   
   return { 
