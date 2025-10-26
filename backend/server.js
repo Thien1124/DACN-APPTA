@@ -281,7 +281,6 @@ app.put('/api/users/profile', authenticate, async (req, res) => {
     user.updatedAt = Date.now();
     await user.save();
 
-    console.log(`User ${user.email} đã cập nhật profile`);
 
     res.json({
       success: true,

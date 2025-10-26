@@ -548,11 +548,9 @@ const resetPassword = async (req, res) => {
  */
 const oauthSuccessRedirect = async (req, res) => {
   try {
-    console.log('📍 OAuth callback handler called');
     
     const user = req.user;
     if (!user) {
-      console.error('❌ No user found in OAuth callback');
       return res.redirect(`${process.env.CLIENT_URL}/login?error=no_user`);
     }
 
@@ -561,7 +559,6 @@ const oauthSuccessRedirect = async (req, res) => {
     user.emailVerified = true;
     await user.save(); // Cần async để dùng await ở đây
 
-    console.log('✅ User found:', user.email);
 
     // Generate token
     const token = generateToken(user._id);
@@ -586,11 +583,9 @@ const oauthSuccessRedirect = async (req, res) => {
     const timestamp = Date.now();
     const redirectUrl = `${process.env.CLIENT_URL}/oauth/success?token=${token}&user=${encodedUser}&t=${timestamp}`;
     
-    console.log('✅ Redirecting to:', redirectUrl);
     return res.redirect(redirectUrl);
 
   } catch (err) {
-    console.error('❌ OAuth redirect error:', err);
     return res.redirect(`${process.env.CLIENT_URL}/login?error=server_error`);
   }
 };
