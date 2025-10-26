@@ -11,13 +11,13 @@ const { sendWelcomeNotification } = require('../services/notificationService');
 const parseExpireToMs = (expire) => {
   if (!expire) return 1 * 24 * 60 * 60 * 1000;
   if (typeof expire === 'number') return expire * 1000;
-  
+
   const s = String(expire).trim();
   if (/^\d+$/.test(s)) return Number(s) * 1000;
 
   const match = s.match(/^(\d+)(d|h|m|s)$/i);
   if (!match) return 1 * 24 * 60 * 60 * 1000;
-  
+
   const value = Number(match[1]);
   const unit = match[2].toLowerCase();
 
@@ -51,9 +51,9 @@ const register = async (req, res) => {
     if (email) {
       const existingEmail = await User.findOne({ email });
       if (existingEmail) {
-        return res.status(400).json({ 
-          success: false, 
-          message: 'Email đã được sử dụng' 
+        return res.status(400).json({
+          success: false,
+          message: 'Email đã được sử dụng'
         });
       }
     }
@@ -78,7 +78,7 @@ const register = async (req, res) => {
     if (email) {
       const otp = user.generateOTP();
       await user.save();
-      
+
       try {
         await sendOTPEmail(email, otp, user.name);
         console.log(`[INFO] OTP đã gửi đến ${email}: ${otp}`);
@@ -143,8 +143,8 @@ const register = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: email 
-        ? 'Đăng ký thành công! Vui lòng kiểm tra email để lấy mã OTP.' 
+      message: email
+        ? 'Đăng ký thành công! Vui lòng kiểm tra email để lấy mã OTP.'
         : 'Đăng ký thành công!',
       data: {
         user: {
@@ -161,15 +161,15 @@ const register = async (req, res) => {
 
     if (error && error.name === 'ValidationError') {
       const errors = Object.values(error.errors).map(err => err.message);
-      return res.status(400).json({ 
-        success: false, 
-        errors 
+      return res.status(400).json({
+        success: false,
+        errors
       });
     }
 
-    res.status(500).json({ 
-      success: false, 
-      message: 'Đã xảy ra lỗi khi đăng ký' 
+    res.status(500).json({
+      success: false,
+      message: 'Đã xảy ra lỗi khi đăng ký'
     });
   }
 };
@@ -360,8 +360,8 @@ const login = async (req, res) => {
       });
     }
 
-    const user = await User.findOne({ 
-      email: email.toLowerCase().trim() 
+    const user = await User.findOne({
+      email: email.toLowerCase().trim()
     }).select('+password');
 
     if (!user) {
@@ -463,7 +463,7 @@ const login = async (req, res) => {
 const logout = async (req, res) => {
   try {
     const authHeader = req.headers.authorization;
-    
+
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return res.status(400).json({
         success: false,
@@ -475,7 +475,7 @@ const logout = async (req, res) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'default-secret-key');
 
     const existingToken = await TokenBlacklist.findOne({ token });
-    
+
     if (existingToken) {
       return res.status(400).json({
         success: false,
@@ -505,7 +505,7 @@ const logout = async (req, res) => {
     });
   } catch (error) {
     console.error('[ERROR] Lỗi đăng xuất:', error);
-    
+
     if (error.name === 'JsonWebTokenError') {
       return res.status(401).json({
         success: false,
@@ -636,8 +636,8 @@ const resetPassword = async (req, res) => {
       });
     }
 
-    const user = await User.findOne({ 
-      email: email.toLowerCase().trim() 
+    const user = await User.findOne({
+      email: email.toLowerCase().trim()
     }).select('+passwordResetOTP.code +passwordResetOTP.expiresAt +passwordResetOTP.attempts +password');
 
     if (!user) {
@@ -702,61 +702,59 @@ const resetPassword = async (req, res) => {
  */
 const oauthSuccessRedirect = async (req, res) => {
   try {
-    console.log('[INFO] OAuth callback handler called');
-    
-    const user = req.user;
+
+    let user = req.user;
     if (!user) {
-      console.error('[ERROR] No user found in OAuth callback');
-      return res.redirect(`${process.env.CLIENT_URL}/login?error=no_user`);
-    }
-
-    user.isActive = true;
-    user.emailVerified = true;
-    await user.save();
-
-    await logAudit({
-      userId: user._id,
-      action: 'OAUTH_LOGIN',
-      status: 'SUCCESS',
-      ipAddress: getIpAddress(req),
-      userAgent: getUserAgent(req),
-      details: {
-        provider: user.provider,
-        email: user.email,
-        name: user.name
+      user = req.user;
+      if (!user) {
+        return res.redirect(`${process.env.CLIENT_URL}/login?error=no_user`);
       }
-    });
 
-    console.log('[SUCCESS] User found:', user.email);
+      user.isActive = true;
+      user.emailVerified = true;
+      await user.save();
 
-    const token = generateToken(user._id);
+      await logAudit({
+        userId: user._id,
+        action: 'OAUTH_LOGIN',
+        status: 'SUCCESS',
+        ipAddress: getIpAddress(req),
+        userAgent: getUserAgent(req),
+        details: {
+          provider: user.provider,
+          email: user.email,
+          name: user.name
+        }
+      });
 
-    const userData = {
-      id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      avatar: user.avatar,
-      provider: user.provider,
-      isActive: true,
-      emailVerified: true,
-      createdAt: user.createdAt
-    };
+      const token = generateToken(user._id);
 
-    const encodedUser = encodeURIComponent(JSON.stringify(userData));
-    const timestamp = Date.now();
-    const redirectUrl = `${process.env.CLIENT_URL}/oauth/success?token=${token}&user=${encodedUser}&t=${timestamp}`;
-    
-    console.log('[SUCCESS] Redirecting to:', redirectUrl);
-    return res.redirect(redirectUrl);
+      const userData = {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        avatar: user.avatar,
+        provider: user.provider,
+        isActive: true,
+        emailVerified: true,
+        createdAt: user.createdAt
+      };
 
+      const encodedUser = encodeURIComponent(JSON.stringify(userData));
+      const timestamp = Date.now();
+      const redirectUrl = `${process.env.CLIENT_URL}/oauth/success?token=${token}&user=${encodedUser}&t=${timestamp}`;
+
+
+      return res.redirect(redirectUrl);
+
+    }
   } catch (err) {
-    console.error('[ERROR] OAuth redirect error:', err);
     return res.redirect(`${process.env.CLIENT_URL}/login?error=server_error`);
   }
 };
 
-module.exports = { 
+module.exports = {
   register,
   login,
   logout,

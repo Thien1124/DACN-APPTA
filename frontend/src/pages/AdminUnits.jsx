@@ -6,6 +6,17 @@ import { adminService } from '../services/adminService';
 import Toast from '../components/Toast';
 import useToast from '../hooks/useToast';
 import Swal from 'sweetalert2';
+import {
+  Inventory,
+  Add,
+  Visibility,
+  Edit,
+  Delete,
+  Public,
+  VisibilityOff,
+  MenuBook,
+  LibraryBooks
+} from '@mui/icons-material';
 
 // ========== STYLED COMPONENTS ==========
 
@@ -110,7 +121,6 @@ const ActionButtons = styled.div`
   gap: 0.5rem;
   margin-top: 1rem;
 `;
-
 const ActionButton = styled.button`
   flex: 1;
   padding: 0.5rem;
@@ -127,13 +137,16 @@ const ActionButton = styled.button`
     return '#6b7280';
   }};
   color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
 
   &:hover {
     opacity: 0.9;
     transform: translateY(-1px);
   }
 `;
-
 const LoadingText = styled.div`
   text-align: center;
   padding: 2rem;
@@ -230,16 +243,18 @@ const AdminUnits = () => {
       <Toast toast={toast} onClose={hideToast} />
 
       <PageHeader>
-        <Title theme={theme}>📦 Units ({units.length})</Title>
+        <Title theme={theme}>
+          <Inventory sx={{ mr: 1 }} /> Units ({units.length})
+        </Title>
         <CreateButton onClick={handleCreate}>
-          <span>➕</span>
+          <Add />
           Tạo unit mới
         </CreateButton>
       </PageHeader>
 
       {units.length === 0 ? (
         <EmptyState theme={theme}>
-          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📦</div>
+          <Inventory sx={{ fontSize: 48, mb: 2, color: theme === 'dark' ? '#9ca3af' : '#6b7280' }} />
           <div>Chưa có unit nào</div>
           <div style={{ fontSize: '0.875rem', marginTop: '0.5rem' }}>
             Nhấn nút "Tạo unit mới" để bắt đầu
@@ -256,11 +271,11 @@ const AdminUnits = () => {
               
               <UnitStats theme={theme}>
                 <Stat theme={theme}>
-                  <span>📚</span>
+                  <MenuBook sx={{ fontSize: 18 }} />
                   Khóa học: {unit.course?.title || 'N/A'}
                 </Stat>
                 <Stat theme={theme}>
-                  <span>📖</span>
+                  <LibraryBooks sx={{ fontSize: 18 }} />
                   {unit.lessons?.length || 0} bài học
                 </Stat>
               </UnitStats>
@@ -271,20 +286,24 @@ const AdminUnits = () => {
 
               <ActionButtons>
                 <ActionButton variant="view" onClick={() => handleView(unit._id)}>
-                  👁️ Xem
+                  <Visibility sx={{ fontSize: 18 }} /> Xem
                 </ActionButton>
                 <ActionButton variant="edit" onClick={() => handleEdit(unit._id)}>
-                  ✏️ Sửa
+                  <Edit sx={{ fontSize: 18 }} /> Sửa
                 </ActionButton>
                 <ActionButton 
                   variant="toggle" 
                   onClick={() => handleTogglePublish(unit)}
                   style={{ background: unit.isPublished ? '#f59e0b' : '#10b981' }}
                 >
-                  {unit.isPublished ? '👁️‍🗨️ Ẩn' : '🌐 Công khai'}
+                  {unit.isPublished ? (
+                    <><VisibilityOff sx={{ fontSize: 18 }} /> Ẩn</>
+                  ) : (
+                    <><Public sx={{ fontSize: 18 }} /> Công khai</>
+                  )}
                 </ActionButton>
                 <ActionButton variant="delete" onClick={() => handleDelete(unit)}>
-                  🗑️
+                  <Delete sx={{ fontSize: 18 }} />
                 </ActionButton>
               </ActionButtons>
             </UnitCard>

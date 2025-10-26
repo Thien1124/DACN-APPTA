@@ -6,6 +6,20 @@ import { adminService } from '../services/adminService';
 import Toast from '../components/Toast';
 import useToast from '../hooks/useToast';
 import Swal from 'sweetalert2';
+import {
+  EmojiEvents,
+  Add,
+  Edit,
+  Delete,
+  Lock,
+  LockOpen,
+  School,
+  Timer,
+  Star,
+  LocalFireDepartment,
+  CheckCircle,
+  Cancel
+} from '@mui/icons-material';
 
 // ========== STYLED COMPONENTS ==========
 
@@ -83,13 +97,16 @@ const AchievementIcon = styled.div`
   width: 64px;
   height: 64px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+  background: ${props => props.theme === 'dark' ? '#374151' : '#f3f4f6'};
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2rem;
   margin: 0 auto 1rem;
-  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
+  color: #f59e0b;
+
+  .MuiSvgIcon-root {
+    font-size: 32px;
+  }
 `;
 
 const AchievementTitle = styled.h3`
@@ -184,6 +201,37 @@ const EmptyState = styled.div`
   color: ${props => props.theme === 'dark' ? '#9ca3af' : '#6b7280'};
 `;
 
+// Add mock data
+const mockAchievements = [
+  {
+    _id: '1',
+    name: 'Học giỏi',
+    description: 'Hoàn thành 10 bài học liên tiếp',
+    icon: <School />,
+    xpReward: 100,
+    condition: { target: 10 },
+    isActive: true
+  },
+  {
+    _id: '2',
+    name: 'Siêu sao',
+    description: 'Đạt 1000 XP',
+    icon: <Star />,
+    xpReward: 200,
+    condition: { target: 1000 },
+    isActive: true
+  },
+  {
+    _id: '3', 
+    name: 'Chăm chỉ',
+    description: 'Học tập 7 ngày liên tiếp',
+    icon: <LocalFireDepartment />,
+    xpReward: 150,
+    condition: { target: 7 },
+    isActive: false
+  }
+];
+
 // ========== COMPONENT ==========
 
 const AdminAchievements = () => {
@@ -194,21 +242,28 @@ const AdminAchievements = () => {
   const [achievements, setAchievements] = useState([]);
 
   useEffect(() => {
-    fetchAchievements();
+    //fetchAchievements(); bỏ này ra nếu dùng api
+    // Simulate API call
+    setTimeout(() => {
+      setAchievements(mockAchievements);
+      setLoading(false);
+    }, 1000);
   }, []);
-
+  
+  /*
+  bỏ này ra nếu dùng api
   const fetchAchievements = async () => {
     try {
       setLoading(true);
       const response = await adminService.achievements.getAll();
-      setAchievements(response.data || []);
+      setAchievements(response.data);
     } catch (error) {
-      console.error('Error fetching achievements:', error);
-      showToast('error', 'Lỗi', 'Không thể tải danh sách thành tích');
+      showToast('error', 'Lỗi', error.response?.data?.message || 'Không thể tải thành tích');
     } finally {
       setLoading(false);
     }
   };
+  */
 
   const handleCreate = () => {
     navigate('/admin/achievements/create');
@@ -234,7 +289,8 @@ const AdminAchievements = () => {
       try {
         await adminService.achievements.delete(achievement._id);
         showToast('success', 'Thành công', 'Đã xóa thành tích');
-        fetchAchievements();
+        //fetchAchievements();
+        mockAchievements = mockAchievements.filter(item => item._id !== achievement._id);
       } catch (error) {
         showToast('error', 'Lỗi', error.response?.data?.message || 'Không thể xóa thành tích');
       }
@@ -245,7 +301,8 @@ const AdminAchievements = () => {
     try {
       await adminService.achievements.toggleActive(achievement._id);
       showToast('success', 'Thành công', `Đã ${achievement.isActive ? 'vô hiệu hóa' : 'kích hoạt'} thành tích`);
-      fetchAchievements();
+      //fetchAchievements();
+      mockAchievements = mockAchievements.filter(item => item._id !== achievement._id);
     } catch (error) {
       showToast('error', 'Lỗi', 'Không thể cập nhật trạng thái');
     }
@@ -264,16 +321,18 @@ const AdminAchievements = () => {
       <Toast toast={toast} onClose={hideToast} />
 
       <PageHeader>
-        <Title theme={theme}>🏆 Thành tích ({achievements.length})</Title>
+        <Title theme={theme}>
+          <EmojiEvents sx={{ mr: 1 }} /> Thành tích ({achievements.length})
+        </Title>
         <CreateButton onClick={handleCreate}>
-          <span>➕</span>
+          <Add />
           Tạo thành tích mới
         </CreateButton>
       </PageHeader>
 
       {achievements.length === 0 ? (
         <EmptyState theme={theme}>
-          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🏆</div>
+          <EmojiEvents sx={{ fontSize: 48, color: theme === 'dark' ? '#9ca3af' : '#6b7280' }} />
           <div>Chưa có thành tích nào</div>
           <div style={{ fontSize: '0.875rem', marginTop: '0.5rem' }}>
             Nhấn nút "Tạo thành tích mới" để bắt đầu
@@ -289,7 +348,11 @@ const AdminAchievements = () => {
             >
               <div style={{ textAlign: 'center' }}>
                 <StatusBadge active={achievement.isActive}>
-                  {achievement.isActive ? '✅ Đang hoạt động' : '❌ Đã tắt'}
+                  {achievement.isActive ? (
+                    <><CheckCircle sx={{ fontSize: 16, mr: 0.5 }} /> Đang hoạt động</>
+                  ) : (
+                    <><Cancel sx={{ fontSize: 16, mr: 0.5 }} /> Đã tắt</>
+                  )}
                 </StatusBadge>
               </div>
 
@@ -320,16 +383,20 @@ const AdminAchievements = () => {
 
               <ActionButtons>
                 <ActionButton variant="edit" onClick={() => handleEdit(achievement._id)}>
-                  ✏️ Sửa
+                  <Edit sx={{ fontSize: 18 }} /> Sửa
                 </ActionButton>
                 <ActionButton 
                   variant="toggle" 
                   onClick={() => handleToggleActive(achievement)}
                 >
-                  {achievement.isActive ? '🔒 Tắt' : '✅ Bật'}
+                  {achievement.isActive ? (
+                    <><Lock sx={{ fontSize: 18 }} /> Tắt</>
+                  ) : (
+                    <><LockOpen sx={{ fontSize: 18 }} /> Bật</>
+                  )}
                 </ActionButton>
                 <ActionButton variant="delete" onClick={() => handleDelete(achievement)}>
-                  🗑️
+                  <Delete sx={{ fontSize: 18 }} />
                 </ActionButton>
               </ActionButtons>
             </AchievementCard>

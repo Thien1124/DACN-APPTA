@@ -6,6 +6,18 @@ import { adminService } from '../services/adminService';
 import Toast from '../components/Toast';
 import useToast from '../hooks/useToast';
 import Swal from 'sweetalert2';
+import {
+  MenuBook,
+  Add,
+  Visibility,
+  Edit,
+  Delete,
+  Public,
+  VisibilityOff,
+  Star,
+  Inventory,
+  Class
+} from '@mui/icons-material';
 
 // ========== STYLED COMPONENTS (tương tự AdminCourses) ==========
 const PageHeader = styled.div`
@@ -47,15 +59,15 @@ const LessonsGrid = styled.div`
 `;
 
 const LessonCard = styled.div`
-  background: ${props => props.theme === 'dark' 
-    ? 'rgba(31, 41, 55, 0.8)' 
+  background: ${props => props.theme === 'dark'
+    ? 'rgba(31, 41, 55, 0.8)'
     : 'rgba(255, 255, 255, 0.9)'
   };
   backdrop-filter: blur(10px);
   border-radius: 16px;
   padding: 1.5rem;
-  border: 1px solid ${props => props.theme === 'dark' 
-    ? 'rgba(75, 85, 99, 0.3)' 
+  border: 1px solid ${props => props.theme === 'dark'
+    ? 'rgba(75, 85, 99, 0.3)'
     : 'rgba(229, 231, 235, 0.5)'
   };
   transition: all 0.3s ease;
@@ -131,7 +143,6 @@ const ActionButtons = styled.div`
   gap: 0.5rem;
   margin-top: 1rem;
 `;
-
 const ActionButton = styled.button`
   flex: 1;
   padding: 0.5rem;
@@ -148,6 +159,10 @@ const ActionButton = styled.button`
     return '#6b7280';
   }};
   color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
 
   &:hover {
     opacity: 0.9;
@@ -251,16 +266,18 @@ const AdminLessons = () => {
       <Toast toast={toast} onClose={hideToast} />
 
       <PageHeader>
-        <Title theme={theme}>📖 Bài học ({lessons.length})</Title>
+        <Title theme={theme}>
+          <MenuBook sx={{ mr: 1 }} /> Bài học ({lessons.length})
+        </Title>
         <CreateButton onClick={handleCreate}>
-          <span>➕</span>
+          <Add />
           Tạo bài học mới
         </CreateButton>
       </PageHeader>
 
       {lessons.length === 0 ? (
         <EmptyState theme={theme}>
-          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📖</div>
+          <MenuBook sx={{ fontSize: 48, mb: 2, color: theme === 'dark' ? '#9ca3af' : '#6b7280' }} />
           <div>Chưa có bài học nào</div>
           <div style={{ fontSize: '0.875rem', marginTop: '0.5rem' }}>
             Nhấn nút "Tạo bài học mới" để bắt đầu
@@ -278,39 +295,43 @@ const AdminLessons = () => {
                   {lesson.type}
                 </TypeBadge>
               </div>
-              
+
               <LessonTitle theme={theme}>{lesson.title}</LessonTitle>
               <LessonDescription theme={theme}>
                 {lesson.description || 'Không có mô tả'}
               </LessonDescription>
-              
+
               <LessonStats theme={theme}>
                 <Stat theme={theme}>
-                  <span>📦</span>
+                  <Class sx={{ fontSize: 18 }} />
                   Unit: {lesson.unit?.title || 'N/A'}
                 </Stat>
                 <Stat theme={theme}>
-                  <span>⭐</span>
+                  <Star sx={{ fontSize: 18 }} />
                   {lesson.xpReward || 0} XP
                 </Stat>
               </LessonStats>
 
               <ActionButtons>
                 <ActionButton variant="view" onClick={() => handleView(lesson._id)}>
-                  👁️ Xem
+                  <Visibility sx={{ fontSize: 18 }} /> Xem
                 </ActionButton>
                 <ActionButton variant="edit" onClick={() => handleEdit(lesson._id)}>
-                  ✏️ Sửa
+                  <Edit sx={{ fontSize: 18 }} /> Sửa
                 </ActionButton>
-                <ActionButton 
-                  variant="toggle" 
+                <ActionButton
+                  variant="toggle"
                   onClick={() => handleTogglePublish(lesson)}
                   style={{ background: lesson.isPublished ? '#f59e0b' : '#10b981' }}
                 >
-                  {lesson.isPublished ? '👁️‍🗨️ Ẩn' : '🌐 Công khai'}
+                  {lesson.isPublished ? (
+                    <><VisibilityOff sx={{ fontSize: 18 }} /> Ẩn</>
+                  ) : (
+                    <><Public sx={{ fontSize: 18 }} /> Công khai</>
+                  )}
                 </ActionButton>
                 <ActionButton variant="delete" onClick={() => handleDelete(lesson)}>
-                  🗑️
+                  <Delete sx={{ fontSize: 18 }} />
                 </ActionButton>
               </ActionButtons>
             </LessonCard>

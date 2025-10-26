@@ -5,7 +5,11 @@ import AdminLayout from '../layouts/AdminLayout';
 import { adminService } from '../services/adminService';
 import Toast from '../components/Toast';
 import useToast from '../hooks/useToast';
-
+import {
+  Add,
+  Edit,
+  Save
+} from '@mui/icons-material';
 // ========== STYLED COMPONENTS ==========
 const FormContainer = styled.div`
   max-width: 800px;
@@ -13,15 +17,15 @@ const FormContainer = styled.div`
 `;
 
 const Card = styled.div`
-  background: ${props => props.theme === 'dark' 
-    ? 'rgba(31, 41, 55, 0.8)' 
+  background: ${props => props.theme === 'dark'
+    ? 'rgba(31, 41, 55, 0.8)'
     : 'rgba(255, 255, 255, 0.9)'
   };
   backdrop-filter: blur(10px);
   border-radius: 16px;
   padding: 2rem;
-  border: 1px solid ${props => props.theme === 'dark' 
-    ? 'rgba(75, 85, 99, 0.3)' 
+  border: 1px solid ${props => props.theme === 'dark'
+    ? 'rgba(75, 85, 99, 0.3)'
     : 'rgba(229, 231, 235, 0.5)'
   };
 `;
@@ -99,7 +103,6 @@ const Select = styled.select`
     border-color: #58CC02;
   }
 `;
-
 const ButtonGroup = styled.div`
   display: flex;
   gap: 1rem;
@@ -110,8 +113,9 @@ const ButtonGroup = styled.div`
 const Button = styled.button`
   padding: 0.75rem 1.5rem;
   border: none;
-  border-radius: 8px;
+  border-radius: 12px;
   font-weight: 600;
+  font-size: 0.875rem;
   cursor: pointer;
   transition: all 0.3s ease;
   background: ${props => {
@@ -122,6 +126,10 @@ const Button = styled.button`
     if (props.variant === 'cancel') return props.theme === 'dark' ? '#e5e7eb' : '#374151';
     return 'white';
   }};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
 
   &:hover {
     transform: translateY(-2px);
@@ -134,6 +142,7 @@ const Button = styled.button`
     transform: none;
   }
 `;
+
 
 const ErrorText = styled.span`
   color: #ef4444;
@@ -261,7 +270,11 @@ const AdminVocabularyForm = () => {
 
       <FormContainer>
         <PageTitle theme={theme}>
-          {id ? '✏️ Chỉnh sửa Từ vựng' : '➕ Tạo Từ vựng mới'}
+          {id ? (
+            <><Edit sx={{ mr: 1 }} /> Chỉnh sửa Từ vựng</>
+          ) : (
+            <><Add sx={{ mr: 1 }} /> Tạo Từ vựng mới</>
+          )}
         </PageTitle>
 
         <Card theme={theme}>
@@ -417,7 +430,13 @@ const AdminVocabularyForm = () => {
                 Hủy
               </Button>
               <Button type="submit" disabled={loading}>
-                {loading ? 'Đang lưu...' : (id ? 'Cập nhật' : 'Tạo mới')}
+                {loading ? 'Đang lưu...' : (
+                  id ? (
+                    <><Save sx={{ mr: 1 }} /> Cập nhật</>
+                  ) : (
+                    <><Add sx={{ mr: 1 }} /> Tạo mới</>
+                  )
+                )}
               </Button>
             </ButtonGroup>
           </form>

@@ -61,11 +61,9 @@ const OAuthSuccess = () => {
         const encodedUser = searchParams.get('user');
 
         if (!token || !encodedUser) {
-          console.error('❌ Missing token or user info');
           throw new Error('Invalid OAuth response');
         }
 
-        console.log('✅ Token received');
 
         // Save token
         localStorage.setItem('token', token);
@@ -74,7 +72,6 @@ const OAuthSuccess = () => {
         const user = JSON.parse(decodeURIComponent(encodedUser));
         localStorage.setItem('user', JSON.stringify(user));
 
-        console.log('✅ User info saved:', user.email);
 
         // Redirect based on role after short delay
         setTimeout(() => {
@@ -86,7 +83,6 @@ const OAuthSuccess = () => {
         }, 1500);
 
       } catch (error) {
-        console.error('❌ OAuth success handler error:', error);
         showToast('error', 'Lỗi đăng nhập', 'Vui lòng thử lại');
         navigate('/login?error=oauth');
       }

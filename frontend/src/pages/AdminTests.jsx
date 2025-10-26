@@ -6,6 +6,18 @@ import { adminService } from '../services/adminService';
 import Toast from '../components/Toast';
 import useToast from '../hooks/useToast';
 import Swal from 'sweetalert2';
+import {
+  AssignmentTurnedIn,
+  Add,
+  Visibility,
+  Edit,
+  Delete,
+  Public,
+  VisibilityOff,
+  MenuBook,
+  Timer,
+  QuestionMark
+} from '@mui/icons-material';
 
 // ========== STYLED COMPONENTS ==========
 
@@ -295,9 +307,11 @@ const AdminTests = () => {
       <Toast toast={toast} onClose={hideToast} />
 
       <PageHeader>
-        <Title theme={theme}>📋 Bài Test ({filteredTests.length})</Title>
+        <Title theme={theme}>
+          <AssignmentTurnedIn sx={{ mr: 1 }} /> Bài Test ({filteredTests.length})
+        </Title>
         <CreateButton onClick={handleCreate}>
-          <span>➕</span>
+          <Add />
           Tạo bài test mới
         </CreateButton>
       </PageHeader>
@@ -331,7 +345,7 @@ const AdminTests = () => {
 
       {filteredTests.length === 0 ? (
         <EmptyState theme={theme}>
-          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📋</div>
+          <AssignmentTurnedIn sx={{ fontSize: 48, mb: 2, color: theme === 'dark' ? '#9ca3af' : '#6b7280' }} />
           <div>Chưa có bài test nào</div>
           <div style={{ fontSize: '0.875rem', marginTop: '0.5rem' }}>
             Nhấn nút "Tạo bài test mới" để bắt đầu
@@ -357,35 +371,39 @@ const AdminTests = () => {
               
               <TestStats theme={theme}>
                 <Stat theme={theme}>
-                  <span>📚</span>
+                  <MenuBook sx={{ fontSize: 18 }} />
                   {test.course?.title || 'N/A'}
                 </Stat>
                 <Stat theme={theme}>
-                  <span>🎯</span>
+                  <QuestionMark sx={{ fontSize: 18 }} />
                   {test.exercises?.length || 0} câu hỏi
                 </Stat>
                 <Stat theme={theme}>
-                  <span>⏱️</span>
+                  <Timer sx={{ fontSize: 18 }} />
                   {test.timeLimit || 0} phút
                 </Stat>
               </TestStats>
 
               <ActionButtons>
                 <ActionButton variant="view" onClick={() => handleView(test._id)}>
-                  👁️ Xem
+                  <Visibility sx={{ fontSize: 18 }} /> Xem
                 </ActionButton>
                 <ActionButton variant="edit" onClick={() => handleEdit(test._id)}>
-                  ✏️ Sửa
+                  <Edit sx={{ fontSize: 18 }} /> Sửa
                 </ActionButton>
                 <ActionButton 
                   variant="toggle" 
                   onClick={() => handleTogglePublish(test)}
                   style={{ background: test.isPublished ? '#f59e0b' : '#10b981' }}
                 >
-                  {test.isPublished ? '👁️‍🗨️ Ẩn' : '🌐 Công khai'}
+                  {test.isPublished ? (
+                    <><VisibilityOff sx={{ fontSize: 18 }} /> Ẩn</>
+                  ) : (
+                    <><Public sx={{ fontSize: 18 }} /> Công khai</>
+                  )}
                 </ActionButton>
                 <ActionButton variant="delete" onClick={() => handleDelete(test)}>
-                  🗑️
+                  <Delete sx={{ fontSize: 18 }} />
                 </ActionButton>
               </ActionButtons>
             </TestCard>

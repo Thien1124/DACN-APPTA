@@ -5,6 +5,13 @@ import AdminLayout from '../layouts/AdminLayout';
 import { adminService } from '../services/adminService';
 import Toast from '../components/Toast';
 import useToast from '../hooks/useToast';
+import {
+  Add,
+  Edit,
+  ArrowBack,
+  Assignment,
+  List
+} from '@mui/icons-material';
 
 // ========== STYLED COMPONENTS (tương tự AdminVocabularyForm) ==========
 const FormContainer = styled.div`
@@ -41,7 +48,7 @@ const SectionTitle = styled.h3`
   margin-bottom: 1rem;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  justify-content: space-between;
 `;
 
 const FormRow = styled.div`
@@ -127,11 +134,7 @@ const OptionInput = styled(Input)`
   flex: 1;
 `;
 
-const CheckboxInput = styled.input`
-  width: 20px;
-  height: 20px;
-  cursor: pointer;
-`;
+
 
 const AddButton = styled.button`
   padding: 0.5rem 1rem;
@@ -143,6 +146,13 @@ const AddButton = styled.button`
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  svg {
+    font-size: 20px;
+  }
 
   &:hover {
     opacity: 0.9;
@@ -346,12 +356,18 @@ const AdminExerciseForm = () => {
 
       <FormContainer>
         <PageTitle theme={theme}>
-          {id ? '✏️ Chỉnh sửa Bài tập' : '➕ Tạo Bài tập mới'}
+          {id ? (
+            <><Edit sx={{ mr: 1 }} /> Chỉnh sửa Bài tập</>
+          ) : (
+            <><Add sx={{ mr: 1 }} /> Tạo Bài tập mới</>
+          )}
         </PageTitle>
 
         <Card theme={theme}>
           <form onSubmit={handleSubmit}>
-            <SectionTitle theme={theme}>📝 Thông tin cơ bản</SectionTitle>
+            <SectionTitle theme={theme}>
+              <Assignment sx={{ fontSize: 20 }} /> Thông tin cơ bản
+            </SectionTitle>
 
             <FormGroup>
               <Label theme={theme}>Bài học *</Label>
@@ -432,9 +448,11 @@ const AdminExerciseForm = () => {
             {formData.type === 'multiple-choice' && (
               <>
                 <SectionTitle theme={theme}>
-                  📋 Lựa chọn
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <List /> Lựa chọn
+                  </div>
                   <AddButton type="button" onClick={handleAddOption}>
-                    ➕ Thêm lựa chọn
+                    <Add /> Thêm lựa chọn
                   </AddButton>
                 </SectionTitle>
 
@@ -493,10 +511,16 @@ const AdminExerciseForm = () => {
                 onClick={handleCancel}
                 disabled={loading}
               >
-                Hủy
+                <ArrowBack sx={{ fontSize: 18 }} /> Hủy
               </Button>
               <Button type="submit" disabled={loading}>
-                {loading ? 'Đang lưu...' : (id ? 'Cập nhật' : 'Tạo mới')}
+                {loading ? 'Đang lưu...' : (
+                  id ? (
+                    <><Edit sx={{ fontSize: 18 }} /> Cập nhật</>
+                  ) : (
+                    <><Add sx={{ fontSize: 18 }} /> Tạo mới</>
+                  )
+                )}
               </Button>
             </ButtonGroup>
           </form>

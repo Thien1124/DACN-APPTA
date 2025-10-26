@@ -1,6 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
+// Import icons
+import { FiGrid, FiTrendingUp, FiUsers, FiBook, FiBox, FiMenu } from 'react-icons/fi';
+import { BiBookOpen, BiTask, BiTestTube } from 'react-icons/bi';
+import { BsStack, BsCardText, BsTrophy } from 'react-icons/bs';
+import { AiOutlineSetting, AiOutlineAudit } from 'react-icons/ai';
+import { IoNotificationsOutline } from 'react-icons/io5';
+import { FaCrown } from 'react-icons/fa';
+import {  MdOutlineLeaderboard } from 'react-icons/md';
 
 // ========== STYLED COMPONENTS ==========
 
@@ -338,7 +346,7 @@ const AdminSidebar = ({ theme = 'light', onThemeToggle }) => {
   const currentUser = {
     name: 'vinhsonvlog',
     role: 'Super Admin',
-    avatar: '👑',
+    avatar: <FaCrown size={24} />,
   };
 
   const menuItems = [
@@ -346,24 +354,18 @@ const AdminSidebar = ({ theme = 'light', onThemeToggle }) => {
       section: 'Dashboard',
       items: [
         {
-          icon: '📊',
+          icon: <FiGrid size={20} />,
           text: 'Tổng quan',
           path: '/admin',
           badge: null,
-        },
-        {
-          icon: '📈',
-          text: 'Thống kê',
-          path: '/admin/statistics',
-          badge: { text: 'New', variant: 'success' },
-        },
+        }
       ],
     },
     {
       section: 'Quản lý người dùng',
       items: [
         {
-          icon: '👥',
+          icon: <FiUsers size={20} />,
           text: 'Người dùng',
           path: '/admin/users',
           badge: null,
@@ -374,37 +376,37 @@ const AdminSidebar = ({ theme = 'light', onThemeToggle }) => {
       section: 'Quản lý nội dung',
       items: [
         {
-          icon: '📚',
+          icon: <FiBook size={20} />,
           text: 'Khóa học',
           path: '/admin/courses',
           badge: null,
         },
         {
-          icon: '📦',
+          icon: <FiBox size={20} />,
           text: 'Units',
           path: '/admin/units',
           badge: null,
         },
         {
-          icon: '📖',
+          icon: <BiBookOpen size={20} />,
           text: 'Bài học',
           path: '/admin/lessons',
           badge: null,
         },
         {
-          icon: '📝',
+          icon: <BiBookOpen size={20} />,
           text: 'Từ vựng',
           path: '/admin/vocabularies',
           badge: null,
         },
         {
-          icon: '🎯',
+          icon: <BiTask size={20} />,
           text: 'Bài tập',
           path: '/admin/exercises',
           badge: null,
         },
         {
-          icon: '📋',
+          icon: <BiTestTube size={20} />,
           text: 'Bài test',
           path: '/admin/tests',
           badge: null,
@@ -415,13 +417,13 @@ const AdminSidebar = ({ theme = 'light', onThemeToggle }) => {
       section: 'Flashcard & Deck',
       items: [
         {
-          icon: '🗂️',
+          icon: <BsStack size={20} />,
           text: 'Decks',
           path: '/admin/decks',
           badge: null,
         },
         {
-          icon: '🎴',
+          icon: <BsCardText size={20} />,
           text: 'Flashcards',
           path: '/admin/flashcards',
           badge: null,
@@ -432,13 +434,13 @@ const AdminSidebar = ({ theme = 'light', onThemeToggle }) => {
       section: 'Gamification',
       items: [
         {
-          icon: '🏆',
+          icon: <BsTrophy size={20} />,
           text: 'Thành tích',
           path: '/admin/achievements',
           badge: null,
         },
         {
-          icon: '🎖️',
+          icon: <MdOutlineLeaderboard size={20} />,
           text: 'Bảng xếp hạng',
           path: '/admin/leaderboard',
           badge: null,
@@ -449,19 +451,19 @@ const AdminSidebar = ({ theme = 'light', onThemeToggle }) => {
       section: 'Hệ thống',
       items: [
         {
-          icon: '🔐',
+          icon: <AiOutlineAudit size={20} />,
           text: 'Audit Log',
           path: '/admin/audit-log',
           badge: { text: '24', variant: 'warning' },
         },
         {
-          icon: '⚙️',
+          icon: <AiOutlineSetting size={20} />,
           text: 'Cài đặt',
           path: '/admin/settings',
           badge: null,
         },
         {
-          icon: '🔔',
+          icon: <IoNotificationsOutline size={20} />,
           text: 'Thông báo',
           path: '/admin/notifications',
           badge: { text: '5', variant: 'danger' },
@@ -490,7 +492,7 @@ const AdminSidebar = ({ theme = 'light', onThemeToggle }) => {
   return (
     <>
       <MobileToggle theme={theme} onClick={handleMobileToggle}>
-        ☰
+        <FiMenu size={24} />
       </MobileToggle>
 
       <MobileOverlay show={mobileOpen} onClick={handleMobileToggle} />

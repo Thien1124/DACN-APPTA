@@ -5,7 +5,7 @@ import LeftSidebar from '../components/LeftSidebar';
 import Toast from '../components/Toast';
 import useToast from '../hooks/useToast';
 import api from '../utils/api';
-
+import { Lock } from '@mui/icons-material';
 const PrivacySettings = () => {
   const navigate = useNavigate();
   const { toast, showToast, hideToast } = useToast();
@@ -138,7 +138,7 @@ const PrivacySettings = () => {
             </Section>
 
             <InfoBox>
-              <InfoIcon>🔒</InfoIcon>
+              <InfoIcon><Lock sx={{ fontSize: 24, color: '#4b5563' }} /></InfoIcon>
               <InfoContent>
                 <InfoTitle>Bảo vệ thông tin cá nhân</InfoTitle>
                 <InfoText>
@@ -329,7 +329,9 @@ const InfoBox = styled.div`
 `;
 
 const InfoIcon = styled.div`
-  font-size: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
 `;
 

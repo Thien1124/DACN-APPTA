@@ -6,6 +6,16 @@ import { adminService } from '../services/adminService';
 import Toast from '../components/Toast';
 import useToast from '../hooks/useToast';
 import Swal from 'sweetalert2';
+import {
+  Style,
+  Add,
+  FileCopy,
+  Edit,
+  Delete,
+  NavigateBefore,
+  NavigateNext,
+  CardMembership
+} from '@mui/icons-material';
 
 // ========== STYLED COMPONENTS ==========
 
@@ -295,14 +305,16 @@ const AdminFlashcards = () => {
       <Toast toast={toast} onClose={hideToast} />
 
       <PageHeader>
-        <Title theme={theme}>🎴 Flashcards ({flashcards.length})</Title>
+        <Title theme={theme}>
+          <Style sx={{ mr: 1 }} /> Flashcards ({flashcards.length})
+        </Title>
         <ButtonGroup>
           <CreateButton onClick={handleCreate}>
-            <span>➕</span>
+            <Add />
             Tạo flashcard
           </CreateButton>
           <CreateButton variant="bulk" onClick={handleBulkCreate}>
-            <span>📋</span>
+            <FileCopy />
             Tạo hàng loạt
           </CreateButton>
         </ButtonGroup>
@@ -328,7 +340,7 @@ const AdminFlashcards = () => {
 
       {flashcards.length === 0 ? (
         <EmptyState theme={theme}>
-          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🎴</div>
+          <CardMembership sx={{ fontSize: 48, mb: 2, color: theme === 'dark' ? '#9ca3af' : '#6b7280' }} />
           <div>Chưa có flashcard nào</div>
           <div style={{ fontSize: '0.875rem', marginTop: '0.5rem' }}>
             Nhấn nút "Tạo flashcard" để bắt đầu
@@ -350,10 +362,10 @@ const AdminFlashcards = () => {
                 </CardInfo>
                 <ActionButtons>
                   <ActionButton variant="edit" onClick={() => handleEdit(flashcard._id)}>
-                    ✏️ Sửa
+                    <Edit sx={{ fontSize: 18 }} /> Sửa
                   </ActionButton>
                   <ActionButton variant="delete" onClick={() => handleDelete(flashcard)}>
-                    🗑️ Xóa
+                    <Delete sx={{ fontSize: 18 }} /> Xóa
                   </ActionButton>
                 </ActionButtons>
               </FlashcardCard>
@@ -366,7 +378,7 @@ const AdminFlashcards = () => {
                 onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                 disabled={currentPage === 1}
               >
-                ← Trước
+                <NavigateBefore /> Trước
               </PageButton>
               {[...Array(totalPages)].map((_, index) => (
                 <PageButton
@@ -381,7 +393,7 @@ const AdminFlashcards = () => {
                 onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                 disabled={currentPage === totalPages}
               >
-                Sau →
+                Sau <NavigateNext />
               </PageButton>
             </Pagination>
           )}

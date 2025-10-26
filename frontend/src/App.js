@@ -29,6 +29,11 @@ import PronunciationPractice from './pages/PronunciationPractice';
 import Quests from './pages/Quests';
 import Shop from './pages/Shop';
 import OAuthSuccess from './pages/OAuthSuccess';
+import AuditLog from './pages/AuditLog';
+import Notifications from './pages/Notifications';
+import LearningGoals from './pages/LearningGoals';
+import TopicFlashcards from './pages/TopicFlashcards';
+import Topics from './pages/Topics';
 
 // Admin Pages
 import AdminDashboard from './pages/AdminDashboard';
@@ -54,7 +59,9 @@ import AdminAchievementForm from './pages/AdminAchievementForm';
 import AdminTestForm from './pages/AdminTestForm';
 import AdminDeckForm from './pages/AdminDeckForm';
 import AdminFlashcardForm from './pages/AdminFlashcardForm';
-
+import AdminNotifications from './pages/AdminNotifications';
+import AdminAuditlog from './pages/AdminAuditlog';
+import AdminSettings from './pages/AdminSettings';
 // Import Styles
 import './styles/App.css';
 
@@ -163,7 +170,7 @@ function App() {
           } />
 
           {/* Learning Resources */}
-          <Route path="/guidebook" element={
+          <Route path="/guidebook/:unitId/:lessonId" element={
             <ProtectedRoute>
               <Guidebook />
             </ProtectedRoute>
@@ -175,13 +182,43 @@ function App() {
             </ProtectedRoute>
           } />
 
-
+          <Route path="/goals" element={
+            <ProtectedRoute>
+              <LearningGoals />
+            </ProtectedRoute>
+          } />
+          <Route path="/topics" element={
+            <ProtectedRoute>
+              <Topics />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/topics/:topicId" element={
+              <ProtectedRoute>
+                <TopicFlashcards />
+              </ProtectedRoute>
+            } />
           <Route path="/pronunciation" element={
             <ProtectedRoute>
               <PronunciationPractice />
             </ProtectedRoute>
           } />
 
+          <Route path="/settings/audit-log" element={
+            <ProtectedRoute>
+              <AuditLog />
+            </ProtectedRoute>
+          } />
+          <Route path="/notifications" element={
+            <ProtectedRoute>
+              <Notifications />
+            </ProtectedRoute>
+          } />
+          <Route path="/practice" element={
+            <ProtectedRoute>
+              <Practice />
+            </ProtectedRoute>
+          } />
           {/* ========== ADMIN DASHBOARD & PAGES ========== */}
           
           {/* Dashboard */}
@@ -258,6 +295,22 @@ function App() {
           <Route path="/admin/leaderboard" element={
             <ProtectedRoute requireAdmin={true}>
               <AdminLeaderboard />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/admin/notifications" element={
+            <ProtectedRoute requireAdmin={true}>
+              <AdminNotifications />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/audit-log" element={
+            <ProtectedRoute requireAdmin={true}>
+              <AdminAuditlog />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/settings" element={
+            <ProtectedRoute requireAdmin={true}>
+              <AdminSettings />
             </ProtectedRoute>
           } />
 

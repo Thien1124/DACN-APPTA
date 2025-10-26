@@ -6,7 +6,18 @@ import Toast from '../components/Toast';
 import useToast from '../hooks/useToast';
 import Swal from 'sweetalert2';
 import api from '../utils/api';
-import {adminService} from '../services/adminService';
+import { adminService } from '../services/adminService';
+
+import {
+  People,
+  Search,
+  LockOpen,
+  Lock,
+  Delete,
+  NavigateBefore,
+  NavigateNext,
+  ManageAccounts
+} from '@mui/icons-material';
 
 // ========== STYLED COMPONENTS ==========
 
@@ -62,15 +73,15 @@ const FilterSelect = styled.select`
 `;
 
 const TableContainer = styled.div`
-  background: ${props => props.theme === 'dark' 
-    ? 'rgba(31, 41, 55, 0.8)' 
+  background: ${props => props.theme === 'dark'
+    ? 'rgba(31, 41, 55, 0.8)'
     : 'rgba(255, 255, 255, 0.9)'
   };
   backdrop-filter: blur(10px);
   border-radius: 16px;
   padding: 1.5rem;
-  border: 1px solid ${props => props.theme === 'dark' 
-    ? 'rgba(75, 85, 99, 0.3)' 
+  border: 1px solid ${props => props.theme === 'dark'
+    ? 'rgba(75, 85, 99, 0.3)'
     : 'rgba(229, 231, 235, 0.5)'
   };
   overflow-x: auto;
@@ -167,6 +178,10 @@ const ActionButton = styled.button`
     return '#6b7280';
   }};
   color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
 
   &:hover {
     opacity: 0.9;
@@ -227,7 +242,7 @@ const AdminUsers = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      
+
       const response = await adminService.users.getAll({
         page: currentPage,
         limit: 10,
@@ -265,7 +280,7 @@ const AdminUsers = () => {
       input: 'select',
       inputOptions: {
         user: 'Học viên',
-        teacher: 'Giảng viên', 
+        teacher: 'Giảng viên',
         admin: 'Quản trị viên'
       },
       inputValue: user.role,
@@ -345,16 +360,22 @@ const AdminUsers = () => {
       <Toast toast={toast} onClose={hideToast} />
 
       <PageHeader>
-        <Title theme={theme}>👥 Người dùng ({users.length})</Title>
+        <Title theme={theme}>
+          <People sx={{ mr: 1 }} /> Người dùng ({users.length})
+        </Title>
+
       </PageHeader>
 
       <FilterBar>
         <SearchInput
           theme={theme}
           type="text"
-          placeholder="🔍 Tìm kiếm theo tên hoặc email..."
+          placeholder="Tìm kiếm theo tên hoặc email..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
+          startAdornment={
+            <Search sx={{ color: 'action.active', mr: 1 }} />
+          }
         />
         <FilterSelect
           theme={theme}
@@ -404,26 +425,26 @@ const AdminUsers = () => {
                 </Td>
                 <Td theme={theme}>
                   <ActionButtons>
-                    <ActionButton 
-                      variant="toggle" 
+                    <ActionButton
+                      variant="toggle"
                       onClick={() => handleChangeRole(user)}
                       title="Thay đổi vai trò"
                     >
-                      Role
+                      <ManageAccounts sx={{ fontSize: 18 }} />
                     </ActionButton>
-                    <ActionButton 
-                      variant="edit" 
+                    <ActionButton
+                      variant="edit"
                       onClick={() => handleToggleActive(user)}
                       title={user.isActive ? 'Vô hiệu hóa' : 'Kích hoạt'}
                     >
-                      {user.isActive ? '🔒' : '🔓'}
+                      {user.isActive ? <Lock sx={{ fontSize: 18 }} /> : <LockOpen sx={{ fontSize: 18 }} />}
                     </ActionButton>
-                    <ActionButton 
-                      variant="delete" 
+                    <ActionButton
+                      variant="delete"
                       onClick={() => handleDelete(user)}
                       title="Xóa"
                     >
-                      X
+                      <Delete sx={{ fontSize: 18 }} />
                     </ActionButton>
                   </ActionButtons>
                 </Td>
@@ -437,7 +458,7 @@ const AdminUsers = () => {
             onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
             disabled={currentPage === 1}
           >
-            ← Trước
+            <NavigateBefore /> Trước
           </PageButton>
           {[...Array(totalPages)].map((_, index) => (
             <PageButton
@@ -452,7 +473,7 @@ const AdminUsers = () => {
             onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
             disabled={currentPage === totalPages}
           >
-            Sau →
+            Sau <NavigateNext />
           </PageButton>
         </Pagination>
       </TableContainer>

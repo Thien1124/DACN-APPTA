@@ -6,6 +6,17 @@ import { adminService } from '../services/adminService';
 import Toast from '../components/Toast';
 import useToast from '../hooks/useToast';
 import Swal from 'sweetalert2';
+import {
+  Folder,
+  Add,
+  Visibility,
+  Edit,
+  Delete,
+  Public,
+  VisibilityOff,
+  Style,
+  Class
+} from '@mui/icons-material';
 
 // ========== STYLED COMPONENTS ==========
 
@@ -242,9 +253,11 @@ const AdminDecks = () => {
       <Toast toast={toast} onClose={hideToast} />
 
       <PageHeader>
-        <Title theme={theme}>🗂️ Decks ({decks.length})</Title>
+        <Title theme={theme}>
+          <Folder sx={{ mr: 1 }} /> Decks ({decks.length})
+        </Title>
         <CreateButton onClick={handleCreate}>
-          <span>➕</span>
+          <Add />
           Tạo deck mới
         </CreateButton>
       </PageHeader>
@@ -270,11 +283,11 @@ const AdminDecks = () => {
               
               <DeckStats theme={theme}>
                 <Stat theme={theme}>
-                  <span>📚</span>
+                  <Class sx={{ fontSize: 18 }} />
                   {deck.course?.title || 'N/A'}
                 </Stat>
                 <Stat theme={theme}>
-                  <span>🎴</span>
+                  <Style sx={{ fontSize: 18 }} />
                   {deck.flashcards?.length || 0} thẻ
                 </Stat>
               </DeckStats>
@@ -285,20 +298,24 @@ const AdminDecks = () => {
 
               <ActionButtons>
                 <ActionButton variant="view" onClick={() => handleView(deck._id)}>
-                  👁️ Xem
+                  <Visibility sx={{ fontSize: 18 }} /> Xem
                 </ActionButton>
                 <ActionButton variant="edit" onClick={() => handleEdit(deck._id)}>
-                  ✏️ Sửa
+                  <Edit sx={{ fontSize: 18 }} /> Sửa
                 </ActionButton>
                 <ActionButton 
                   variant="toggle" 
                   onClick={() => handleTogglePublish(deck)}
                   style={{ background: deck.isPublished ? '#f59e0b' : '#10b981' }}
                 >
-                  {deck.isPublished ? '👁️‍🗨️ Ẩn' : '🌐 Công khai'}
+                  {deck.isPublished ? (
+                    <><VisibilityOff sx={{ fontSize: 18 }} /> Ẩn</>
+                  ) : (
+                    <><Public sx={{ fontSize: 18 }} /> Công khai</>
+                  )}
                 </ActionButton>
                 <ActionButton variant="delete" onClick={() => handleDelete(deck)}>
-                  🗑️
+                  <Delete sx={{ fontSize: 18 }} />
                 </ActionButton>
               </ActionButtons>
             </DeckCard>

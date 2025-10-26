@@ -2,12 +2,18 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
 import logo from '../assets/logo.png';
-import home123 from '../assets/home123.png';
-import speaking123 from '../assets/speaking123.png';
-import rankings from '../assets/rankings.png';
-import mission from '../assets/mission.png';
-import store from '../assets/store.png';
-import Profile from '../assets/profile.png';
+// Thêm imports cho icons
+import { FiSettings } from 'react-icons/fi';
+import { FaFacebookF, FaTwitter, FaInstagram } from 'react-icons/fa';
+import {
+  BiHomeAlt2,
+  BiMicrophone,
+  BiTrophy,
+  BiTask,
+  BiStore,
+  BiUser, BiBrain, BiCard, BiFlag
+} from 'react-icons/bi';
+
 // ========== ANIMATIONS ==========
 const fadeIn = keyframes`
   from { opacity: 0; transform: translateX(-20px); }
@@ -120,11 +126,22 @@ const NavItem = styled.div`
 `;
 
 const NavIcon = styled.div`
-  font-size: 1.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
   min-width: 32px;
+  color: ${props => props.active ? '#1CB0F6' : '#4b5563'};
+  transition: all 0.3s ease;
+
+  svg {
+    transition: all 0.3s ease;
+  }
+
+  ${props => props.active && `
+    svg {
+      transform: scale(1.1);
+    }
+  `}
 `;
 
 const NavText = styled.span`
@@ -222,48 +239,66 @@ const LeftSidebar = () => {
   const location = useLocation();
 
   const navItems = [
-    { 
-      id: 'learn', 
-      icon: home123, 
-      text: 'Học', 
+    {
+      id: 'learn',
+      icon: <BiHomeAlt2 size={24} />,
+      text: 'Học',
       path: '/learn'
     },
-    { 
-      id: 'pronunciation', 
-      icon: speaking123, 
-      text: 'Phát âm', 
+    {
+      id: 'pronunciation',
+      icon: <BiMicrophone size={24} />,
+      text: 'Phát âm',
       path: '/characters'
     },
-    { 
-      id: 'leaderboard', 
-      icon: rankings, 
-      text: 'Bảng xếp hạng', 
+    {
+      id: 'leaderboard',
+      icon: <BiTrophy size={24} />,
+      text: 'Bảng xếp hạng',
       path: '/leaderboard'
     },
-    { 
-      id: 'quests', 
-      icon: mission, 
-      text: 'Nhiệm vụ', 
+    {
+      id: 'quests',
+      icon: <BiTask size={24} />,
+      text: 'Nhiệm vụ',
       path: '/quests',
       badge: '3',
       variant: 'danger'
     },
-    { 
-      id: 'shop', 
-      icon: store, 
-      text: 'Cửa hàng', 
+    {
+      id: 'practice',
+      icon: <BiBrain size={24} />,
+      text: 'Luyện tập',
+      path: '/practice'
+    },
+    {
+      id: 'flashcards',
+      icon: <BiCard size={24} />,
+      text: 'Flashcard',
+      path: '/topics'
+    },
+    {
+      id: 'goals',
+      icon: <BiFlag size={24} />,
+      text: 'Mục tiêu học tập',
+      path: '/goals'
+    },
+    {
+      id: 'shop',
+      icon: <BiStore size={24} />,
+      text: 'Cửa hàng',
       path: '/shop'
     },
-    { 
-      id: 'profile', 
-      icon: Profile, 
-      text: 'Hồ sơ', 
+    {
+      id: 'profile',
+      icon: <BiUser size={24} />,
+      text: 'Hồ sơ',
       path: '/profile'
     },
-    { 
-      id: 'settings', 
-      icon: '⚙️', 
-      text: 'Xem thêm', 
+    {
+      id: 'settings',
+      icon: <FiSettings size={24} />,
+      text: 'Xem thêm',
       path: '/settings'
     },
   ];
@@ -290,16 +325,8 @@ const LeftSidebar = () => {
               active={isActive(item.path)}
               onClick={() => handleNavClick(item)}
             >
-              <NavIcon>
-                {typeof item.icon === 'string' && item.icon.startsWith('http') || item.icon.endsWith('.png') ? (
-                  <NavIconImage 
-                    src={item.icon} 
-                    alt={item.text}
-                    active={isActive(item.path)}
-                  />
-                ) : (
-                  <span style={{ fontSize: '1.5rem' }}>{item.icon}</span>
-                )}
+              <NavIcon active={isActive(item.path)}>
+                {item.icon}
               </NavIcon>
               <NavText active={isActive(item.path)}>{item.text}</NavText>
               {item.badge && (
@@ -319,7 +346,17 @@ const LeftSidebar = () => {
           <br />
           Version 1.0.0
         </FooterText>
-        
+        <SocialLinks>
+          <SocialIcon href="https://facebook.com" target="_blank">
+            <FaFacebookF />
+          </SocialIcon>
+          <SocialIcon href="https://twitter.com" target="_blank">
+            <FaTwitter />
+          </SocialIcon>
+          <SocialIcon href="https://instagram.com" target="_blank">
+            <FaInstagram />
+          </SocialIcon>
+        </SocialLinks>
       </SidebarFooter>
     </SidebarContainer>
   );
