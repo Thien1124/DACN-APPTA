@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import api from '../utils/api';
 import Toast from './Toast';
 import useToast from '../hooks/useToast';
+import { AiOutlineCamera, AiOutlineLoading3Quarters, AiOutlineClose } from 'react-icons/ai';
 
 // ========== STYLED COMPONENTS ==========
 
@@ -178,6 +179,14 @@ const DeleteButton = styled.button`
   }
 `;
 
+const LoadingIcon = styled(AiOutlineLoading3Quarters)`
+  animation: spin 1s linear infinite;
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+`;
+
 // ========== COMPONENT ==========
 
 const Avatar = ({
@@ -337,7 +346,11 @@ const Avatar = ({
             {editable && (
               <UploadOverlay>
                 <UploadIcon>
-                  {uploading ? '⏳' : '📷'}
+                  {uploading ? (
+                    <LoadingIcon size={24} />
+                  ) : (
+                    <AiOutlineCamera size={24} />
+                  )}
                 </UploadIcon>
               </UploadOverlay>
             )}
@@ -362,7 +375,7 @@ const Avatar = ({
           {/* ✅ Nút xóa avatar */}
           {allowDelete && currentImage && (
             <DeleteButton onClick={handleDeleteAvatar}>
-              ✕
+              <AiOutlineClose size={16} />
             </DeleteButton>
           )}
         </AvatarContainer>

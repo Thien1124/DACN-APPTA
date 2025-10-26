@@ -5,6 +5,13 @@ import AdminLayout from '../layouts/AdminLayout';
 import { adminService } from '../services/adminService';
 import Toast from '../components/Toast';
 import useToast from '../hooks/useToast';
+import {
+  Add,
+  Edit,
+  Info,
+  Assignment,
+  Settings
+} from '@mui/icons-material';
 
 // ========== STYLED COMPONENTS ==========
 const FormContainer = styled.div`
@@ -352,12 +359,16 @@ const AdminTestForm = () => {
 
       <FormContainer>
         <PageTitle theme={theme}>
-          {id ? '✏️ Chỉnh sửa Bài Test' : '➕ Tạo Bài Test mới'}
+          {id ? (
+            <><Edit sx={{ mr: 1 }} /> Chỉnh sửa Bài Test</>
+          ) : (
+            <><Add sx={{ mr: 1 }} /> Tạo Bài Test mới</>
+          )}
         </PageTitle>
 
         <InfoBox theme={theme}>
           <InfoTitle theme={theme}>
-            <span>💡</span>
+            <Info />
             Lưu ý
           </InfoTitle>
           <InfoText theme={theme}>
@@ -368,7 +379,9 @@ const AdminTestForm = () => {
 
         <Card theme={theme}>
           <form onSubmit={handleSubmit}>
-            <SectionTitle theme={theme}>📝 Thông tin cơ bản</SectionTitle>
+            <SectionTitle theme={theme}>
+              <Assignment sx={{ fontSize: 20 }} /> Thông tin cơ bản
+            </SectionTitle>
 
             <FormGroup>
               <Label theme={theme}>Tên bài test *</Label>
@@ -436,7 +449,9 @@ const AdminTestForm = () => {
               </FormGroup>
             </FormRow>
 
-            <SectionTitle theme={theme}>⚙️ Cấu hình bài test</SectionTitle>
+            <SectionTitle theme={theme}>
+              <Settings sx={{ fontSize: 20 }} /> Cấu hình bài test
+            </SectionTitle>
 
             <FormRow columns="1fr 1fr 1fr">
               <FormGroup>

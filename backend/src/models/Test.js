@@ -3,55 +3,106 @@ const mongoose = require('mongoose');
 const testSchema = new mongoose.Schema({
   title: {
     type: String,
-    required: [true, 'Vui lòng nhập tên bài kiểm tra'],
+    required: true,
     trim: true
   },
+  
   description: {
     type: String,
-    required: [true, 'Vui lòng nhập mô tả bài kiểm tra'],
+    required: false
   },
-  course: {
+  
+  type: {
+    type: String,
+    required: true,
+    enum: ['PRACTICE', 'TEST', 'EXAM', 'QUIZ'],
+    default: 'PRACTICE'
+  },
+  
+  skill: {
+    type: String,
+    required: true,
+    enum: ['LISTENING', 'READING', 'SPEAKING', 'WRITING', 'VOCABULARY', 'GRAMMAR', 'MIXED'],
+    index: true
+  },
+  
+  level: {
+    type: String,
+    required: true,
+    enum: ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'],
+    index: true
+  },
+  
+  questions: [{
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Course',
-    required: [true, 'Bài kiểm tra phải thuộc về một khóa học']
-  },
-  unit: {
+    ref: 'Question'
+  }],
+  exercises: [{
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Unit'
+    ref: 'Exercise' // Hoặc model phù hợp
+  }],
+  
+  totalQuestions: {
+    type: Number,
+    required: true
   },
-  duration: {
-    type: Number, // Thời gian làm bài tính bằng phút
-    default: 15
+  
+  totalPoints: {
+    type: Number,
+    required: true
   },
+  
   passingScore: {
     type: Number,
     default: 70
   },
-  isPublished: {
-    type: Boolean,
-    default: false
+  
+  timeLimit: {
+    type: Number,
+    required: false
   },
-  exercises: [{
+  
+  attempts: {
+    type: Number,
+    default: -1
+  },
+  
+  courseId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Exercise'
-  }],
+    ref: 'Course',
+    required: false
+  },
+  
+  isPublic: {
+    type: Boolean,
+    default: true
+  },
+  
+  isActive: {
+    type: Boolean,
+    default: true
+  },
+  
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  
   createdAt: {
     type: Date,
     default: Date.now
   },
+  
   updatedAt: {
     type: Date,
     default: Date.now
   }
-}, {
-  timestamps: true
 });
 
-// Middleware trước khi lưu để cập nhật updatedAt
-testSchema.pre('save', function(next) {
-  this.updatedAt = Date.now();
-  next();
-});
+// Indexes
+testSchema.index({ skill: 1, level: 1, isActive: 1, isPublic: 1 });
+testSchema.index({ courseId: 1 });
 
 const Test = mongoose.model('Test', testSchema);
 

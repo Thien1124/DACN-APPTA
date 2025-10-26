@@ -4,6 +4,34 @@ import styled, { keyframes } from 'styled-components';
 import logo from '../assets/logo.png';
 import home from '../assets/home.png';
 import { authService } from '../services/authService'; // ✅ Import authService
+import {
+  MenuBook,
+  FlashOn,
+  SportsEsports,
+  Psychology,
+  Timer,
+  EmojiEvents,
+  ShowChart,
+  Favorite,
+  Public,
+  Facebook,
+  Twitter,
+  Instagram,
+  YouTube,
+  Info,
+  Group,
+  Work,
+  Newspaper,
+  School,
+  Podcasts,
+  AutoStories,
+  Event,
+  Help,
+  ContactSupport,
+  Security,
+  Gavel
+} from '@mui/icons-material';
+import MyLocationIcon from '@mui/icons-material/MyLocation';
 
 // ========== ANIMATIONS ==========
 const float = keyframes`
@@ -168,6 +196,7 @@ const BtnGetStarted = styled.button`
     box-shadow: 0 6px 20px rgba(88, 204, 2, 0.4);
   }
 `;
+
 
 const HeroSection = styled.section`
   max-width: 1280px;
@@ -804,15 +833,15 @@ const Home = () => {
           </IllustrationWrapper>
           
           <FloatingElement theme={theme} delay="0s" style={{top: '10%', left: '5%'}}>
-            <span>📚</span>
+            <MenuBook sx={{ fontSize: 24 }} />
             <span>Học mọi lúc</span>
           </FloatingElement>
           <FloatingElement theme={theme} delay="1s" style={{top: '20%', right: '10%'}}>
-            <span>🎯</span>
+            <MyLocationIcon sx={{ fontSize: 24 }} />
             <span>Hiệu quả</span>
           </FloatingElement>
           <FloatingElement theme={theme} delay="2s" style={{bottom: '15%', left: '10%'}}>
-            <span>⚡</span>
+            <FlashOn sx={{ fontSize: 24 }} />
             <span>Nhanh chóng</span>
           </FloatingElement>
         </HeroIllustration>
@@ -851,7 +880,9 @@ const Home = () => {
         
         <FeaturesGrid>
           <FeatureCard theme={theme} color="#58CC02">
-            <FeatureIcon color="green">🎮</FeatureIcon>
+            <FeatureIcon color="green">
+              <SportsEsports sx={{ fontSize: 40 }} />
+            </FeatureIcon>
             <FeatureTitle theme={theme}>Học như chơi game</FeatureTitle>
             <FeatureDescription theme={theme}>
               Bài học vui nhộn với điểm số, cấp độ và thử thách hấp dẫn.
@@ -859,7 +890,9 @@ const Home = () => {
           </FeatureCard>
 
           <FeatureCard theme={theme} color="#1CB0F6">
-            <FeatureIcon color="blue">🧠</FeatureIcon>
+            <FeatureIcon color="blue">
+              <Psychology sx={{ fontSize: 40 }} />
+            </FeatureIcon>
             <FeatureTitle theme={theme}>Khoa học chứng minh</FeatureTitle>
             <FeatureDescription theme={theme}>
               Phương pháp học dựa trên nghiên cứu khoa học về não bộ và trí nhớ.
@@ -867,7 +900,9 @@ const Home = () => {
           </FeatureCard>
 
           <FeatureCard theme={theme} color="#CE82FF">
-            <FeatureIcon color="purple">⚡</FeatureIcon>
+            <FeatureIcon color="purple">
+              <Timer sx={{ fontSize: 40 }} />
+            </FeatureIcon>
             <FeatureTitle theme={theme}>Bài học ngắn gọn</FeatureTitle>
             <FeatureDescription theme={theme}>
               Chỉ 5-10 phút mỗi ngày để duy trì tiến độ học tập hiệu quả.
@@ -875,7 +910,9 @@ const Home = () => {
           </FeatureCard>
 
           <FeatureCard theme={theme} color="#FF9600">
-            <FeatureIcon color="orange">🏆</FeatureIcon>
+            <FeatureIcon color="orange">
+              <EmojiEvents sx={{ fontSize: 40 }} />
+            </FeatureIcon>
             <FeatureTitle theme={theme}>Theo dõi tiến độ</FeatureTitle>
             <FeatureDescription theme={theme}>
               Xem tiến độ học tập và cạnh tranh với bạn bè trên bảng xếp hạng.
@@ -883,7 +920,9 @@ const Home = () => {
           </FeatureCard>
 
           <FeatureCard theme={theme} color="#FF4B4B">
-            <FeatureIcon color="red">💖</FeatureIcon>
+            <FeatureIcon color="red">
+              <Favorite sx={{ fontSize: 40 }} />
+            </FeatureIcon>
             <FeatureTitle theme={theme}>Động lực thường xuyên</FeatureTitle>
             <FeatureDescription theme={theme}>
               Nhắc nhở thông minh và hệ thống streak giúp bạn giữ động lực học tập.
@@ -891,7 +930,9 @@ const Home = () => {
           </FeatureCard>
 
           <FeatureCard theme={theme} color="#facc15">
-            <FeatureIcon color="yellow">🌍</FeatureIcon>
+            <FeatureIcon color="yellow">
+              <Public sx={{ fontSize: 40 }} />
+            </FeatureIcon>
             <FeatureTitle theme={theme}>Học mọi lúc mọi nơi</FeatureTitle>
             <FeatureDescription theme={theme}>
               Đồng bộ trên mọi thiết bị. Học trên điện thoại, máy tính bảng hoặc máy tính.
@@ -919,40 +960,48 @@ const Home = () => {
           <FooterSection>
             <FooterTitle>Về chúng tôi</FooterTitle>
             <FooterLinks theme={theme}>
-              <FooterLink><a href="#about">Giới thiệu</a></FooterLink>
-              <FooterLink><a href="#team">Đội ngũ</a></FooterLink>
-              <FooterLink><a href="#careers">Tuyển dụng</a></FooterLink>
-              <FooterLink><a href="#press">Báo chí</a></FooterLink>
+              <FooterLink><a href="#about"><Info sx={{ fontSize: 16, marginRight: 1 }} />Giới thiệu</a></FooterLink>
+              <FooterLink><a href="#team"><Group sx={{ fontSize: 16, marginRight: 1 }} />Đội ngũ</a></FooterLink>
+              <FooterLink><a href="#careers"><Work sx={{ fontSize: 16, marginRight: 1 }} />Tuyển dụng</a></FooterLink>
+              <FooterLink><a href="#press"><Newspaper sx={{ fontSize: 16, marginRight: 1 }} />Báo chí</a></FooterLink>
             </FooterLinks>
           </FooterSection>
 
           <FooterSection>
             <FooterTitle>Sản phẩm</FooterTitle>
             <FooterLinks theme={theme}>
-              <FooterLink><a href="#courses">Khóa học</a></FooterLink>
-              <FooterLink><a href="#podcast">Podcast</a></FooterLink>
-              <FooterLink><a href="#stories">Stories</a></FooterLink>
-              <FooterLink><a href="#events">Events</a></FooterLink>
+              <FooterLink><a href="#courses"><School sx={{ fontSize: 16, marginRight: 1 }} />Khóa học</a></FooterLink>
+              <FooterLink><a href="#podcast"><Podcasts sx={{ fontSize: 16, marginRight: 1 }} />Podcast</a></FooterLink>
+              <FooterLink><a href="#stories"><AutoStories sx={{ fontSize: 16, marginRight: 1 }} />Stories</a></FooterLink>
+              <FooterLink><a href="#events"><Event sx={{ fontSize: 16, marginRight: 1 }} />Events</a></FooterLink>
             </FooterLinks>
           </FooterSection>
 
           <FooterSection>
             <FooterTitle>Hỗ trợ</FooterTitle>
             <FooterLinks theme={theme}>
-              <FooterLink><a href="#faq">FAQ</a></FooterLink>
-              <FooterLink><a href="#contact">Liên hệ</a></FooterLink>
-              <FooterLink><a href="#privacy">Bảo mật</a></FooterLink>
-              <FooterLink><a href="#terms">Điều khoản</a></FooterLink>
+              <FooterLink><a href="#faq"><Help sx={{ fontSize: 16, marginRight: 1 }} />FAQ</a></FooterLink>
+              <FooterLink><a href="#contact"><ContactSupport sx={{ fontSize: 16, marginRight: 1 }} />Liên hệ</a></FooterLink>
+              <FooterLink><a href="#privacy"><Security sx={{ fontSize: 16, marginRight: 1 }} />Bảo mật</a></FooterLink>
+              <FooterLink><a href="#terms"><Gavel sx={{ fontSize: 16, marginRight: 1 }} />Điều khoản</a></FooterLink>
             </FooterLinks>
           </FooterSection>
 
           <FooterSection>
             <FooterTitle>Kết nối</FooterTitle>
             <SocialLinks>
-              <SocialLink href="#facebook" aria-label="Facebook">📘</SocialLink>
-              <SocialLink href="#twitter" aria-label="Twitter">🐦</SocialLink>
-              <SocialLink href="#instagram" aria-label="Instagram">📷</SocialLink>
-              <SocialLink href="#youtube" aria-label="YouTube">📺</SocialLink>
+              <SocialLink href="#facebook" aria-label="Facebook">
+                <Facebook sx={{ fontSize: 24, color: theme === 'dark' ? '#f9fafb' : '#1a1a1a' }} />
+              </SocialLink>
+              <SocialLink href="#twitter" aria-label="Twitter">
+                <Twitter sx={{ fontSize: 24, color: theme === 'dark' ? '#f9fafb' : '#1a1a1a' }} />
+              </SocialLink>
+              <SocialLink href="#instagram" aria-label="Instagram">
+                <Instagram sx={{ fontSize: 24, color: theme === 'dark' ? '#f9fafb' : '#1a1a1a' }} />
+              </SocialLink>
+              <SocialLink href="#youtube" aria-label="YouTube">
+                <YouTube sx={{ fontSize: 24, color: theme === 'dark' ? '#f9fafb' : '#1a1a1a' }} />
+              </SocialLink>
             </SocialLinks>
           </FooterSection>
         </FooterContent>

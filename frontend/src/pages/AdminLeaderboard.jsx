@@ -5,6 +5,16 @@ import { adminService } from '../services/adminService';
 import Toast from '../components/Toast';
 import useToast from '../hooks/useToast';
 import Swal from 'sweetalert2';
+import {
+  EmojiEvents,
+  Download,
+  Refresh,
+  Star,
+  Diamond,
+  LocalFireDepartment,
+  Timer,
+  MenuBook
+} from '@mui/icons-material';
 
 // ========== STYLED COMPONENTS ==========
 
@@ -35,7 +45,7 @@ const Tab = styled.button`
   padding: 0.75rem 1.5rem;
   border: none;
   background: transparent;
-  color: ${props => props.active 
+  color: ${props => props.active
     ? (props.theme === 'dark' ? '#58CC02' : '#58CC02')
     : (props.theme === 'dark' ? '#9ca3af' : '#6b7280')
   };
@@ -80,15 +90,15 @@ const ActionButton = styled.button`
 `;
 
 const TableContainer = styled.div`
-  background: ${props => props.theme === 'dark' 
-    ? 'rgba(31, 41, 55, 0.8)' 
+  background: ${props => props.theme === 'dark'
+    ? 'rgba(31, 41, 55, 0.8)'
     : 'rgba(255, 255, 255, 0.9)'
   };
   backdrop-filter: blur(10px);
   border-radius: 16px;
   padding: 1.5rem;
-  border: 1px solid ${props => props.theme === 'dark' 
-    ? 'rgba(75, 85, 99, 0.3)' 
+  border: 1px solid ${props => props.theme === 'dark'
+    ? 'rgba(75, 85, 99, 0.3)'
     : 'rgba(229, 231, 235, 0.5)'
   };
   overflow-x: auto;
@@ -195,6 +205,46 @@ const EmptyState = styled.div`
   color: ${props => props.theme === 'dark' ? '#9ca3af' : '#6b7280'};
 `;
 
+// Add mock data
+const mockLeaderboard = [
+  {
+    _id: '1',
+    user: {
+      displayName: 'John Doe',
+      email: 'john@example.com',
+      level: 10,
+      totalXP: 5000,
+      streak: 15,
+      completedLessons: 45,
+      studyTime: 3600
+    }
+  },
+  {
+    _id: '2',
+    user: {
+      displayName: 'Jane Smith',
+      email: 'jane@example.com',
+      level: 8,
+      totalXP: 4200,
+      streak: 20,
+      completedLessons: 38,
+      studyTime: 2800
+    }
+  },
+  {
+    _id: '3',
+    user: {
+      displayName: 'Mike Johnson',
+      email: 'mike@example.com',
+      level: 12,
+      totalXP: 6500,
+      streak: 30,
+      completedLessons: 60,
+      studyTime: 4500
+    }
+  }
+];
+
 // ========== COMPONENT ==========
 
 const AdminLeaderboard = () => {
@@ -205,14 +255,19 @@ const AdminLeaderboard = () => {
   const [leaderboardData, setLeaderboardData] = useState([]);
 
   useEffect(() => {
-    fetchLeaderboard();
+    //fetchLeaderboard(); bỏ này ra nếu dùng api
+    // Simulate API call
+    setTimeout(() => {
+      setLeaderboardData(mockLeaderboard);
+      setLoading(false);
+    }, 1000);
   }, [activeTab]);
 
   const fetchLeaderboard = async () => {
     try {
       setLoading(true);
       let response;
-      
+
       switch (activeTab) {
         case 'weekly':
           response = await adminService.leaderboard.getWeekly();
@@ -223,7 +278,7 @@ const AdminLeaderboard = () => {
         default:
           response = await adminService.leaderboard.getOverall();
       }
-      
+
       setLeaderboardData(response.data || []);
     } catch (error) {
       console.error('Error fetching leaderboard:', error);
@@ -321,7 +376,9 @@ const AdminLeaderboard = () => {
       <Toast toast={toast} onClose={hideToast} />
 
       <PageHeader>
-        <Title theme={theme}>🏆 {getTabTitle()}</Title>
+        <Title theme={theme}>
+          <EmojiEvents sx={{ mr: 1 }} /> {getTabTitle()}
+        </Title>
         <Subtitle theme={theme}>
           Quản lý và theo dõi thành tích học tập của người dùng
         </Subtitle>
@@ -353,18 +410,18 @@ const AdminLeaderboard = () => {
 
       <ActionBar>
         <ActionButton onClick={handleExportData}>
-          <span>📥</span>
+          <Download />
           Xuất dữ liệu
         </ActionButton>
         {activeTab === 'weekly' && (
           <ActionButton variant="warning" onClick={handleResetWeekly}>
-            <span>🔄</span>
+            <Refresh />
             Reset tuần
           </ActionButton>
         )}
         {activeTab === 'monthly' && (
           <ActionButton variant="warning" onClick={handleResetMonthly}>
-            <span>🔄</span>
+            <Refresh />
             Reset tháng
           </ActionButton>
         )}
@@ -403,9 +460,9 @@ const AdminLeaderboard = () => {
                   <Td theme={theme}>
                     <UserInfo>
                       <UserAvatar>
-                        {entry.user?.displayName?.charAt(0).toUpperCase() || 
-                         entry.user?.username?.charAt(0).toUpperCase() || 
-                         '?'}
+                        {entry.user?.displayName?.charAt(0).toUpperCase() ||
+                          entry.user?.username?.charAt(0).toUpperCase() ||
+                          '?'}
                       </UserAvatar>
                       <UserDetails>
                         <UserName theme={theme}>
@@ -419,24 +476,30 @@ const AdminLeaderboard = () => {
                   </Td>
                   <Td theme={theme}>
                     <StatBadge type="level">
-                      ⭐ Level {entry.user?.level || 1}
+                      <Star sx={{ fontSize: 18 }} /> Level {entry.user?.level || 1}
                     </StatBadge>
                   </Td>
                   <Td theme={theme}>
                     <StatBadge type="xp">
-                      💎 {entry.totalXP || entry.user?.totalXP || 0} XP
+                      <Diamond sx={{ fontSize: 18 }} /> {entry.totalXP || entry.user?.totalXP || 0} XP
                     </StatBadge>
                   </Td>
                   <Td theme={theme}>
                     <StatBadge type="streak">
-                      🔥 {entry.streak || entry.user?.streak || 0} ngày
+                      <LocalFireDepartment sx={{ fontSize: 18 }} /> {entry.streak || entry.user?.streak || 0} ngày
                     </StatBadge>
                   </Td>
                   <Td theme={theme}>
-                    {entry.completedLessons || entry.user?.completedLessons?.length || 0} bài
+                    <StatBadge>
+                      <MenuBook sx={{ fontSize: 18 }} />
+                      {entry.user?.completedLessons || 0} bài
+                    </StatBadge>
                   </Td>
                   <Td theme={theme}>
-                    {Math.floor((entry.studyTime || entry.user?.studyTime || 0) / 60)} giờ
+                    <StatBadge>
+                      <Timer sx={{ fontSize: 18 }} />
+                      {Math.floor((entry.studyTime || entry.user?.studyTime || 0) / 60)} giờ
+                    </StatBadge>
                   </Td>
                 </tr>
               ))}

@@ -6,6 +6,19 @@ import { adminService } from '../services/adminService';
 import Toast from '../components/Toast';
 import useToast from '../hooks/useToast';
 
+import {
+  MenuBook,
+  School,
+  People,
+  Translate,
+  Assignment,
+  EmojiEvents,
+  Add,
+  Analytics
+} from '@mui/icons-material';
+import FlashOnIcon from '@mui/icons-material/FlashOn';
+
+
 // ========== STYLED COMPONENTS ==========
 
 const DashboardGrid = styled.div`
@@ -74,6 +87,7 @@ const SectionTitle = styled.h2`
   font-weight: bold;
   color: ${props => props.theme === 'dark' ? '#f9fafb' : '#1a1a1a'};
   margin-bottom: 1rem;
+  margin-top: 3rem; // Add more top margin
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -199,61 +213,62 @@ const AdminDashboard = () => {
   };
 
   const statCards = [
-    {
-      icon: '📚',
-      label: 'Khóa học',
-      value: stats.totalCourses,
-      color: '#58CC02',
-      change: '+12%',
-      positive: true,
-      path: '/admin/courses'
-    },
-    {
-      icon: '📖',
-      label: 'Bài học',
-      value: stats.totalLessons,
-      color: '#1CB0F6',
-      change: '+8%',
-      positive: true,
-      path: '/admin/lessons'
-    },
-    {
-      icon: '👥',
-      label: 'Người dùng',
-      value: stats.totalUsers,
-      color: '#8b5cf6',
-      change: '+15%',
-      positive: true,
-      path: '/admin/users'
-    },
-    {
-      icon: '📝',
-      label: 'Từ vựng',
-      value: stats.totalVocabularies,
-      color: '#f59e0b',
-      change: '+24%',
-      positive: true,
-      path: '/admin/vocabularies'
-    },
-    {
-      icon: '🎯',
-      label: 'Bài tập',
-      value: stats.totalExercises,
-      color: '#ef4444',
-      change: '+18%',
-      positive: true,
-      path: '/admin/exercises'
-    },
-    {
-      icon: '🏆',
-      label: 'Thành tích',
-      value: stats.totalAchievements,
-      color: '#10b981',
-      change: '+6%',
-      positive: true,
-      path: '/admin/achievements'
-    }
-  ];
+  {
+    icon: <MenuBook sx={{ color: '#58CC02', fontSize: 28 }} />,
+    label: 'Khóa học',
+    value: stats.totalCourses,
+    color: '#58CC02',
+    change: '+12%',
+    positive: true,
+    path: '/admin/courses'
+  },
+  {
+    icon: <School sx={{ color: '#1CB0F6', fontSize: 28 }} />,
+    label: 'Bài học',
+    value: stats.totalLessons,
+    color: '#1CB0F6',
+    change: '+8%',
+    positive: true,
+    path: '/admin/lessons'
+  },
+  {
+    icon: <People sx={{ color: '#8b5cf6', fontSize: 28 }} />,
+    label: 'Người dùng',
+    value: stats.totalUsers,
+    color: '#8b5cf6',
+    change: '+15%',
+    positive: true,
+    path: '/admin/users'
+  },
+  {
+    icon: <Translate sx={{ color: '#f59e0b', fontSize: 28 }} />,
+    label: 'Từ vựng',
+    value: stats.totalVocabularies,
+    color: '#f59e0b',
+    change: '+24%',
+    positive: true,
+    path: '/admin/vocabularies'
+  },
+  {
+    icon: <Assignment sx={{ color: '#ef4444', fontSize: 28 }} />,
+    label: 'Bài tập',
+    value: stats.totalExercises,
+    color: '#ef4444',
+    change: '+18%',
+    positive: true,
+    path: '/admin/exercises'
+  },
+  {
+    icon: <EmojiEvents sx={{ color: '#10b981', fontSize: 28 }} />,
+    label: 'Thành tích',
+    value: stats.totalAchievements,
+    color: '#10b981',
+    change: '+6%',
+    positive: true,
+    path: '/admin/achievements'
+  }
+];
+
 
   if (loading) {
     return (
@@ -286,33 +301,34 @@ const AdminDashboard = () => {
 
       {/* Quick Actions */}
       <SectionTitle theme={theme}>
-        <span>⚡</span>
-        Hành động nhanh
-      </SectionTitle>
-      <QuickActionsGrid>
-        <QuickActionBtn color="#58CC02" onClick={() => navigate('/admin/courses/create')}>
-          <span>➕</span>
-          Tạo khóa học
-        </QuickActionBtn>
-        <QuickActionBtn color="#1CB0F6" onClick={() => navigate('/admin/lessons/create')}>
-          <span>➕</span>
-          Tạo bài học
-        </QuickActionBtn>
-        <QuickActionBtn color="#f59e0b" onClick={() => navigate('/admin/vocabularies/create')}>
-          <span>➕</span>
-          Thêm từ vựng
-        </QuickActionBtn>
-        <QuickActionBtn color="#ef4444" onClick={() => navigate('/admin/exercises/create')}>
-          <span>➕</span>
-          Tạo bài tập
-        </QuickActionBtn>
-      </QuickActionsGrid>
+  <FlashOnIcon sx={{ fontSize: 24 }} />
+  Hành động nhanh
+</SectionTitle>
+<QuickActionsGrid>
+  <QuickActionBtn color="#58CC02" onClick={() => navigate('/admin/courses/create')}>
+    <Add />
+    Tạo khóa học
+  </QuickActionBtn>
+  <QuickActionBtn color="#1CB0F6" onClick={() => navigate('/admin/lessons/create')}>
+    <Add />
+    Tạo bài học
+  </QuickActionBtn>
+  <QuickActionBtn color="#f59e0b" onClick={() => navigate('/admin/vocabularies/create')}>
+    <Add />
+    Thêm từ vựng
+  </QuickActionBtn>
+  <QuickActionBtn color="#ef4444" onClick={() => navigate('/admin/exercises/create')}>
+    <Add />
+    Tạo bài tập
+  </QuickActionBtn>
+</QuickActionsGrid>
 
       {/* Recent Activity */}
+       <div style={{ marginTop: '3rem' }}>
       <SectionTitle theme={theme}>
-        <span>📊</span>
-        Hoạt động gần đây
-      </SectionTitle>
+  <Analytics sx={{ fontSize: 24 }} />
+  Hoạt động gần đây
+</SectionTitle>
       <RecentActivityTable theme={theme}>
         <Table>
           <thead>
@@ -328,23 +344,24 @@ const AdminDashboard = () => {
               <Td theme={theme}>Tạo khóa học "TOEIC 550+"</Td>
               <Td theme={theme}>Admin</Td>
               <Td theme={theme}>5 phút trước</Td>
-              <Td theme={theme}>✅ Thành công</Td>
+              <Td theme={theme}>Thành công</Td>
             </tr>
             <tr>
               <Td theme={theme}>Cập nhật bài học Unit 3</Td>
               <Td theme={theme}>Admin</Td>
               <Td theme={theme}>15 phút trước</Td>
-              <Td theme={theme}>✅ Thành công</Td>
+              <Td theme={theme}>Thành công</Td>
             </tr>
             <tr>
               <Td theme={theme}>Thêm 50 từ vựng mới</Td>
               <Td theme={theme}>Admin</Td>
               <Td theme={theme}>1 giờ trước</Td>
-              <Td theme={theme}>✅ Thành công</Td>
+              <Td theme={theme}>Thành công</Td>
             </tr>
           </tbody>
         </Table>
       </RecentActivityTable>
+      </div>
     </AdminLayout>
   );
 };

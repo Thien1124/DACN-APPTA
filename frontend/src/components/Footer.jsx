@@ -1,6 +1,16 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+// Import icons
+import { GiOwl } from 'react-icons/gi';
+import { FaFacebookSquare, FaTwitter, FaInstagram, FaYoutube, FaTiktok } from 'react-icons/fa';
+import { MdDashboard, MdInfo } from 'react-icons/md';
+import { BiSupport } from 'react-icons/bi';
+import { BsQuestionCircle } from 'react-icons/bs';
+import { IoMdStats } from 'react-icons/io';
+import { AiFillStar, AiOutlineMobile, AiOutlineTeam } from 'react-icons/ai';
+import { RiFileListLine, RiLightbulbLine, RiTeamLine, RiNewspaperLine, RiPhoneLine } from 'react-icons/ri';
+import { FiHeart } from 'react-icons/fi';
 
 // ========== STYLED COMPONENTS ==========
 
@@ -156,7 +166,7 @@ const Footer = ({ theme = 'light' }) => {
         {/* Company Info */}
         <FooterSection>
           <FooterLogo>
-            <span>🦉</span>
+            <span><🦉 /></span>
             <span>EnglishMaster</span>
           </FooterLogo>
           <FooterDescription>
@@ -165,19 +175,19 @@ const Footer = ({ theme = 'light' }) => {
           </FooterDescription>
           <SocialLinks>
             <SocialLink href="https://facebook.com" target="_blank" title="Facebook">
-              📘
+              <FaFacebookSquare size={24} />
             </SocialLink>
             <SocialLink href="https://twitter.com" target="_blank" title="Twitter">
-              🐦
+              <FaTwitter size={24} />
             </SocialLink>
             <SocialLink href="https://instagram.com" target="_blank" title="Instagram">
-              📷
+              <FaInstagram size={24} />
             </SocialLink>
             <SocialLink href="https://youtube.com" target="_blank" title="YouTube">
-              📺
+              <FaYoutube size={24} />
             </SocialLink>
             <SocialLink href="https://tiktok.com" target="_blank" title="TikTok">
-              🎵
+              <FaTiktok size={24} />
             </SocialLink>
           </SocialLinks>
         </FooterSection>
@@ -188,27 +198,27 @@ const Footer = ({ theme = 'light' }) => {
           <FooterLinks>
             <FooterLinkItem>
               <FooterLink onClick={() => handleNavigate('/dashboard')}>
-                🏠 Dashboard
+                <MdDashboard size={18} /> Dashboard
               </FooterLink>
             </FooterLinkItem>
             <FooterLinkItem>
               <FooterLink onClick={() => handleNavigate('/practice')}>
-                💪 Luyện tập
+                <IoMdStats size={18} /> Luyện tập
               </FooterLink>
             </FooterLinkItem>
             <FooterLinkItem>
               <FooterLink onClick={() => handleNavigate('/progress')}>
-                📈 Tiến độ
+                <IoMdStats size={18} /> Tiến độ
               </FooterLink>
             </FooterLinkItem>
             <FooterLinkItem>
               <FooterLink href="#premium">
-                ⭐ Premium
+                <AiFillStar size={18} /> Premium
               </FooterLink>
             </FooterLinkItem>
             <FooterLinkItem>
               <FooterLink href="#mobile">
-                📱 Ứng dụng Mobile
+                <AiOutlineMobile size={18} /> Ứng dụng Mobile
               </FooterLink>
             </FooterLinkItem>
           </FooterLinks>
@@ -220,27 +230,27 @@ const Footer = ({ theme = 'light' }) => {
           <FooterLinks>
             <FooterLinkItem>
               <FooterLink href="#blog">
-                📝 Blog
+                <RiFileListLine size={18} /> Blog
               </FooterLink>
             </FooterLinkItem>
             <FooterLinkItem>
               <FooterLink href="#tips">
-                💡 Mẹo học tập
+                <RiLightbulbLine size={18} /> Mẹo học tập
               </FooterLink>
             </FooterLinkItem>
             <FooterLinkItem>
               <FooterLink href="#community">
-                👥 Cộng đồng
+                <RiTeamLine size={18} /> Cộng đồng
               </FooterLink>
             </FooterLinkItem>
             <FooterLinkItem>
               <FooterLink href="#faq">
-                ❓ FAQ
+                <BsQuestionCircle size={18} /> FAQ
               </FooterLink>
             </FooterLinkItem>
             <FooterLinkItem>
               <FooterLink href="#support">
-                🆘 Hỗ trợ
+                <BiSupport size={18} /> Hỗ trợ
               </FooterLink>
             </FooterLinkItem>
           </FooterLinks>
@@ -252,27 +262,27 @@ const Footer = ({ theme = 'light' }) => {
           <FooterLinks>
             <FooterLinkItem>
               <FooterLink href="#about">
-                ℹ️ Về chúng tôi
+                <MdInfo size={18} /> Về chúng tôi
               </FooterLink>
             </FooterLinkItem>
             <FooterLinkItem>
               <FooterLink href="#team">
-                👨‍💼 Đội ngũ
+                <AiOutlineTeam size={18} /> Đội ngũ
               </FooterLink>
             </FooterLinkItem>
             <FooterLinkItem>
               <FooterLink href="#careers">
-                💼 Tuyển dụng
+                <RiFileListLine size={18} /> Tuyển dụng
               </FooterLink>
             </FooterLinkItem>
             <FooterLinkItem>
               <FooterLink href="#press">
-                📰 Báo chí
+                <RiNewspaperLine size={18} /> Báo chí
               </FooterLink>
             </FooterLinkItem>
             <FooterLinkItem>
               <FooterLink href="#contact">
-                📞 Liên hệ
+                <RiPhoneLine size={18} /> Liên hệ
               </FooterLink>
             </FooterLinkItem>
           </FooterLinks>
@@ -287,7 +297,7 @@ const Footer = ({ theme = 'light' }) => {
           <a href="#sitemap">Sitemap</a>
         </FooterBottomLinks>
         <Copyright>
-          © {new Date().getFullYear()} EnglishMaster. Made with ❤️ by @vinhsonvlog. All rights reserved.
+          © {new Date().getFullYear()} EnglishMaster. Made with <FiHeart color="#ef4444" size={14} /> by @vinhsonvlog. All rights reserved.
         </Copyright>
       </FooterBottom>
     </FooterContainer>

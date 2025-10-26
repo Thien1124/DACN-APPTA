@@ -4,32 +4,139 @@ const deckSchema = new mongoose.Schema({
   title: {
     type: String,
     required: [true, 'Vui lòng nhập tên deck'],
-    trim: true
+    trim: true,
+    index: true
   },
+  
   description: {
     type: String,
     required: [true, 'Vui lòng nhập mô tả deck'],
   },
+  
   course: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Course'
   },
+  
   unit: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Unit'
   },
+  
+  // Category/Topic cho browse & filter
+  category: {
+    type: String,
+    required: true,
+    enum: [
+      'ACADEMIC',
+      'TRAVEL',
+      'BUSINESS',
+      'DAILY_LIFE',
+      'TECHNOLOGY',
+      'HEALTH',
+      'ENTERTAINMENT',
+      'FOOD',
+      'GENERAL'
+    ],
+    default: 'GENERAL',
+    index: true
+  },
+  
+  subcategory: {
+    type: String,
+    trim: true
+  },
+  
+  // CEFR Level
+  level: {
+    type: String,
+    required: true,
+    enum: ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'],
+    default: 'A1',
+    index: true
+  },
+  
+  // Difficulty
+  difficulty: {
+    type: String,
+    required: true,
+    enum: ['BEGINNER', 'INTERMEDIATE', 'ADVANCED'],
+    default: 'BEGINNER',
+    index: true
+  },
+  
+  // Tags cho tìm kiếm
+  tags: [{
+    type: String,
+    trim: true
+  }],
+  
   isPublished: {
     type: Boolean,
     default: false
   },
+  
+  isPublic: {
+    type: Boolean,
+    default: true,
+    index: true
+  },
+  
+  isFeatured: {
+    type: Boolean,
+    default: false,
+    index: true
+  },
+  
   imageUrl: {
     type: String,
     default: '/images/default-deck.png'
   },
+  
+  // Created by user
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+    index: true
+  },
+  
+  // Statistics
+  totalCards: {
+    type: Number,
+    default: 0
+  },
+  
+  viewCount: {
+    type: Number,
+    default: 0,
+    index: true
+  },
+  
+  studyCount: {
+    type: Number,
+    default: 0,
+    index: true
+  },
+  
+  rating: {
+    type: Number,
+    default: 0,
+    min: 0,
+    max: 5
+  },
+  
+  ratingCount: {
+    type: Number,
+    default: 0
+  },
+  
   createdAt: {
     type: Date,
-    default: Date.now
+    default: Date.now,
+    index: true
   },
+  
   updatedAt: {
     type: Date,
     default: Date.now
@@ -47,7 +154,19 @@ deckSchema.virtual('flashcards', {
   localField: '_id'
 });
 
-// Middleware trước khi lưu để cập nhật updatedAt
+// Virtual: Average rating
+deckSchema.virtual('averageRating').get(function() {
+  return this.ratingCount > 0 ? (this.rating / this.ratingCount).toFixed(1) : 0;
+});
+
+// Indexes for filtering
+deckSchema.index({ category: 1, level: 1, isPublic: 1 });
+deckSchema.index({ difficulty: 1, isPublic: 1 });
+deckSchema.index({ isFeatured: 1, isPublic: 1 });
+deckSchema.index({ studyCount: -1 });
+deckSchema.index({ createdAt: -1 });
+
+// Middleware trước khi lưu
 deckSchema.pre('save', function(next) {
   this.updatedAt = Date.now();
   next();

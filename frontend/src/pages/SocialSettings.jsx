@@ -6,6 +6,17 @@ import Toast from '../components/Toast';
 import useToast from '../hooks/useToast';
 import api from '../utils/api';
 
+import {
+  ArrowBack,
+  Facebook,
+  Google,
+  Info,
+  Security,
+  Shield,
+  Lock,
+  CheckCircle
+} from '@mui/icons-material';
+
 const SocialSettings = () => {
   const navigate = useNavigate();
   const { toast, showToast, hideToast } = useToast();
@@ -72,8 +83,8 @@ const SocialSettings = () => {
           <Container>
             <HeaderSection>
               <BackButton onClick={() => navigate('/settings')}>
-                ← Quay lại
-              </BackButton>
+  <ArrowBack sx={{ fontSize: 20 }} /> Quay lại
+</BackButton>
               <Title>Tài khoản mạng xã hội</Title>
               <Subtitle>Kết nối hoặc ngắt kết nối tài khoản mạng xã hội của bạn</Subtitle>
             </HeaderSection>
@@ -81,16 +92,16 @@ const SocialSettings = () => {
             <Section>
               <SocialItem>
                 <SocialInfo>
-                  <SocialIcon connected={socialAccounts.facebook}>
-                    📘
-                  </SocialIcon>
-                  <SocialDetails>
-                    <SocialName>Facebook</SocialName>
-                    <SocialStatus connected={socialAccounts.facebook}>
-                      {socialAccounts.facebook ? '✓ Đã kết nối' : 'Chưa kết nối'}
-                    </SocialStatus>
-                  </SocialDetails>
-                </SocialInfo>
+    <SocialIcon connected={socialAccounts.facebook}>
+      <Facebook sx={{ fontSize: 28, color: socialAccounts.facebook ? 'white' : '#6b7280' }} />
+    </SocialIcon>
+    <SocialDetails>
+      <SocialName>Facebook</SocialName>
+      <SocialStatus connected={socialAccounts.facebook}>
+        {socialAccounts.facebook ? <><CheckCircle sx={{ fontSize: 16, marginRight: '4px' }} /> Đã kết nối</> : 'Chưa kết nối'}
+      </SocialStatus>
+    </SocialDetails>
+  </SocialInfo>
                 <Toggle>
                   <ToggleInput
                     type="checkbox"
@@ -104,16 +115,16 @@ const SocialSettings = () => {
 
               <SocialItem>
                 <SocialInfo>
-                  <SocialIcon connected={socialAccounts.google}>
-                    🔍
-                  </SocialIcon>
-                  <SocialDetails>
-                    <SocialName>Google</SocialName>
-                    <SocialStatus connected={socialAccounts.google}>
-                      {socialAccounts.google ? '✓ Đã kết nối' : 'Chưa kết nối'}
-                    </SocialStatus>
-                  </SocialDetails>
-                </SocialInfo>
+    <SocialIcon connected={socialAccounts.google}>
+      <Google sx={{ fontSize: 28, color: socialAccounts.google ? 'white' : '#6b7280' }} />
+    </SocialIcon>
+    <SocialDetails>
+      <SocialName>Google</SocialName>
+      <SocialStatus connected={socialAccounts.google}>
+        {socialAccounts.google ? <><CheckCircle sx={{ fontSize: 16, marginRight: '4px' }} /> Đã kết nối</> : 'Chưa kết nối'}
+      </SocialStatus>
+    </SocialDetails>
+  </SocialInfo>
                 <Toggle>
                   <ToggleInput
                     type="checkbox"
@@ -126,29 +137,37 @@ const SocialSettings = () => {
               </SocialItem>
 
               <InfoBox>
-                <InfoIcon>ℹ️</InfoIcon>
-                <InfoText>
-                  Kết nối tài khoản mạng xã hội giúp bạn đăng nhập nhanh chóng và chia sẻ thành tích học tập của mình với bạn bè.
-                </InfoText>
-              </InfoBox>
+  <InfoIcon>
+    <Info sx={{ fontSize: 24, color: '#3b82f6' }} />
+  </InfoIcon>
+  <InfoText>
+    Kết nối tài khoản mạng xã hội giúp bạn đăng nhập nhanh chóng và chia sẻ thành tích học tập của mình với bạn bè.
+  </InfoText>
+</InfoBox>
             </Section>
 
             <Section>
               <SectionTitle>Lưu ý bảo mật</SectionTitle>
               <SecurityList>
-                <SecurityItem>
-                  <SecurityIcon>🔐</SecurityIcon>
-                  <SecurityText>Chúng tôi không lưu trữ mật khẩu tài khoản mạng xã hội của bạn</SecurityText>
-                </SecurityItem>
-                <SecurityItem>
-                  <SecurityIcon>🛡️</SecurityIcon>
-                  <SecurityText>Bạn có thể ngắt kết nối bất kỳ lúc nào</SecurityText>
-                </SecurityItem>
-                <SecurityItem>
-                  <SecurityIcon>🔒</SecurityIcon>
-                  <SecurityText>Thông tin của bạn được mã hóa và bảo mật</SecurityText>
-                </SecurityItem>
-              </SecurityList>
+  <SecurityItem>
+    <SecurityIcon>
+      <Security sx={{ fontSize: 24, color: '#4b5563' }} />
+    </SecurityIcon>
+    <SecurityText>Chúng tôi không lưu trữ mật khẩu tài khoản mạng xã hội của bạn</SecurityText>
+  </SecurityItem>
+  <SecurityItem>
+    <SecurityIcon>
+      <Shield sx={{ fontSize: 24, color: '#4b5563' }} />
+    </SecurityIcon>
+    <SecurityText>Bạn có thể ngắt kết nối bất kỳ lúc nào</SecurityText>
+  </SecurityItem>
+  <SecurityItem>
+    <SecurityIcon>
+      <Lock sx={{ fontSize: 24, color: '#4b5563' }} />
+    </SecurityIcon>
+    <SecurityText>Thông tin của bạn được mã hóa và bảo mật</SecurityText>
+  </SecurityItem>
+</SecurityList>
             </Section>
           </Container>
         </RightArea>
@@ -292,6 +311,8 @@ const SocialStatus = styled.div`
   font-size: 0.875rem;
   font-weight: 600;
   color: ${props => props.connected ? '#10b981' : '#6b7280'};
+  display: flex;
+  align-items: center;
 `;
 
 const Toggle = styled.div`
@@ -347,7 +368,9 @@ const InfoBox = styled.div`
 `;
 
 const InfoIcon = styled.div`
-  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
 `;
 
@@ -377,7 +400,9 @@ const SecurityItem = styled.div`
 `;
 
 const SecurityIcon = styled.div`
-  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 `;
 
 const SecurityText = styled.div`

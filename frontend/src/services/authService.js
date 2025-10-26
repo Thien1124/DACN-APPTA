@@ -5,7 +5,7 @@ export const authService = {
   register: async (userData) => {
     try {
       const response = await api.post('/auth/register', userData);
-      
+
       if (response.data.success) {
         // Lưu token vào localStorage
         if (response.data.data.token) {
@@ -27,12 +27,12 @@ export const authService = {
   // Đăng nhập
   login: async (credentials) => {
     try {
-      
+
       const response = await api.post('/auth/login', {
         email: credentials.email.trim().toLowerCase(),
         password: credentials.password
       });
-      
+
       if (response.data.success) {
         // Lưu token và user
         if (response.data.data?.token) {
@@ -47,7 +47,7 @@ export const authService = {
       }
     } catch (error) {
       console.error('🔥 authService.login error:', error);
-      
+
       // ✅ Quan trọng: Throw lại error để component có thể catch
       throw error; // Giữ nguyên error object với error.response
     }
@@ -115,7 +115,7 @@ export const authService = {
   verifyOTP: async (data) => {
     try {
       const response = await api.post('/auth/verify-otp', data);
-      
+
       if (response.data.success) {
         // Cập nhật user info sau khi verify
         if (response.data.data?.user) {
@@ -143,7 +143,7 @@ export const authService = {
   updateProfile: async (data) => {
     try {
       const response = await api.put('/users/profile', data);
-      
+
       if (response.data.success && response.data.data?.user) {
         // Cập nhật localStorage với thông tin mới
         const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
@@ -153,7 +153,7 @@ export const authService = {
         };
         localStorage.setItem('user', JSON.stringify(updatedUser));
       }
-      
+
       return response.data;
     } catch (error) {
       throw error;
@@ -190,8 +190,55 @@ export const authService = {
     const backendUrl = process.env.REACT_APP_API_URL || 'http://localhost:1124/api';
     const providerPath = provider.toLowerCase();
     const authUrl = `${backendUrl}/auth/${providerPath}`;
-    
+
     console.log('🔄 Redirecting to:', authUrl);
     window.location.href = authUrl;
+  },
+
+  // ========== 2FA METHODS ==========
+  setup2FA: async () => {
+    try {
+      const response = await api.post('/2fa/setup');
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.message || 'Không thể thiết lập 2FA');
+    }
+  },
+
+  enable2FA: async (token) => {
+    try {
+      const response = await api.post('/2fa/enable', { token });
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.message || 'Không thể bật 2FA');
+    }
+  },
+
+  verify2FA: async (token) => {
+    try {
+      const response = await api.post('/2fa/verify', { token });
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.message || 'Xác thực 2FA thất bại');
+    }
+  },
+
+  disable2FA: async (password, token) => {
+    try {
+      const response = await api.post('/2fa/disable', { password, token });
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.message || 'Không thể tắt 2FA');
+    }
+  },
+
+  get2FAStatus: async () => {
+    try {
+      const response = await api.get('/2fa/status');
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.message || 'Không thể lấy trạng thái 2FA');
+    }
   }
 };
+

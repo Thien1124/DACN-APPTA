@@ -6,6 +6,15 @@ import RightSidebar from '../components/RightSidebar';
 import Toast from '../components/Toast';
 import useToast from '../hooks/useToast';
 
+import {
+  AccessTime,
+  LocalActivity,
+  Diamond,
+  Timer,
+  Bolt,
+} from '@mui/icons-material';
+import NightlightIcon from '@mui/icons-material/Nightlight';
+
 // ========== STYLED COMPONENTS ==========
 
 const PageWrapper = styled.div`
@@ -327,7 +336,7 @@ const monthlyQuestData = {
   current: 12,
   target: 35,
   reward: {
-    icon: '👻',
+    icon: <NightlightIcon sx={{ fontSize: 40, color: 'white' }} />,
     title: 'Huy hiệu bí mật của Lucy',
     description: 'Hoàn thành 35 nhiệm vụ để nhận'
   }
@@ -336,7 +345,7 @@ const monthlyQuestData = {
 const dailyQuests = [
   {
     id: 1,
-    icon: '⚡',
+    icon: <Bolt sx={{ fontSize: 24, color: 'white' }} />,
     name: 'Kiếm 10 KN',
     current: 0,
     target: 10,
@@ -346,7 +355,7 @@ const dailyQuests = [
   },
   {
     id: 2,
-    icon: '💎',
+    icon: <Diamond sx={{ fontSize: 24, color: 'white' }} />,
     name: 'Đạt 10 Điểm thưởng KN',
     current: 0,
     target: 10,
@@ -356,7 +365,7 @@ const dailyQuests = [
   },
   {
     id: 3,
-    icon: '⏰',
+    icon: <Timer sx={{ fontSize: 24, color: 'white' }} />,
     name: 'Học trong 10 phút',
     current: 0,
     target: 10,
@@ -402,7 +411,7 @@ const Quests = () => {
             <QuestBadge>THÁNG MƯỜI</QuestBadge>
             <QuestTitle>{monthlyProgress.title}</QuestTitle>
             <QuestTimer>
-              <span>⏰</span>
+              <AccessTime sx={{ fontSize: 20 }} />
               <span>{monthlyProgress.timeLeft}</span>
             </QuestTimer>
             
@@ -428,7 +437,7 @@ const Quests = () => {
           {/* Daily Quests */}
           <QuestsSection>
             <SectionTitle>
-              <span>🎯</span>
+              <LocalActivity sx={{ fontSize: 24 }} />
               Nhiệm vụ hàng ngày
             </SectionTitle>
             
@@ -458,7 +467,7 @@ const Quests = () => {
                     </QuestInfo>
                     <QuestReward completed={quest.completed}>
                       {quest.completed ? '✓' : `+${quest.reward}`}
-                      {!quest.completed && ' 💎'}
+                      {!quest.completed && <Diamond sx={{ fontSize: 24, color: 'white' }} />}
                     </QuestReward>
                   </QuestItem>
                 );

@@ -6,6 +6,17 @@ import { adminService } from '../services/adminService';
 import Toast from '../components/Toast';
 import useToast from '../hooks/useToast';
 import Swal from 'sweetalert2';
+import {
+  FitnessCenter,
+  Add,
+  FileCopy,
+  Visibility,
+  Edit,
+  Delete,
+  MenuBook,
+  Star,
+  School
+} from '@mui/icons-material';
 
 // ========== STYLED COMPONENTS ==========
 
@@ -332,14 +343,16 @@ const AdminExercises = () => {
       <Toast toast={toast} onClose={hideToast} />
 
       <PageHeader>
-        <Title theme={theme}>🎯 Bài tập ({exercises.length})</Title>
+        <Title theme={theme}>
+          <FitnessCenter sx={{ mr: 1 }} /> Bài tập ({exercises.length})
+        </Title>
         <ButtonGroup>
           <CreateButton onClick={handleCreate}>
-            <span>➕</span>
+            <Add />
             Tạo bài tập
           </CreateButton>
           <CreateButton variant="bulk" onClick={handleBulkCreate}>
-            <span>📋</span>
+            <FileCopy />
             Tạo hàng loạt
           </CreateButton>
         </ButtonGroup>
@@ -416,24 +429,24 @@ const AdminExercises = () => {
 
               <ExerciseInfo theme={theme}>
                 <InfoItem>
-                  <span>📖</span>
+                  <MenuBook sx={{ fontSize: 18 }} />
                   {exercise.lesson?.title || 'N/A'}
                 </InfoItem>
                 <InfoItem>
-                  <span>⭐</span>
+                  <Star sx={{ fontSize: 18 }} />
                   {exercise.points || 0} điểm
                 </InfoItem>
               </ExerciseInfo>
 
               <ActionButtons>
                 <ActionButton variant="view" onClick={() => handleView(exercise._id)}>
-                  👁️ Xem
+                  <Visibility sx={{ fontSize: 18 }} /> Xem
                 </ActionButton>
                 <ActionButton variant="edit" onClick={() => handleEdit(exercise._id)}>
-                  ✏️ Sửa
+                  <Edit sx={{ fontSize: 18 }} /> Sửa
                 </ActionButton>
                 <ActionButton variant="delete" onClick={() => handleDelete(exercise)}>
-                  🗑️
+                  <Delete sx={{ fontSize: 18 }} />
                 </ActionButton>
               </ActionButtons>
             </ExerciseCard>

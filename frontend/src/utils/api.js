@@ -1,7 +1,8 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:1124/api',
+  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
+  withCredentials: true, // Đảm bảo cookies được gửi
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -11,11 +12,11 @@ const api = axios.create({
 // Request interceptor
 api.interceptors.request.use(
   (config) => {
-    
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    console.log('API Request Config:', config); // Add this log
     return config;
   },
   (error) => {
@@ -26,21 +27,12 @@ api.interceptors.request.use(
 // Response interceptor
 api.interceptors.response.use(
   (response) => {
+    console.log('API Response:', response);
     
     return response;
   },
   (error) => {
-    console.error('❌ Response error:', error);
-    
-    if (error.response) {
-      console.error(`🔴 Status: ${error.response.status}`);
-      console.error('🔴 Data:', error.response.data);
-      console.error('🔴 Headers:', error.response.headers);
-    } else if (error.request) {
-      console.error('🔴 No response received:', error.request);
-    } else {
-      console.error('🔴 Error message:', error.message);
-    }
+    console.error('API Error:', error);
     
     // Xử lý 401 Unauthorized
     if (error.response?.status === 401) {

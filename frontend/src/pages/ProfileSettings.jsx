@@ -61,7 +61,6 @@ const ProfileSettings = () => {
 
   // ✅ Xử lý khi avatar thay đổi
   const handleAvatarChange = (newAvatarPath) => {
-    console.log('Avatar changed:', newAvatarPath); // Debug
     
     setFormData(prev => ({
       ...prev,
@@ -101,7 +100,6 @@ const ProfileSettings = () => {
         updateData.newPassword = formData.newPassword;
       }
 
-      console.log('Updating profile with:', updateData); // Debug
 
       const response = await authService.updateProfile(updateData);
 
