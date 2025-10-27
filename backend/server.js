@@ -23,6 +23,13 @@ const deckRoutes = require('./src/routes/deckRoutes');
 const flashcardRoutes = require('./src/routes/flashcardRoutes');
 const achievementRoutes = require('./src/routes/achievementRoutes');
 
+// --- Import routes cho các tính năng mới ---
+const streakRoutes = require('./src/routes/streakRoutes');
+const xpRoutes = require('./src/routes/xpRoutes');
+const missionRoutes = require('./src/routes/missionRoutes');
+const heartRoutes = require('./src/routes/heartRoutes');
+const shopRoutes = require('./src/routes/shopRoutes');
+
 const app = express();
 const PORT = process.env.PORT || 1124;
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:3000';
@@ -59,6 +66,13 @@ app.use('/api/v1/tests', testRoutes);
 app.use('/api/v1/decks', deckRoutes);
 app.use('/api/v1/flashcards', flashcardRoutes);
 app.use('/api/v1/achievements', achievementRoutes);
+
+// --- Đăng ký routes cho các tính năng mới ---
+app.use('/api/v1/streak', streakRoutes);
+app.use('/api/v1/xp', xpRoutes);
+app.use('/api/v1/missions', missionRoutes);
+app.use('/api/v1/hearts', heartRoutes);
+app.use('/api/v1/shop', shopRoutes);
 
 // --- Route gốc đã hợp nhất ---
 app.get('/', (req, res) => {
