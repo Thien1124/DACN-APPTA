@@ -32,11 +32,18 @@ const PageLayout = styled.div`
   position: relative; // Add this
 `;
 
-const MainContent = styled.div`
+const FormWrapper = styled.div`
   flex: 1;
+  margin-left: 280px;
+  margin-right: 340px; // Increase RightSidebar margin
+  padding: 0 20px;
+  min-width: 0;
+`;
+
+const MainContent = styled.div`
   padding: 2.5rem;
-  min-width: 0; // Prevent content overflow
-  max-width: 100%;
+  padding-bottom: 4rem; // Add more padding at bottom
+  min-width: 0;
   animation: fadeIn 0.5s ease;
 
   @keyframes fadeIn {
@@ -49,13 +56,6 @@ const MainContent = styled.div`
       transform: translateY(0);
     }
   }
-`;
-
-const FormWrapper = styled.div`
-  flex: 1;
-  padding-right: 320px; // Match RightSidebar width
-  margin-left: 280px; // Match LeftSidebar width
-  width: calc(100% - 600px); // Account for both sidebars
 `;
 
 const PageTitle = styled.h1`
@@ -133,45 +133,25 @@ const ProgressFill = styled.div`
 
 const GoalStats = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: repeat(2, 1fr); // 2 stats per row
   gap: 1rem;
-  margin-top: 1rem;
+  margin-top: auto; // Push to bottom
 `;
 
 const StatItem = styled.div`
-  padding: 1.25rem;
+  padding: 1rem;
   background: ${props => props.theme === 'dark' 
     ? 'rgba(45, 55, 72, 0.5)' 
     : 'rgba(247, 250, 252, 0.8)'
   };
-  border-radius: 16px;
+  border-radius: 12px;
   text-align: center;
   transition: all 0.3s ease;
-  border: 1px solid ${props => props.theme === 'dark'
-    ? 'rgba(74, 85, 104, 0.2)'
-    : 'rgba(226, 232, 240, 0.7)'
-  };
 
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   }
-`;
-
-
-const StatValue = styled.div`
-  font-size: 1.75rem;
-  font-weight: bold;
-  background: linear-gradient(135deg, #58CC02 0%, #45A302 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  margin-bottom: 0.5rem;
-`;
-
-const StatLabel = styled.div`
-  font-size: 0.875rem;
-  color: ${props => props.theme === 'dark' ? '#9ca3af' : '#6b7280'};
-  margin-top: 0.25rem;
 `;
 
 
@@ -204,6 +184,8 @@ const AddButton = styled.button`
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 4px 6px -1px rgba(88, 204, 2, 0.2);
+  margin-top: 2rem; // Add margin top
+  margin-bottom: 1rem; // Add margin bottom
 
   &:hover {
     background: linear-gradient(135deg, #45a302 0%, #378202 100%);
@@ -351,10 +333,10 @@ const EmptyState = styled.div`
 
 const GoalsList = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(295px, 1fr)); 
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 1.5rem;
-  margin-bottom: 2rem;
   width: 100%;
+  margin-bottom: 1rem; // Add margin bottom
 `;
 
 const GoalCard = styled.div`
@@ -364,30 +346,21 @@ const GoalCard = styled.div`
   };
   backdrop-filter: blur(12px);
   border-radius: 20px;
-  padding: 1.75rem;
-  margin-bottom: 1.5rem;
-  width: 100%; // Take full width of container
-  max-width: calc(100% - 40px); // Add some padding
-  box-sizing: border-box;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  };
-  backdrop-filter: blur(12px);
-  border-radius: 20px;
-  padding: 1.75rem; // Reduced padding
+  padding: 1.25rem;
   border: 1px solid ${props => props.theme === 'dark'
     ? 'rgba(74, 85, 104, 0.2)'
     : 'rgba(226, 232, 240, 0.7)'
   };
-  margin-bottom: 1.5rem;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
-              0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  width: 100%; // Ensure card takes full width of grid cell
+  height: fit-content;
+  min-height: 180px;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
 
   &:hover {
     transform: translateY(-4px);
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
-                0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
   }
 `;
 
@@ -428,6 +401,17 @@ const ToastWrapper = styled.div`
   }
 `;
 
+const StatValue = styled.p`
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0;
+  color: ${props => props.theme === 'dark' ? '#f9fafb' : '#1a1a1a'};
+`;
+
+const StatLabel = styled.p`
+  font-size: 0.875rem;
+  color: ${props => props.theme === 'dark' ? '#9ca3af' : '#6b7280'};
+`;
 const LearningGoals = () => {
   const [theme] = useState('light');
   const [loading, setLoading] = useState(true);
@@ -666,12 +650,7 @@ const LearningGoals = () => {
                               <StatLabel theme={theme}>Kỹ năng</StatLabel>
                             </StatItem>
                           )}
-                          <StatItem theme={theme}>
-                            <StatValue theme={theme}>
-                              {goal.status}
-                            </StatValue>
-                            <StatLabel theme={theme}>Trạng thái</StatLabel>
-                          </StatItem>
+                          
                         </GoalStats>
                       </GoalCard>
                     );

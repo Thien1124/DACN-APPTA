@@ -3,14 +3,13 @@ import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import LeftSidebar from '../components/LeftSidebar';
 import RightSidebar from '../components/RightSidebar';
-import { Book, School, Business,MenuBook, Restaurant, LocalHospital,AutoAwesome, Add } from '@mui/icons-material';
+import { Book, School, Business, MenuBook, Restaurant, LocalHospital, AutoAwesome, Add, Edit, Delete } from '@mui/icons-material';
 import BeachAccessIcon from '@mui/icons-material/BeachAccess';
-import { flashcardServices } from '../services/flashcardServices';
 import { useToast } from '../hooks/useToast';
-import {deckService} from '../services/deckService'
-
+import { deckService } from '../services/deckService';
 import { geminiService } from '../services/geminiService';
 
+// ...existing styled components...
 // Update PageWrapper and add FormWrapper
 const PageWrapper = styled.div`
   display: flex;
@@ -29,18 +28,16 @@ const PageLayout = styled.div`
 
 const FormWrapper = styled.div`
   flex: 1;
-  margin-left: 280px; // Match LeftSidebar width
-  width: calc(100% - 280px); // Only account for LeftSidebar
-  position: relative;
+  margin-left: 280px; // LeftSidebar width
+  margin-right: 340px; // Increase RightSidebar margin
+  padding: 0 20px; // Add padding
+  min-width: 0; // Prevent content from overflowing
 `;
 
 // Update MainContent styling
 const MainContent = styled.div`
-  flex: 1;
   padding: 2.5rem;
-  padding-right: 2rem; // Add padding to prevent overlap
   min-width: 0;
-  max-width: calc(100% - 20px); // Account for RightSidebar width
   animation: fadeIn 0.5s ease;
 
   @keyframes fadeIn {
@@ -62,19 +59,27 @@ const Title = styled.h1`
   margin-bottom: 2rem;
 `;
 
+// Update TopicsGrid for better responsiveness
 const TopicsGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); // More responsive grid
   gap: 1.5rem;
+  width: 100%;
 `;
 
+// Make TopicCard more compact
 const TopicCard = styled.div`
   background: ${props => props.theme === 'dark' ? 'rgba(31, 41, 55, 0.95)' : 'white'};
   border-radius: 20px;
-  padding: 1.5rem;
+  padding: 1.25rem; // Reduce padding
   cursor: pointer;
   transition: all 0.3s ease;
   border: 2px solid transparent;
+  display: flex;
+  flex-direction: column;
+  height: fit-content;
+  min-height: 180px; // Reduce minimum height
+  max-width: 100%; // Ensure card doesn't overflow
 
   &:hover {
     transform: translateY(-4px);
@@ -120,8 +125,8 @@ const HeaderSection = styled.div`
   justify-content: space-between;
   align-items: center;
   margin-bottom: 2rem;
+  width: 100%; // Take full width
   padding-right: 2rem; // Add padding to prevent overlap
-  max-width: calc(100% - 320px); // Account for RightSidebar width
 `;
 
 const AddButton = styled.button`
@@ -219,27 +224,45 @@ const ButtonGroup = styled.div`
   margin-top: 1rem;
 `;
 
+// Make TopicActions more compact
 const TopicActions = styled.div`
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 0.5rem;
   margin-top: 1rem;
 `;
 
-const ActionButton = styled.button`
-  padding: 0.5rem;
+// Update ActionButton to be more compact
+const ActionButton = styled.button.withConfig({
+  shouldComponentUpdate: true,
+  shouldForwardProp: prop => !['variant'].includes(prop)
+})`
+  padding: 0.4rem 0.75rem; // Reduce padding
   border: none;
   border-radius: 8px;
   font-weight: 600;
-  font-size: 0.875rem;
+  font-size: 0.8rem; // Smaller font
   cursor: pointer;
-  background: ${props => props.variant === 'ai' ? '#1CB0F6' : '#58CC02'};
+  background: ${props => {
+    switch(props.variant) {
+      case 'ai': return '#1CB0F6';
+      case 'edit': return '#FFA116';
+      case 'delete': return '#dc2626';
+      default: return '#58CC02';
+    }
+  }};
   color: white;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.25rem;
   
   &:hover {
     opacity: 0.9;
+  }
+
+  svg {
+    font-size: 16px; // Smaller icons
   }
 `;
 
@@ -250,24 +273,27 @@ const Topics = () => {
   const [loading, setLoading] = useState(true);
   const { showToast } = useToast();
   const [showModal, setShowModal] = useState(false);
+  const [editingDeck, setEditingDeck] = useState(null); // Add this line
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    category: 'GENERAL'
+    category: 'GENERAL',
+    level: 'A1',
+    difficulty: 'BEGINNER',
+    tags: [],
+    isPublic: true,
+    imageUrl: '/images/default-deck.png'
   });
 
-  // Update fetchTopics function
+  // Update fetchTopics to use getMyDecks
   const fetchTopics = async () => {
     try {
-      const response = await flashcardServices.getAll();
-      if (response.success) {
-        setTopics(response.data);
-      } else {
-        showToast('error', 'Lỗi', 'Không thể tải danh sách chủ đề');
-      }
+      setLoading(true);
+      const response = await deckService.getMyDecks();
+      setTopics(response.data || []);
     } catch (error) {
-      console.error('Fetch topics error:', error);
-      showToast('error', 'Lỗi', 'Không thể tải danh sách chủ đề');
+      console.error('Fetch decks error:', error);
+      showToast('error', 'Lỗi', error.message || 'Không thể tải danh sách bộ thẻ');
     } finally {
       setLoading(false);
     }
@@ -275,7 +301,7 @@ const Topics = () => {
 
   useEffect(() => {
     fetchTopics();
-  }, [showToast]); // Add fetchTopics to dependencies if needed
+  }, []); // Remove showToast from dependencies
 
   const handleTopicClick = (topicId) => {
     navigate(`/topics/${encodeURIComponent(topicId)}`);
@@ -285,12 +311,32 @@ const Topics = () => {
     setShowModal(true);
   };
 
+  const handleEdit = (deck) => {
+    setEditingDeck(deck);
+    setFormData({
+      title: deck.title,
+      description: deck.description,
+      category: deck.category,
+      level: deck.level,
+      difficulty: deck.difficulty,
+      isPublic: deck.isPublic,
+      imageUrl: deck.imageUrl
+    });
+    setShowModal(true);
+  };
+
   const handleCloseModal = () => {
     setShowModal(false);
+    setEditingDeck(null);
     setFormData({
       title: '',
       description: '',
-      category: 'GENERAL'
+      category: 'GENERAL',
+      level: 'A1',
+      difficulty: 'BEGINNER',
+      tags: [],
+      isPublic: true,
+      imageUrl: '/images/default-deck.png'
     });
   };
 
@@ -302,19 +348,26 @@ const Topics = () => {
     }));
   };
 
-  // Update handleSubmit function
+  // Update handleSubmit to handle both create and edit
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await flashcardServices.create(formData);
-      if (response.success) {
+      let response;
+      if (editingDeck) {
+        response = await deckService.update(editingDeck._id, formData);
+        showToast('success', 'Thành công', '✅ Đã cập nhật bộ thẻ thành công');
+      } else {
+        response = await deckService.create(formData);
         showToast('success', 'Thành công', '✅ Đã tạo bộ thẻ mới thành công');
+      }
+
+      if (response.success) {
         fetchTopics();
         handleCloseModal();
       }
     } catch (error) {
-      console.error('Create deck error:', error);
-      showToast('error', 'Lỗi', error.response?.data?.message || 'Không thể tạo bộ thẻ mới');
+      console.error('Save deck error:', error);
+      showToast('error', 'Lỗi', error.message || 'Không thể lưu bộ thẻ');
     }
   };
 
@@ -322,21 +375,11 @@ const Topics = () => {
     try {
       showToast('info', 'Đang xử lý', 'Đang tạo từ vựng bằng AI...');
 
-      // 1. Generate words using Gemini API
-      const result = await geminiService.generateWords({
-        topic: deck.title,
-        category: deck.category,
-        count: 10
-      });
-
+      const result = await deckService.generateAIFlashcards(deck._id, deck.title);
+      
       if (result.success) {
-        // 2. Save generated flashcards to deck
-        const saveResponse = await deckService.addFlashcards(deck._id, result.data);
-        
-        if (saveResponse.success) {
-          showToast('success', 'Thành công', `✅ Đã tạo ${result.data.length} từ vựng cho chủ đề "${deck.title}"`);
-          fetchTopics(); // Refresh list
-        }
+        showToast('success', 'Thành công', `✅ Đã tạo ${result.data.length} từ vựng cho bộ "${deck.title}"`);
+        fetchTopics();
       }
     } catch (error) {
       console.error('Generate AI error:', error);
@@ -344,8 +387,24 @@ const Topics = () => {
     }
   };
 
-  const handleStudy = (topicId) => {
-    navigate(`/topics/${topicId}/study`);
+  const handleStudy = (deckId) => {
+    navigate(`/decks/${deckId}/study`);
+    // Optionally increment study count
+    deckService.incrementStudy(deckId).catch(console.error);
+  };
+
+  // Add delete functionality
+  const handleDelete = async (deckId) => {
+    if (window.confirm('Bạn có chắc chắn muốn xóa bộ thẻ này?')) {
+      try {
+        await deckService.delete(deckId);
+        showToast('success', 'Thành công', '✅ Đã xóa bộ thẻ thành công');
+        fetchTopics();
+      } catch (error) {
+        console.error('Delete deck error:', error);
+        showToast('error', 'Lỗi', error.message || 'Không thể xóa bộ thẻ');
+      }
+    }
   };
 
   return (
@@ -355,31 +414,40 @@ const Topics = () => {
         <FormWrapper>
           <MainContent>
             <HeaderSection>
-              <Title theme={theme}>Choose a Topic</Title>
+              <Title theme={theme}>Chủ Đề</Title>
               <AddButton onClick={handleAddTopic}>
                 <Add /> Thêm chủ đề mới
               </AddButton>
             </HeaderSection>
             {loading ? (
-              <div>Loading...</div>
+              <div style={{ textAlign: 'center', padding: '2rem' }}>
+                <div>Đang tải dữ liệu...</div>
+              </div>
+            ) : topics.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '2rem' }}>
+                <div>Chưa có chủ đề nào</div>
+                <div style={{ fontSize: '0.875rem', marginTop: '0.5rem' }}>
+                  Nhấn nút "Thêm chủ đề mới" để bắt đầu
+                </div>
+              </div>
             ) : (
               <TopicsGrid>
-                {topics.map(topic => (
-                  <TopicCard key={topic._id} theme={theme}>
-                    <TopicIcon>{getTopicIcon(topic.category)}</TopicIcon>
-                    <TopicName theme={theme}>{topic.title}</TopicName>
+                {topics.map(deck => (
+                  <TopicCard key={deck._id} theme={theme}>
+                    <TopicIcon>{getTopicIcon(deck.category)}</TopicIcon>
+                    <TopicName theme={theme}>{deck.title}</TopicName>
                     <TopicDescription theme={theme}>
-                      {topic.description}
+                      {deck.description || 'Không có mô tả'}
                     </TopicDescription>
                     <TopicStats theme={theme}>
-                      <span>{topic.flashcards?.length || 0} thẻ</span>
+                      <span>{deck.flashcards?.length || 0} thẻ</span>
                       <span>•</span>
-                      <span>{topic.category}</span>
+                      <span>{deck.category}</span>
                     </TopicStats>
                     <TopicActions>
                       <ActionButton onClick={(e) => {
                         e.stopPropagation();
-                        handleStudy(topic._id);
+                        handleStudy(deck._id);
                       }}>
                         <MenuBook sx={{fontSize: 18}} /> Học
                       </ActionButton>
@@ -387,10 +455,28 @@ const Topics = () => {
                         variant="ai"
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleGenerateAI(topic);
+                          handleGenerateAI(deck);
                         }}
                       >
                         <AutoAwesome sx={{fontSize: 18}} /> Tạo AI
+                      </ActionButton>
+                      <ActionButton 
+                        variant="edit"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEdit(deck);
+                        }}
+                      >
+                        <Edit sx={{fontSize: 18}} /> Sửa
+                      </ActionButton>
+                      <ActionButton 
+                        variant="delete"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(deck._id);
+                        }}
+                      >
+                        <Delete sx={{fontSize: 18}} /> Xóa
                       </ActionButton>
                     </TopicActions>
                   </TopicCard>
@@ -405,14 +491,16 @@ const Topics = () => {
       {showModal && (
         <Modal onClick={handleCloseModal}>
           <ModalContent theme={theme} onClick={e => e.stopPropagation()}>
-            <Title theme={theme}>Thêm chủ đề mới</Title>
+            <Title theme={theme}>
+              {editingDeck ? 'Chỉnh sửa bộ thẻ' : 'Thêm bộ thẻ mới'}
+            </Title>
             <Form onSubmit={handleSubmit}>
               <Input
                 theme={theme}
-                name="title"  // Đổi từ name
+                name="title"  // Changed from name to title
                 value={formData.title}
                 onChange={handleChange} 
-                placeholder="Tên chủ đề"
+                placeholder="Tên bộ thẻ"
                 required
               />
               
@@ -421,13 +509,13 @@ const Topics = () => {
                 name="description"
                 value={formData.description}
                 onChange={handleChange}
-                placeholder="Mô tả"
+                placeholder="Mô tả chi tiết về bộ thẻ"
                 required
               />
 
               <Select
                 theme={theme}
-                name="category" // Đổi từ type
+                name="category" 
                 value={formData.category}
                 onChange={handleChange}
                 required
@@ -440,17 +528,38 @@ const Topics = () => {
                 <option value="HEALTH">Health - Y tế</option>
               </Select>
 
-              <Input
+              <Select
                 theme={theme}
-                name="subcategory"
-                value={formData.subcategory}
+                name="level"
+                value={formData.level}
                 onChange={handleChange}
-                placeholder="Danh mục phụ (không bắt buộc)"
-              />
+                required
+              >
+                <option value="A1">A1 - Beginner</option>
+                <option value="A2">A2 - Elementary</option>
+                <option value="B1">B1 - Intermediate</option>
+                <option value="B2">B2 - Upper Intermediate</option>
+                <option value="C1">C1 - Advanced</option>
+                <option value="C2">C2 - Mastery</option>
+              </Select>
+
+              <Select
+                theme={theme}
+                name="difficulty"
+                value={formData.difficulty}
+                onChange={handleChange}
+                required
+              >
+                <option value="BEGINNER">Beginner - Người mới</option>
+                <option value="INTERMEDIATE">Intermediate - Trung cấp</option>
+                <option value="ADVANCED">Advanced - Nâng cao</option>
+              </Select>
 
               <ButtonGroup>
                 <AddButton type="button" onClick={handleCloseModal}>Hủy</AddButton>
-                <AddButton type="submit">Tạo mới</AddButton>
+                <AddButton type="submit">
+                  {editingDeck ? 'Cập nhật' : 'Tạo mới'}
+                </AddButton>
               </ButtonGroup>
             </Form>
           </ModalContent>

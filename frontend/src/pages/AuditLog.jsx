@@ -133,6 +133,20 @@ const ActivityBadge = styled.span`
   color: white;
 `;
 
+const Button = styled.button`
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 8px;
+  background: ${props => props.disabled ? '#e5e7eb' : '#58CC02'};
+  color: ${props => props.disabled ? '#6b7280' : 'white'};
+  font-weight: 600;
+  cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
+
+  &:hover {
+    background: ${props => props.disabled ? '#e5e7eb' : '#45a302'};
+  }
+`;
+
 // Mock data
 const mockActivities = [
   {
@@ -159,26 +173,65 @@ const AuditLog = () => {
   const [theme] = useState('light');
   const [loading, setLoading] = useState(true);
   const [activities, setActivities] = useState([]);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 20,
+    total: 0,
+    pages: 0
+  });
+  const [filters, setFilters] = useState({
+    action: '',
+    status: '',
+    startDate: '',
+    endDate: ''
+  });
   const [filter, setFilter] = useState({
-    days: 7 // Default to last 7 days
+    days: 7
   });
   const { toast, showToast, hideToast } = useToast();
   
-  useEffect(() => {
-    fetchAuditLogs();
-  }, [filter]);
-
-  const fetchAuditLogs = async () => {
+  const fetchLogs = async () => {
     try {
       setLoading(true);
-      const response = await auditService.getAuditLogs({ days: filter.days });
-      setActivities(response.data || []);
+      const response = await auditService.getLogs({
+        page: pagination.page,
+        limit: pagination.limit,
+        days: filter.days,
+        ...filters
+      });
+
+      if (response.success) {
+        setActivities(response.data.logs);
+        setPagination(response.data.pagination);
+      }
     } catch (error) {
       console.error('Error fetching audit logs:', error);
       showToast('error', 'Lỗi', 'Không thể tải lịch sử hoạt động');
     } finally {
       setLoading(false);
     }
+  };
+
+  useEffect(() => {
+    fetchLogs();
+  }, [pagination.page, filters, filter.days]);
+
+  const handleFilterChange = (newFilters) => {
+    setFilters(prev => ({
+      ...prev,
+      ...newFilters
+    }));
+    setPagination(prev => ({
+      ...prev,
+      page: 1 // Reset to first page when filters change
+    }));
+  };
+
+  const handlePageChange = (newPage) => {
+    setPagination(prev => ({
+      ...prev,
+      page: newPage
+    }));
   };
 
   const handleExport = async () => {
@@ -228,37 +281,52 @@ const AuditLog = () => {
 
         <Card theme={theme}>
           {loading ? (
-            <div>Đang tải...</div>
+            <div style={{ textAlign: 'center', padding: '2rem' }}>Đang tải...</div>
+          ) : activities.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '2rem', color: '#666' }}>
+              Chưa có hoạt động nào
+            </div>
           ) : (
-            <Table>
-              <thead>
-                <tr>
-                  <Th theme={theme}>
-                    <Event /> Hoạt động
-                  </Th>
-                  <Th theme={theme}>
-                    <AccessTime /> Thời gian
-                  </Th>
-                </tr>
-              </thead>
-              <tbody>
-                {activities.map(activity => (
-                  <tr key={activity._id}>
-                    <Td theme={theme}>
-                      <ActivityBadge type={activity.type}>
-                        {activity.type === 'lesson' && 'Bài học'}
-                        {activity.type === 'exercise' && 'Bài tập'}
-                        {activity.type === 'achievement' && 'Thành tích'} 
-                      </ActivityBadge>
-                      {' '}{activity.action}
-                    </Td>
-                    <Td theme={theme}>
-                      {new Date(activity.timestamp).toLocaleString('vi-VN')}
-                    </Td>
+            <>
+              <Table>
+                <thead>
+                  <tr>
+                    <Th theme={theme}>Hoạt động</Th>
+                    <Th theme={theme}>Trạng thái</Th>
+                    <Th theme={theme}>Thời gian</Th>
                   </tr>
+                </thead>
+                <tbody>
+                  {activities.map(activity => (
+                    <tr key={activity._id}>
+                      <Td theme={theme}>{activity.action}</Td>
+                      <Td theme={theme}>
+                        <ActivityBadge type={activity.status}>
+                          {activity.status}
+                        </ActivityBadge>
+                      </Td>
+                      <Td theme={theme}>
+                        {new Date(activity.createdAt).toLocaleString('vi-VN')}
+                      </Td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+
+              {/* Pagination */}
+              <div style={{ marginTop: '1rem', textAlign: 'right' }}>
+                {Array.from({ length: pagination.pages }, (_, i) => (
+                  <Button
+                    key={i + 1}
+                    onClick={() => handlePageChange(i + 1)}
+                    disabled={pagination.page === i + 1}
+                    style={{ margin: '0 0.25rem' }}
+                  >
+                    {i + 1}
+                  </Button>
                 ))}
-              </tbody>
-            </Table>
+              </div>
+            </>
           )}
         </Card>
       </MainContent>

@@ -208,7 +208,7 @@ const AdminTests = () => {
   const { toast, showToast, hideToast } = useToast();
   const [theme] = useState('light');
   const [loading, setLoading] = useState(true);
-  const [tests, setTests] = useState([]);
+  const [tests, setTests] = useState([]); // Initialize as empty array
   const [courses, setCourses] = useState([]);
   const [courseFilter, setCourseFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
@@ -229,11 +229,14 @@ const AdminTests = () => {
         adminService.courses.getAll()
       ]);
       
-      setTests(testsResponse.data || []);
-      setCourses(coursesResponse.data || []);
+      // Ensure we're setting an array, even if empty
+      setTests(Array.isArray(testsResponse.data) ? testsResponse.data : []);
+      setCourses(Array.isArray(coursesResponse.data) ? coursesResponse.data : []);
     } catch (error) {
       console.error('Error fetching data:', error);
       showToast('error', 'Lỗi', 'Không thể tải dữ liệu');
+      setTests([]); // Set empty array on error
+      setCourses([]); 
     } finally {
       setLoading(false);
     }

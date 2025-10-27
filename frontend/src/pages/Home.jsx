@@ -759,11 +759,7 @@ const Home = () => {
 
   // ✅ Xử lý nút "Bắt đầu ngay" (Nút chính)
   const handleGetStarted = () => {
-    const isLoggedIn = checkAuthAndRedirect();
-    
-    if (!isLoggedIn) {
-      navigate('/register');
-    }
+    navigate('/welcome');
   };
 
   // ✅ Xử lý nút "Bắt đầu ngay" trong hero

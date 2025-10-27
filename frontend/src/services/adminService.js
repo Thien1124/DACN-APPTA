@@ -458,16 +458,87 @@ export const adminService = {
   },
 
   // ========== FLASHCARDS (ADMIN) ==========
-  getFlashcards: async () => {
-    try {
-      const response = await api.get('/admin/flashcards');
-      return {
-        success: true,
-        data: response.data.data
-      };
-    } catch (error) {
-      console.error('Get flashcards error:', error);
-      throw error;
+  flashcards: {
+    getAll: async () => {
+      try {
+        const response = await api.get('/flashcards');
+        return response.data;
+      } catch (error) {
+        throw error;
+      }
+    },
+
+    getById: async (id) => {
+      try {
+        const response = await api.get(`/flashcards/${id}`);
+        return response.data;
+      } catch (error) {
+        throw error;
+      }
+    },
+
+    create: async (data) => {
+      try {
+        const response = await api.post('/flashcards', {
+          front: data.front,
+          back: data.back,
+          example: data.example,
+          imageUrl: data.imageUrl || '',
+          audioUrl: data.audioUrl || '',
+          deck: data.deck // ID of the deck
+        });
+        return response.data;
+      } catch (error) {
+        throw error;
+      }
+    },
+
+    update: async (id, data) => {
+      try {
+        const response = await api.put(`/flashcards/${id}`, {
+          front: data.front,
+          back: data.back,
+          example: data.example,
+          imageUrl: data.imageUrl || '',
+          audioUrl: data.audioUrl || '',
+          deck: data.deck
+        });
+        return response.data;
+      } catch (error) {
+        throw error;
+      }
+    },
+
+    delete: async (id) => {
+      try {
+        const response = await api.delete(`/flashcards/${id}`);
+        return response.data;
+      } catch (error) {
+        throw error;
+      }
+    },
+
+    getByDeck: async (deckId) => {
+      try {
+        const response = await api.get(`/decks/${deckId}/flashcards`);
+        return response.data;
+      } catch (error) {
+        throw error;
+      }
+    },
+
+    bulkCreate: async (deckId, flashcards) => {
+      try {
+        // Change endpoint to /flashcards/bulk instead of /decks/:id/flashcards
+        const response = await api.post('/flashcards/bulk', {
+          deckId,
+          flashcards
+        });
+        return response.data;
+      } catch (error) {
+        console.error('Bulk create error:', error);
+        throw error;
+      }
     }
   }
 };

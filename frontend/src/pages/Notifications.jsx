@@ -147,31 +147,17 @@ const Notifications = () => {
   useEffect(() => {
     fetchNotifications();
   }, []);
-
-  useEffect(() => {
-    // Simulate API call with mock data
-    const fetchMockNotifications = async () => {
-      try {
-        setLoading(true);
-        // Simulate network delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        setNotifications(mockNotifications);
-      } catch (error) {
-        console.error('Error fetching notifications:', error);
-        showToast('error', 'Lỗi', 'Không thể tải thông báo');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchMockNotifications();
-  }, []);
   
   const fetchNotifications = async () => {
     try {
       setLoading(true);
-      const response = await notificationService.getNotifications();
-      setNotifications(response.data || []);
+      // Simulate network delay with mock data
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      setNotifications(mockNotifications);
+      
+      // When you're ready to use real API:
+      // const response = await notificationService.getNotifications();
+      // setNotifications(response.data || []);
     } catch (error) {
       console.error('Error fetching notifications:', error);
       showToast('error', 'Lỗi', 'Không thể tải thông báo');

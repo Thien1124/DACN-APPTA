@@ -11,7 +11,7 @@ import {
   BiTrophy,
   BiTask,
   BiStore,
-  BiUser, BiBrain, BiCard, BiFlag
+  BiUser, BiBrain, BiCard, BiFlag,BiBookContent
 } from 'react-icons/bi';
 
 // ========== ANIMATIONS ==========
@@ -273,9 +273,15 @@ const LeftSidebar = () => {
     },
     {
       id: 'flashcards',
+      icon: <BiBookContent size={24} />,
+      text: 'Flashcards',
+      path: '/flashcards'
+    },
+    {
+      id: 'decks',
       icon: <BiCard size={24} />,
-      text: 'Flashcard',
-      path: '/topics'
+      text: 'Bộ thẻ Decks',
+      path: '/decks'
     },
     {
       id: 'goals',
@@ -335,7 +341,7 @@ const LeftSidebar = () => {
                 </NavBadge>
               )}
             </NavItem>
-            {index === 5 && <Divider />}
+            {index === 9 && <Divider />}
           </React.Fragment>
         ))}
       </NavMenu>

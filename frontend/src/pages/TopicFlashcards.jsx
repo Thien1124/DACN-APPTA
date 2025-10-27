@@ -18,6 +18,51 @@ import {
 } from '@mui/icons-material';
 import { geminiService } from '../services/geminiService';
 
+const mockFlashcards = {
+  "basic-english": {
+    topic: "Basic English",
+    cards: [
+      {
+        id: 1,
+        type: "text", // Add type to differentiate between text and image cards
+        front: "Hello",
+        back: "Xin chào",
+        phonetic: "/həˈləʊ/",
+        example: "Hello, how are you?",
+        translation: "Xin chào, bạn khỏe không?"
+      },
+      {
+        id: 2,
+        type: "image",
+        front: "https://images.unsplash.com/photo-1529778873920-4da4926a72c2?w=300&h=300&fit=crop",
+        back: "Cat (Mèo)",
+        phonetic: "/kæt/",
+        example: "The cat is sleeping on the couch.",
+        translation: "Con mèo đang ngủ trên ghế sofa."
+      },
+      {
+        id: 3,
+        type: "text",
+        front: "Thank you",
+        back: "Cảm ơn",
+        phonetic: "/θæŋk juː/",
+        example: "Thank you for your help.",
+        translation: "Cảm ơn vì sự giúp đỡ của bạn."
+      },
+      {
+        id: 4,
+        type: "image",
+        front: "https://images.unsplash.com/photo-1551269901-5c5e14c25df7?w=300&h=300&fit=crop",
+        back: "Dog (Chó)",
+        phonetic: "/dɒɡ/",
+        example: "The dog is playing in the garden.",
+        translation: "Con chó đang chơi trong vườn."
+      }
+    ]
+  },
+  // Add more topics as needed
+};
+
 const PageWrapper = styled.div`
   display: flex;
   min-height: 100vh;
@@ -117,7 +162,14 @@ const CardFace = styled.div`
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 `;
 
-const FrontFace = styled(CardFace)``;
+const FrontFace = styled(CardFace)`
+  img {
+    max-width: 100%;
+    max-height: 250px;
+    border-radius: 12px;
+    margin-bottom: 1rem;
+  }
+`;
 
 const BackFace = styled(CardFace)`
   transform: rotateY(180deg);
@@ -342,7 +394,6 @@ const ExampleTranslation = styled.div`
 `;
 
 
-
 const Button = styled.button`
   padding: 0.75rem 1.5rem;
   border: none;
@@ -418,6 +469,40 @@ const TopicFlashcards = () => {
       generateFlashcards();
     }
   }, [topicId]);
+
+  // Add mock data loading
+  useEffect(() => {
+    const loadMockFlashcards = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        const topicKey = topicId.toLowerCase();
+        const mockData = mockFlashcards[topicKey];
+
+        if (!mockData) {
+          throw new Error('Không tìm thấy chủ đề');
+        }
+
+        setTopic(mockData.topic);
+        setFlashcards(mockData.cards);
+
+      } catch (err) {
+        console.error('Load flashcards error:', err);
+        setError(err.message);
+        showToast('error', 'Lỗi', err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (topicId) {
+      loadMockFlashcards();
+    }
+  }, [topicId, showToast]);
 
   const progress = ((currentIndex + 1) / flashcards.length) * 100;
 
@@ -534,9 +619,25 @@ const TopicFlashcards = () => {
           {flashcards[currentIndex] ? (
             <FlashcardInner flipped={flipped} onClick={handleFlip}>
               <FrontFace theme={theme}>
-                <CardWord theme={theme}>{flashcards[currentIndex].front}</CardWord>
-                <CardPhonetic theme={theme}>{flashcards[currentIndex].phonetic}</CardPhonetic>
-                <CardExample theme={theme}>Click to reveal meaning</CardExample>
+                {flashcards[currentIndex].type === 'image' ? (
+                  <>
+                    <img 
+                      src={flashcards[currentIndex].front} 
+                      alt="Guess the word"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = 'https://via.placeholder.com/300?text=Image+Not+Found';
+                      }}
+                    />
+                    <CardExample theme={theme}>What is this?</CardExample>
+                  </>
+                ) : (
+                  <>
+                    <CardWord theme={theme}>{flashcards[currentIndex].front}</CardWord>
+                    <CardPhonetic theme={theme}>{flashcards[currentIndex].phonetic}</CardPhonetic>
+                    <CardExample theme={theme}>Click to reveal meaning</CardExample>
+                  </>
+                )}
               </FrontFace>
               <BackFace theme={theme}>
                 <CardMeaning theme={theme}>{flashcards[currentIndex].back}</CardMeaning>

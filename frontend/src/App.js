@@ -34,6 +34,7 @@ import Notifications from './pages/Notifications';
 import LearningGoals from './pages/LearningGoals';
 import TopicFlashcards from './pages/TopicFlashcards';
 import Topics from './pages/Topics';
+import Flashcards from './pages/Flashcards';
 
 // Admin Pages
 import AdminDashboard from './pages/AdminDashboard';
@@ -62,6 +63,7 @@ import AdminFlashcardForm from './pages/AdminFlashcardForm';
 import AdminNotifications from './pages/AdminNotifications';
 import AdminAuditlog from './pages/AdminAuditlog';
 import AdminSettings from './pages/AdminSettings';
+import AdminFlashcardBulkCreate from './pages/AdminFlashcardBulkCreate';
 // Import Styles
 import './styles/App.css';
 
@@ -187,17 +189,26 @@ function App() {
               <LearningGoals />
             </ProtectedRoute>
           } />
+          {/* Flashcards & Decks Routes */}
           <Route path="/topics" element={
             <ProtectedRoute>
               <Topics />
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/topics/:topicId" element={
-              <ProtectedRoute>
-                <TopicFlashcards />
-              </ProtectedRoute>
-            } />
+            </ProtectedRoute>
+          } />
+          
+         
+          <Route path="/decks" element={
+            <ProtectedRoute>
+              <Topics />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/decks/:deckId/study" element={
+            <ProtectedRoute>
+              <TopicFlashcards />
+            </ProtectedRoute>
+          } />
+
           <Route path="/pronunciation" element={
             <ProtectedRoute>
               <PronunciationPractice />
@@ -217,6 +228,11 @@ function App() {
           <Route path="/practice" element={
             <ProtectedRoute>
               <Practice />
+            </ProtectedRoute>
+          } />
+          <Route path="/flashcards" element={
+            <ProtectedRoute>
+              <Flashcards />
             </ProtectedRoute>
           } />
           {/* ========== ADMIN DASHBOARD & PAGES ========== */}
@@ -421,6 +437,13 @@ function App() {
           <Route path="/admin/flashcards/edit/:id" element={
             <ProtectedRoute requireAdmin={true}>
               <AdminFlashcardForm />
+            </ProtectedRoute>
+          } />
+
+          {/* Bulk Create Flashcards */}
+          <Route path="/admin/flashcards/bulk-create" element={
+            <ProtectedRoute requireAdmin={true}>
+              <AdminFlashcardBulkCreate />
             </ProtectedRoute>
           } />
 
