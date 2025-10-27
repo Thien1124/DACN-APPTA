@@ -1,5 +1,4 @@
 const express = require('express');
-<<<<<<< HEAD
 const {
   getFlashcards,
   getFlashcard,
@@ -9,14 +8,30 @@ const {
   deleteFlashcard
 } = require('../controllers/flashcardController');
 
+// Import middleware for advanced results
+const Flashcard = require('../models/Flashcard');
+const advancedResults = require('../middleware/advancedResults');
+
 const router = express.Router({ mergeParams: true });
 
-// Middleware bảo vệ
+// Middleware bảo vệ và phân quyền
 const { protect, authorize } = require('../middleware/authMiddleware');
 
+// Các route công khai để xem flashcards
 router
   .route('/')
-  .get(getFlashcards)
+  .get(advancedResults(Flashcard, {
+    path: 'deck',
+    select: 'title description'
+  }), getFlashcards);
+
+router
+  .route('/:id')
+  .get(getFlashcard);
+
+// Các route yêu cầu quyền admin để quản lý flashcards
+router
+  .route('/')
   .post(protect, authorize('admin'), createFlashcard);
 
 router
@@ -25,35 +40,7 @@ router
 
 router
   .route('/:id')
-  .get(getFlashcard)
   .put(protect, authorize('admin'), updateFlashcard)
   .delete(protect, authorize('admin'), deleteFlashcard);
-=======
-const router = express.Router();
-const flashcardController = require('../controllers/flashcardController');
-const { protect, authorize } = require('../middleware/authMiddleware');
-
-// Tất cả routes đều yêu cầu đăng nhập và quyền admin
-router.use(protect);
-router.use(authorize('admin'));
-
-router
-  .route('/')
-  .get(flashcardController.getAllFlashcards)
-  .post(flashcardController.createFlashcard);
-
-router
-  .route('/bulk')
-  .post(flashcardController.createBulkFlashcards);
-
-router
-  .route('/:id')
-  .get(flashcardController.getFlashcardById)
-  .put(flashcardController.updateFlashcard)
-  .delete(flashcardController.deleteFlashcard);
-
-// Route để lấy flashcard theo deck
-router.get('/deck/:deckId', flashcardController.getFlashcardsByDeck);
->>>>>>> main
 
 module.exports = router;

@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 
-<<<<<<< HEAD
 const LessonSchema = new mongoose.Schema(
   {
     title: {
@@ -30,7 +29,8 @@ const LessonSchema = new mongoose.Schema(
       enum: {
         values: ['vocabulary', 'grammar', 'reading', 'listening', 'speaking', 'writing', 'mixed'],
         message: 'Loại bài học không hợp lệ'
-      }
+      },
+      default: 'mixed'
     },
     xpReward: {
       type: Number,
@@ -42,24 +42,18 @@ const LessonSchema = new mongoose.Schema(
     },
     imageUrl: {
       type: String,
-      default: 'default-lesson.jpg'
-    },
-    createdAt: {
-      type: Date,
-      default: Date.now
-    },
-    updatedAt: {
-      type: Date,
-      default: Date.now
+      default: '/images/default-lesson.png' // Giữ lại đường dẫn hợp lý hơn
     }
   },
   {
+    // Sử dụng timestamps tích hợp của Mongoose, sạch sẽ hơn
+    timestamps: true,
     toJSON: { virtuals: true },
     toObject: { virtuals: true }
   }
 );
 
-// Virtual populate
+// Virtual populate để lấy các từ vựng thuộc bài học
 LessonSchema.virtual('vocabularies', {
   ref: 'Vocabulary',
   localField: '_id',
@@ -67,6 +61,7 @@ LessonSchema.virtual('vocabularies', {
   justOne: false
 });
 
+// Virtual populate để lấy các bài tập thuộc bài học
 LessonSchema.virtual('exercises', {
   ref: 'Exercise',
   localField: '_id',
@@ -74,85 +69,6 @@ LessonSchema.virtual('exercises', {
   justOne: false
 });
 
-// Middleware để cập nhật updatedAt trước khi lưu
-LessonSchema.pre('save', function(next) {
-=======
-const lessonSchema = new mongoose.Schema({
-  title: {
-    type: String,
-    required: [true, 'Vui lòng nhập tên bài học'],
-    trim: true
-  },
-  description: {
-    type: String,
-    required: [true, 'Vui lòng nhập mô tả bài học'],
-  },
-  unit: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Unit',
-    required: [true, 'Bài học phải thuộc về một unit']
-  },
-  order: {
-    type: Number,
-    required: [true, 'Vui lòng nhập thứ tự bài học'],
-    default: 1
-  },
-  type: {
-    type: String,
-    enum: ['vocabulary', 'grammar', 'reading', 'listening', 'speaking', 'writing', 'mixed'],
-    default: 'mixed'
-  },
-  xpReward: {
-    type: Number,
-    default: 10
-  },
-  isPublished: {
-    type: Boolean,
-    default: false
-  },
-  imageUrl: {
-    type: String,
-    default: '/images/default-lesson.png'
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now
-  }
-}, {
-  timestamps: true,
-  toJSON: { virtuals: true },
-  toObject: { virtuals: true }
-});
+// Không cần pre-save hook cho 'updatedAt' vì `timestamps: true` đã tự động xử lý
 
-// Virtual populate để lấy các từ vựng thuộc bài học
-lessonSchema.virtual('vocabularies', {
-  ref: 'Vocabulary',
-  foreignField: 'lesson',
-  localField: '_id'
-});
-
-// Virtual populate để lấy các bài tập thuộc bài học
-lessonSchema.virtual('exercises', {
-  ref: 'Exercise',
-  foreignField: 'lesson',
-  localField: '_id'
-});
-
-// Middleware trước khi lưu để cập nhật updatedAt
-lessonSchema.pre('save', function(next) {
->>>>>>> main
-  this.updatedAt = Date.now();
-  next();
-});
-
-<<<<<<< HEAD
 module.exports = mongoose.model('Lesson', LessonSchema);
-=======
-const Lesson = mongoose.model('Lesson', lessonSchema);
-
-module.exports = Lesson;
->>>>>>> main

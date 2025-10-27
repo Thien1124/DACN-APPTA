@@ -1,29 +1,50 @@
 const express = require('express');
-const router = express.Router();
-const unitController = require('../controllers/unitController');
+const {
+  getUnits,
+  getUnit,
+  createUnit,
+  updateUnit,
+  deleteUnit,
+  togglePublishUnit
+} = require('../controllers/unitController');
+
+// Import middleware for advanced results
+const Unit = require('../models/Unit');
+const advancedResults = require('../middleware/advancedResults');
+
+// Include other resource routers
+const lessonRouter = require('./lessonRoutes');
+
+const router = express.Router({ mergeParams: true });
+
+// Middleware bảo vệ và phân quyền
 const { protect, authorize } = require('../middleware/authMiddleware');
 
-// Tất cả routes đều yêu cầu đăng nhập và quyền admin
-router.use(protect);
-router.use(authorize('admin'));
+// Re-route vào các resource routers khác
+router.use('/:unitId/lessons', lessonRouter);
 
+// Các route công khai để xem units
 router
   .route('/')
-  .get(unitController.getAllUnits)
-  .post(unitController.createUnit);
+  .get(advancedResults(Unit, 'lessons'), getUnits);
 
 router
   .route('/:id')
-  .get(unitController.getUnitById)
-  .put(unitController.updateUnit)
-  .delete(unitController.deleteUnit);
+  .get(getUnit);
 
-router.patch('/:id/publish', unitController.togglePublishUnit);
+// Các route yêu cầu quyền admin để quản lý units
+router
+  .route('/')
+  .post(protect, authorize('admin'), createUnit);
 
-<<<<<<< HEAD
-// Route để lấy unit theo khóa học
-router.get('/course/:courseId', unitController.getUnitsByCourse);
+router
+  .route('/:id')
+  .put(protect, authorize('admin'), updateUnit)
+  .delete(protect, authorize('admin'), deleteUnit);
 
-=======
->>>>>>> main
+// Sử dụng PATCH (từ nhánh 'main') vì nó đúng ngữ nghĩa hơn
+router
+  .route('/:id/publish')
+  .patch(protect, authorize('admin'), togglePublishUnit);
+
 module.exports = router;

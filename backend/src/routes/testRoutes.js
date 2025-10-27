@@ -1,110 +1,90 @@
 const express = require('express');
-<<<<<<< HEAD
 const {
-  getTests,
-  getTest,
+  // Admin functions
+  getTestsForAdmin,
+  getTestForAdmin,
   createTest,
   updateTest,
   deleteTest,
   togglePublishTest,
+  addExerciseToTest,
+  removeExerciseFromTest,
+  // User functions
+  getPublicTests,
+  getTestForUser,
   getTestsByCourse,
   getTestsByUnit,
-  addExerciseToTest,
-  removeExerciseFromTest
+  startTest,
+  submitAnswer,
+  completeTest,
+  getTestResult,
+  getUserHistory
 } = require('../controllers/testController');
+
+// Import middleware for advanced results
+const Test = require('../models/Test');
+const advancedResults = require('../middleware/advancedResults');
 
 const router = express.Router({ mergeParams: true });
 
-// Middleware bảo vệ
+// Middleware bảo vệ và phân quyền
 const { protect, authorize } = require('../middleware/authMiddleware');
 
-router
-  .route('/')
-  .get(getTests)
-  .post(protect, authorize('admin'), createTest);
+// ==================== PUBLIC & USER ROUTES ====================
+// Các routes này dành cho người dùng xem và làm bài test
 
-router
-  .route('/:id')
-  .get(getTest)
-  .put(protect, authorize('admin'), updateTest)
-  .delete(protect, authorize('admin'), deleteTest);
+// Lấy danh sách tests (công khai) với filter, sort, pagination
+router.route('/')
+    .get(advancedResults(Test, { path: 'exercises' }), getPublicTests);
 
-router
-  .route('/:id/publish')
-  .put(protect, authorize('admin'), togglePublishTest);
+// Lấy lịch sử làm bài của user hiện tại
+router.route('/history/me')
+    .get(protect, getUserHistory);
+    
+// Lấy chi tiết một bài test (công khai, không có đáp án)
+router.route('/:id')
+    .get(getTestForUser);
 
-router
-  .route('/course/:courseId')
-  .get(getTestsByCourse);
+// Lấy tests theo course và unit (công khai)
+router.route('/course/:courseId').get(getTestsByCourse);
+router.route('/unit/:unitId').get(getTestsByUnit);
 
-router
-  .route('/unit/:unitId')
-  .get(getTestsByUnit);
+// Các route cho quy trình làm bài (yêu cầu đăng nhập)
+router.route('/:id/start')
+    .post(protect, startTest);
 
-router
-  .route('/:id/exercises')
-  .post(protect, authorize('admin'), addExerciseToTest);
+router.route('/attempts/:attemptId/answer')
+    .post(protect, submitAnswer);
 
-router
-  .route('/:id/exercises/:exerciseId')
-  .delete(protect, authorize('admin'), removeExerciseFromTest);
-=======
-const router = express.Router();
-const testController = require('../controllers/testController');
-const { protect, authorize } = require('../middleware/authMiddleware');
+router.route('/attempts/:attemptId/complete')
+    .post(protect, completeTest);
 
-/**
- * ROUTES CHO USER THƯỜNG - Chỉ cần đăng nhập
- */
+router.route('/attempts/:attemptId/result')
+    .get(protect, getTestResult);
 
-// Lấy danh sách tests (public)
-router.get('/', protect, testController.getAllTests);
 
-// Lấy chi tiết test
-router.get('/:id', protect, testController.getTestById);
+// ==================== ADMIN MANAGEMENT ROUTES ====================
+// Các routes này yêu cầu quyền admin/teacher để quản lý bài test
 
-// Lấy tests theo course
-router.get('/course/:courseId', protect, testController.getTestsByCourse);
+router.use(protect, authorize('admin', 'teacher')); // Áp dụng middleware cho tất cả các route bên dưới
 
-// Lấy tests theo unit
-router.get('/unit/:unitId', protect, testController.getTestsByUnit);
+router.route('/')
+    .post(createTest);
 
-// Bắt đầu làm test
-router.post('/:id/start', protect, testController.startTest);
+router.route('/:id')
+    .put(updateTest)
+    .delete(authorize('admin'), deleteTest); // Chỉ admin mới được xóa hẳn
 
-// Submit câu trả lời
-router.post('/attempts/:attemptId/answer', protect, testController.submitAnswer);
+router.route('/:id/admin-view') // Route riêng cho admin xem chi tiết (có đáp án)
+    .get(getTestForAdmin);
 
-// Hoàn thành test
-router.post('/attempts/:attemptId/complete', protect, testController.completeTest);
+router.route('/:id/publish')
+    .patch(togglePublishTest);
 
-// Lấy kết quả test
-router.get('/attempts/:attemptId/result', protect, testController.getTestResult);
+router.route('/:testId/exercises')
+    .post(addExerciseToTest);
 
-// Lấy lịch sử làm bài của user
-router.get('/user/history', protect, testController.getUserHistory);
-
-/**
- * ROUTES CHO ADMIN - Quản lý tests
- */
-
-// Tạo test mới
-router.post('/admin/create', protect, authorize('admin', 'teacher'), testController.createTest);
-
-// Cập nhật test
-router.put('/admin/:id', protect, authorize('admin', 'teacher'), testController.updateTest);
-
-// Xóa test
-router.delete('/admin/:id', protect, authorize('admin'), testController.deleteTest);
-
-// Publish/Unpublish test
-router.patch('/admin/:id/publish', protect, authorize('admin', 'teacher'), testController.togglePublishTest);
-
-// Thêm exercise vào test
-router.post('/admin/:testId/exercises/:exerciseId', protect, authorize('admin', 'teacher'), testController.addExerciseToTest);
-
-// Xóa exercise khỏi test
-router.delete('/admin/:testId/exercises/:exerciseId', protect, authorize('admin', 'teacher'), testController.removeExerciseFromTest);
->>>>>>> main
+router.route('/:testId/exercises/:exerciseId')
+    .delete(removeExerciseFromTest);
 
 module.exports = router;

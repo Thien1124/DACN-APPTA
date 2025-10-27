@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 
-<<<<<<< HEAD
 const CourseSchema = new mongoose.Schema(
   {
     title: {
@@ -20,32 +19,27 @@ const CourseSchema = new mongoose.Schema(
       enum: {
         values: ['beginner', 'intermediate', 'advanced'],
         message: 'Cấp độ phải là beginner, intermediate hoặc advanced'
-      }
+      },
+      default: 'beginner' // Giữ lại default value hữu ích
     },
     imageUrl: {
       type: String,
-      default: 'default-course.jpg'
+      default: '/images/default-course.png' // Giữ lại đường dẫn hợp lý hơn
     },
     isPublished: {
       type: Boolean,
       default: false
-    },
-    createdAt: {
-      type: Date,
-      default: Date.now
-    },
-    updatedAt: {
-      type: Date,
-      default: Date.now
     }
   },
   {
+    // Sử dụng timestamps tích hợp của Mongoose, sạch sẽ hơn
+    timestamps: true,
     toJSON: { virtuals: true },
     toObject: { virtuals: true }
   }
 );
 
-// Virtual populate
+// Virtual populate để lấy các unit thuộc khóa học
 CourseSchema.virtual('units', {
   ref: 'Unit',
   localField: '_id',
@@ -53,65 +47,6 @@ CourseSchema.virtual('units', {
   justOne: false
 });
 
-// Middleware để cập nhật updatedAt trước khi lưu
-CourseSchema.pre('save', function(next) {
-=======
-const courseSchema = new mongoose.Schema({
-  title: {
-    type: String,
-    required: [true, 'Vui lòng nhập tên khóa học'],
-    trim: true
-  },
-  description: {
-    type: String,
-    required: [true, 'Vui lòng nhập mô tả khóa học'],
-  },
-  level: {
-    type: String,
-    required: [true, 'Vui lòng chọn cấp độ'],
-    enum: ['beginner', 'intermediate', 'advanced'],
-    default: 'beginner'
-  },
-  imageUrl: {
-    type: String,
-    default: '/images/default-course.png'
-  },
-  isPublished: {
-    type: Boolean,
-    default: false
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now
-  }
-}, {
-  timestamps: true,
-  toJSON: { virtuals: true },
-  toObject: { virtuals: true }
-});
+// Không cần pre-save hook cho 'updatedAt' vì `timestamps: true` đã tự động xử lý
 
-// Virtual populate để lấy các unit thuộc khóa học
-courseSchema.virtual('units', {
-  ref: 'Unit',
-  foreignField: 'course',
-  localField: '_id'
-});
-
-// Middleware trước khi lưu để cập nhật updatedAt
-courseSchema.pre('save', function(next) {
->>>>>>> main
-  this.updatedAt = Date.now();
-  next();
-});
-
-<<<<<<< HEAD
 module.exports = mongoose.model('Course', CourseSchema);
-=======
-const Course = mongoose.model('Course', courseSchema);
-
-module.exports = Course;
->>>>>>> main

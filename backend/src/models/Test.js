@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 
-<<<<<<< HEAD
 const TestSchema = new mongoose.Schema(
   {
     title: {
@@ -14,6 +13,26 @@ const TestSchema = new mongoose.Schema(
       required: [true, 'Vui lòng nhập mô tả bài test'],
       trim: true
     },
+    // **Hợp nhất:** Giữ lại các trường enum chi tiết từ 'main'
+    type: {
+      type: String,
+      required: true,
+      enum: ['PRACTICE', 'TEST', 'EXAM', 'QUIZ'],
+      default: 'PRACTICE'
+    },
+    skill: {
+      type: String,
+      required: true,
+      enum: ['LISTENING', 'READING', 'SPEAKING', 'WRITING', 'VOCABULARY', 'GRAMMAR', 'MIXED'],
+      index: true
+    },
+    level: {
+      type: String,
+      required: true,
+      enum: ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'],
+      index: true
+    },
+    // Giữ lại tham chiếu đến course và unit
     course: {
       type: mongoose.Schema.ObjectId,
       ref: 'Course'
@@ -28,32 +47,34 @@ const TestSchema = new mongoose.Schema(
     },
     passingScore: {
       type: Number,
-      default: 70 // Điểm đạt (%)
+      default: 70, // Điểm đạt (%)
+      min: 0,
+      max: 100
     },
-    xpReward: {
-      type: Number,
-      default: 20
+    // Đổi tên 'attempts' thành 'maxAttempts' cho rõ ràng
+    maxAttempts: {
+        type: Number,
+        default: -1 // -1 = không giới hạn số lần làm bài
     },
     isPublished: {
       type: Boolean,
       default: false
     },
-    createdAt: {
-      type: Date,
-      default: Date.now
-    },
-    updatedAt: {
-      type: Date,
-      default: Date.now
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true
     }
   },
   {
+    // Sử dụng timestamps tích hợp, sạch sẽ hơn
+    timestamps: true,
     toJSON: { virtuals: true },
     toObject: { virtuals: true }
   }
 );
 
-// Virtual populate
+// **Hợp nhất:** Giữ lại Virtual populate đến TestExercise, đây là pattern tốt hơn
 TestSchema.virtual('exercises', {
   ref: 'TestExercise',
   localField: '_id',
@@ -61,119 +82,12 @@ TestSchema.virtual('exercises', {
   justOne: false
 });
 
-// Middleware để cập nhật updatedAt trước khi lưu
-TestSchema.pre('save', function(next) {
-  this.updatedAt = Date.now();
-  next();
-});
+// **Hợp nhất:** Giữ lại các index quan trọng
+TestSchema.index({ skill: 1, level: 1, isPublished: 1 });
+TestSchema.index({ course: 1 });
+TestSchema.index({ unit: 1 });
+
+
+// Không cần pre-save hook cho 'updatedAt' vì `timestamps: true` đã tự động xử lý
 
 module.exports = mongoose.model('Test', TestSchema);
-=======
-const testSchema = new mongoose.Schema({
-  title: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  
-  description: {
-    type: String,
-    required: false
-  },
-  
-  type: {
-    type: String,
-    required: true,
-    enum: ['PRACTICE', 'TEST', 'EXAM', 'QUIZ'],
-    default: 'PRACTICE'
-  },
-  
-  skill: {
-    type: String,
-    required: true,
-    enum: ['LISTENING', 'READING', 'SPEAKING', 'WRITING', 'VOCABULARY', 'GRAMMAR', 'MIXED'],
-    index: true
-  },
-  
-  level: {
-    type: String,
-    required: true,
-    enum: ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'],
-    index: true
-  },
-  
-  questions: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Question'
-  }],
-  exercises: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Exercise' // Hoặc model phù hợp
-  }],
-  
-  totalQuestions: {
-    type: Number,
-    required: true
-  },
-  
-  totalPoints: {
-    type: Number,
-    required: true
-  },
-  
-  passingScore: {
-    type: Number,
-    default: 70
-  },
-  
-  timeLimit: {
-    type: Number,
-    required: false
-  },
-  
-  attempts: {
-    type: Number,
-    default: -1
-  },
-  
-  courseId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Course',
-    required: false
-  },
-  
-  isPublic: {
-    type: Boolean,
-    default: true
-  },
-  
-  isActive: {
-    type: Boolean,
-    default: true
-  },
-  
-  createdBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
-  },
-  
-  createdAt: {
-    type: Date,
-    default: Date.now
-  },
-  
-  updatedAt: {
-    type: Date,
-    default: Date.now
-  }
-});
-
-// Indexes
-testSchema.index({ skill: 1, level: 1, isActive: 1, isPublic: 1 });
-testSchema.index({ courseId: 1 });
-
-const Test = mongoose.model('Test', testSchema);
-
-module.exports = Test;
->>>>>>> main

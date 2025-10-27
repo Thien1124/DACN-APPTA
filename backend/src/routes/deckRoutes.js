@@ -1,5 +1,4 @@
 const express = require('express');
-<<<<<<< HEAD
 const {
   getDecks,
   getDeck,
@@ -8,93 +7,66 @@ const {
   deleteDeck,
   togglePublishDeck,
   getDecksByCourse,
-  getDecksByUnit
+  getDecksByUnit,
+  browseDecks,       // From main
+  getCategories,     // From main
+  getFeaturedDecks,  // From main
+  getPopularDecks,   // From main
+  incrementViewCount,// From main
+  getMyDecks,        // From main
+  incrementStudyCount// From main
 } = require('../controllers/deckController');
+
+// Import middleware for advanced results
+const Deck = require('../models/Deck');
+const advancedResults = require('../middleware/advancedResults');
 
 // Include other resource routers
 const flashcardRouter = require('./flashcardRoutes');
 
 const router = express.Router({ mergeParams: true });
 
-// Middleware bảo vệ
+// Middleware bảo vệ và phân quyền
 const { protect, authorize } = require('../middleware/authMiddleware');
 
-// Re-route vào các resource routers khác
+// Re-route vào resource flashcards (ví dụ: /api/v1/decks/:deckId/flashcards)
 router.use('/:deckId/flashcards', flashcardRouter);
+
+// ==================== COMMUNITY & PUBLIC ROUTES ====================
+// Các routes này KHÔNG cần đăng nhập
+
+router.get('/browse', browseDecks);
+router.get('/categories', getCategories);
+router.get('/featured', getFeaturedDecks);
+router.get('/popular', getPopularDecks);
+router.post('/:id/view', incrementViewCount); // User xem deck
+
+// ==================== USER-SPECIFIC ROUTES ====================
+// Các routes này yêu cầu đăng nhập
+
+router.get('/my-decks', protect, getMyDecks); // Lấy các bộ thẻ của tôi
+router.post('/:id/study', protect, incrementStudyCount); // User học deck
+
+// ==================== ADMIN MANAGEMENT ROUTES ====================
+// Các routes này yêu cầu quyền admin
+
+// Lấy decks theo course và unit (dùng cho admin)
+router.get('/course/:courseId', getDecksByCourse);
+router.get('/unit/:unitId', getDecksByUnit);
 
 router
   .route('/')
-  .get(getDecks)
+  .get(advancedResults(Deck, 'flashcards'), getDecks) // Dùng advanced results
   .post(protect, authorize('admin'), createDeck);
 
 router
   .route('/:id')
   .get(getDeck)
-  .put(protect, authorize('admin'), updateDeck)
-  .delete(protect, authorize('admin'), deleteDeck);
+  .put(protect, authorize('admin', 'user'), updateDeck) // Cho phép user tự sửa deck của mình
+  .delete(protect, authorize('admin', 'user'), deleteDeck); // Cho phép user tự xóa deck của mình
 
 router
   .route('/:id/publish')
-  .put(protect, authorize('admin'), togglePublishDeck);
-
-router
-  .route('/course/:courseId')
-  .get(getDecksByCourse);
-
-router
-  .route('/unit/:unitId')
-  .get(getDecksByUnit);
-=======
-const router = express.Router();
-const deckController = require('../controllers/deckController');
-const { protect, authorize } = require('../middleware/authMiddleware');
-
-// ==================== PUBLIC ROUTES (Task 15) ====================
-// Các routes này KHÔNG cần đăng nhập - để user browse decks
-
-// Browse & Filter decks (giống Duolingo)
-router.get('/browse', deckController.browseDecks);
-
-// Get all categories with counts
-router.get('/categories', deckController.getCategories);
-
-// Get featured decks
-router.get('/featured', deckController.getFeaturedDecks);
-
-// Get popular decks
-router.get('/popular', deckController.getPopularDecks);
-
-// Increment view count (public - khi user xem deck)
-router.post('/:id/view', deckController.incrementViewCount);
-
-// Increment study count (yêu cầu đăng nhập)
-router.post('/:id/study', protect, deckController.incrementStudyCount);
-
-router.post('/', protect, deckController.createDeck);
-
-router.get('/my-decks', protect, deckController.getMyDecks);  // Cần thêm controller này
-router.put('/:id', protect, deckController.updateDeck);       // Cần kiểm tra ownership
-router.delete('/:id', protect, deckController.deleteDeck);     // Cần kiểm tra ownership
-
-// ==================== ADMIN ROUTES ====================
-// Routes này yêu cầu đăng nhập và quyền admin
-
-router
-  .route('/')
-  .get(protect, authorize('admin'), deckController.getAllDecks)
-  .post(protect, authorize('admin'), deckController.createDeck);
-
-router
-  .route('/:id')
-  .get(protect, authorize('admin'), deckController.getDeckById)
-  .put(protect, authorize('admin'), deckController.updateDeck)
-  .delete(protect, authorize('admin'), deckController.deleteDeck);
-
-router.patch('/:id/publish', protect, authorize('admin'), deckController.togglePublishDeck);
-
-// Routes để lấy deck theo khóa học và unit (admin)
-router.get('/course/:courseId', protect, authorize('admin'), deckController.getDecksByCourse);
-router.get('/unit/:unitId', protect, authorize('admin'), deckController.getDecksByUnit);
->>>>>>> main
+  .patch(protect, authorize('admin', 'user'), togglePublishDeck); // Dùng PATCH
 
 module.exports = router;

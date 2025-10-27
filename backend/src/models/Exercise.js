@@ -1,8 +1,6 @@
 const mongoose = require('mongoose');
 
-<<<<<<< HEAD
-const ExerciseSchema = new mongoose.Schema({
-=======
+// **Hợp nhất:** Sử dụng optionSchema từ nhánh 'main' vì nó tốt hơn
 const optionSchema = new mongoose.Schema({
   text: {
     type: String,
@@ -15,8 +13,7 @@ const optionSchema = new mongoose.Schema({
   }
 });
 
-const exerciseSchema = new mongoose.Schema({
->>>>>>> main
+const ExerciseSchema = new mongoose.Schema({
   question: {
     type: String,
     required: [true, 'Vui lòng nhập câu hỏi'],
@@ -25,107 +22,54 @@ const exerciseSchema = new mongoose.Schema({
   type: {
     type: String,
     required: [true, 'Vui lòng chọn loại bài tập'],
-<<<<<<< HEAD
+    // Hợp nhất các enum từ cả hai nhánh
     enum: {
-      values: ['multiple-choice', 'fill-in-blank', 'matching', 'reorder', 'listening', 'speaking'],
+      values: ['multiple-choice', 'fill-in-blank', 'matching', 'reorder', 'listening', 'speaking', 'translation'],
       message: 'Loại bài tập không hợp lệ'
-    }
-  },
-  options: {
-    type: [String],
-    validate: {
-      validator: function(v) {
-        return this.type === 'multiple-choice' ? v.length >= 2 : true;
-      },
-      message: 'Bài tập trắc nghiệm phải có ít nhất 2 lựa chọn'
-    }
-  },
-  correctAnswer: {
-    type: String,
-    required: [true, 'Vui lòng nhập đáp án đúng'],
-    trim: true
-  },
-  explanation: {
-    type: String,
-    trim: true
-=======
-    enum: ['multiple-choice', 'fill-in-blank', 'matching', 'listening', 'speaking', 'translation'],
+    },
     default: 'multiple-choice'
   },
+  // Sử dụng [optionSchema] cho các loại bài tập có lựa chọn
   options: [optionSchema],
+  // correctAnswer chỉ bắt buộc cho các loại không có lựa chọn
   correctAnswer: {
     type: String,
+    trim: true,
     required: function() {
-      return this.type === 'fill-in-blank' || this.type === 'translation';
+      // Chỉ bắt buộc khi không phải là trắc nghiệm
+      return this.type !== 'multiple-choice';
     }
   },
   explanation: {
-    type: String
+    type: String,
+    trim: true
   },
   lesson: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Lesson',
     required: [true, 'Bài tập phải thuộc về một bài học']
->>>>>>> main
   },
   difficulty: {
     type: String,
     enum: ['easy', 'medium', 'hard'],
     default: 'medium'
   },
-<<<<<<< HEAD
-  lesson: {
-    type: mongoose.Schema.ObjectId,
-    ref: 'Lesson',
-    required: [true, 'Bài tập phải thuộc về một bài học']
-=======
+  // Sử dụng 'points' thay vì 'xpReward' cho linh hoạt hơn
   points: {
     type: Number,
     default: 10
->>>>>>> main
   },
   imageUrl: {
     type: String
   },
   audioUrl: {
     type: String
-  },
-<<<<<<< HEAD
-  xpReward: {
-    type: Number,
-    default: 5
-  },
-=======
->>>>>>> main
-  createdAt: {
-    type: Date,
-    default: Date.now
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now
   }
-<<<<<<< HEAD
-});
-
-// Middleware để cập nhật updatedAt trước khi lưu
-ExerciseSchema.pre('save', function(next) {
-=======
 }, {
+  // Sử dụng timestamps tích hợp, sạch sẽ hơn
   timestamps: true
 });
 
-// Middleware trước khi lưu để cập nhật updatedAt
-exerciseSchema.pre('save', function(next) {
->>>>>>> main
-  this.updatedAt = Date.now();
-  next();
-});
+// Không cần pre-save hook cho 'updatedAt' vì `timestamps: true` đã tự động xử lý
 
-<<<<<<< HEAD
 module.exports = mongoose.model('Exercise', ExerciseSchema);
-=======
-const Exercise = mongoose.model('Exercise', exerciseSchema);
-
-module.exports = Exercise;
->>>>>>> main
