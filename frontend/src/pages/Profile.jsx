@@ -7,6 +7,14 @@ import { authService } from '../services/authService';
 import Toast from '../components/Toast';
 import useToast from '../hooks/useToast';
 
+import { 
+  EmojiEvents, 
+  Star,
+  Diamond,
+  MenuBook
+} from '@mui/icons-material';
+import WhatshotIcon from '@mui/icons-material/Whatshot';
+import Target from '@mui/icons-material/Psychology';
 // ========== STYLED COMPONENTS ==========
 
 const PageWrapper = styled.div`
@@ -229,7 +237,7 @@ const StatsGrid = styled.div`
   }
 `;
 
-const StatCard = styled.div`
+const StatCardWrapper = styled.div`
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -406,6 +414,7 @@ const Profile = () => {
     name: '',
     username: '',
     email: '',
+    avatar: null, // ✅ Thêm avatar
     joinDate: '',
     following: 0,
     followers: 0,
@@ -414,117 +423,144 @@ const Profile = () => {
 
   // Fetch user profile from backend
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const response = await authService.getProfile();
-        if (response.success && response.data?.user) {
-          const user = response.data.user;
-          setUserData({
-            name: user.name || 'User',
-            username: user.username || user.name || 'user123',
-            email: user.email || '',
-            joinDate: user.createdAt 
-              ? `Đã tham gia ${new Date(user.createdAt).toLocaleDateString('vi-VN', { month: 'long', year: 'numeric' })}`
-              : 'Đã tham gia gần đây',
-            following: user.following || 0,
-            followers: user.followers || 0,
-            languages: user.languages || ['🇺🇸']
-          });
-        }
-      } catch (error) {
-        console.error('Error fetching profile:', error);
-        showToast('error', 'Lỗi!', error.message || 'Không thể tải thông tin hồ sơ');
-      } finally {
-        setLoading(false);
-      }
+    fetchProfile();
+
+    // ✅ Listen for avatar update events
+    const handleAvatarUpdate = (event) => {
+     
+      setUserData(prev => ({
+        ...prev,
+        avatar: event.detail.avatar
+      }));
     };
 
-    fetchProfile();
+    window.addEventListener('avatarUpdated', handleAvatarUpdate);
+
+    return () => {
+      window.removeEventListener('avatarUpdated', handleAvatarUpdate);
+    };
   }, []);
 
-  // Mock stats (có thể thay bằng API call riêng sau này)
-  const stats = [
-    {
-      icon: '🔥',
-      value: '207',
-      label: 'Ngày streak',
-      color: '#fbbf24',
-      background: '#fef3c7'
-    },
-    {
-      icon: '⚡',
-      value: '10883',
-      label: 'Tổng điểm KN',
-      color: '#1CB0F6',
-      background: '#dbeafe'
-    },
-    {
-      icon: '💎',
-      value: 'Hồng Ngọc',
-      label: 'Giải đấu hiện tại',
-      badge: 'TUẦN 1',
-      color: '#ef4444',
-      background: '#fee2e2'
-    },
-    {
-      icon: '🏆',
-      value: '3',
-      label: 'Số lần đạt top 3',
-      color: '#8b5cf6',
-      background: '#ede9fe'
+  const fetchProfile = async () => {
+    try {
+      const response = await authService.getProfile();
+      if (response.success && response.data?.user) {
+        const user = response.data.user;
+        setUserData({
+          name: user.name || 'User',
+          username: user.username || user.name || 'user123',
+          email: user.email || '',
+          avatar: user.avatar || null, // ✅ Lấy avatar từ API
+          joinDate: user.createdAt 
+            ? `Đã tham gia ${new Date(user.createdAt).toLocaleDateString('vi-VN', { month: 'long', year: 'numeric' })}`
+            : 'Đã tham gia gần đây',
+          following: user.following || 0,
+          followers: user.followers || 0,
+          languages: user.languages || ['🇺🇸']
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      showToast('error', 'Lỗi!', error.message || 'Không thể tải thông tin hồ sơ');
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
-  const achievements = [
-    {
-      icon: '🔥',
-      title: 'Lửa rừng',
-      current: 207,
-      target: 250,
-      description: 'Đạt chuỗi 250 ngày streak',
-      color: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%)',
-      progressColor: '#ff6b6b',
-      level: 'CẤP 9',
-      levelBg: '#fee2e2',
-      levelColor: '#dc2626'
-    },
-    {
-      icon: '🏆',
-      title: 'Cao nhân',
-      current: 10883,
-      target: 12500,
-      description: 'Đạt được 12500 KN',
-      color: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
-      progressColor: '#fbbf24',
-      level: 'CẤP 9',
-      levelBg: '#fef3c7',
-      levelColor: '#d97706'
-    },
-    {
-      icon: '🎯',
-      title: 'Siêu trí tuệ',
-      current: 367,
-      target: 500,
-      description: 'Hoàn thành 500 quiz trí tuệ',
-      color: 'linear-gradient(135deg, #34d399 0%, #10b981 100%)',
-      progressColor: '#10b981',
-      level: 'CẤP 8',
-      levelBg: '#d1fae5',
-      levelColor: '#059669'
-    },
-    {
-      icon: '📚',
-      title: 'Học già',
-      current: 224,
-      target: 250,
-      description: 'Hoàn thành 250 bài học',
-      color: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-      progressColor: '#f59e0b',
-      level: 'CẤP 7',
-      levelBg: '#fef3c7',
-      levelColor: '#d97706'
+  // ✅ Tạo full avatar URL
+  const getAvatarUrl = () => {
+    if (!userData.avatar) return null;
+    
+    if (userData.avatar.startsWith('http')) {
+      return userData.avatar;
     }
-  ];
+    
+    return `${process.env.REACT_APP_API_URL.replace('/api', '')}${userData.avatar}`;
+  };
+
+  // Mock stats (có thể thay bằng API call riêng sau này)
+const stats = [
+  {
+    icon: <WhatshotIcon sx={{ fontSize: 24, color: 'white' }} />,
+    value: '207',
+    label: 'Ngày streak',
+    color: '#fbbf24',
+    background: '#fef3c7'
+  },
+  {
+    icon: <Star sx={{ fontSize: 24, color: 'white' }} />,
+    value: '10883',
+    label: 'Tổng điểm KN',
+    color: '#1CB0F6',
+    background: '#dbeafe'
+  },
+  {
+    icon: <Diamond sx={{ fontSize: 24, color: 'white' }} />,
+    value: 'Hồng Ngọc',
+    label: 'Giải đấu hiện tại',
+    badge: 'TUẦN 1',
+    color: '#ef4444',
+    background: '#fee2e2'
+  },
+  {
+    icon: <EmojiEvents sx={{ fontSize: 24, color: 'white' }} />,
+    value: '3',
+    label: 'Số lần đạt top 3',
+    color: '#8b5cf6',
+    background: '#ede9fe'
+  }
+];
+
+const achievements = [
+  {
+    icon: <WhatshotIcon  sx={{ fontSize: 32, color: 'white' }} />,
+    title: 'Lửa rừng',
+    current: 207,
+    target: 250,
+    description: 'Đạt chuỗi 250 ngày streak',
+    color: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%)',
+    progressColor: '#ff6b6b',
+    level: 'CẤP 9',
+    levelBg: '#fee2e2',
+    levelColor: '#dc2626'
+  },
+  {
+    icon: <EmojiEvents sx={{ fontSize: 32, color: 'white' }} />,
+    title: 'Cao nhân',
+    current: 10883,
+    target: 12500,
+    description: 'Đạt được 12500 KN',
+    color: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
+    progressColor: '#fbbf24',
+    level: 'CẤP 9',
+    levelBg: '#fef3c7',
+    levelColor: '#d97706'
+  },
+  {
+    icon: <Target sx={{ fontSize: 32, color: 'white' }} />,
+    title: 'Siêu trí tuệ',
+    current: 367,
+    target: 500,
+    description: 'Hoàn thành 500 quiz trí tuệ',
+    color: 'linear-gradient(135deg, #34d399 0%, #10b981 100%)',
+    progressColor: '#10b981',
+    level: 'CẤP 8',
+    levelBg: '#d1fae5',
+    levelColor: '#059669'
+  },
+  {
+    icon: <MenuBook sx={{ fontSize: 32, color: 'white' }} />,
+    title: 'Học già',
+    current: 224,
+    target: 250,
+    description: 'Hoàn thành 250 bài học',
+    color: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+    progressColor: '#f59e0b',
+    level: 'CẤP 7',
+    levelBg: '#fef3c7',
+    levelColor: '#d97706'
+  }
+];
 
   const handleViewAll = (section) => {
     console.log(`View all ${section}`);
@@ -553,9 +589,19 @@ const Profile = () => {
           {/* Profile Header */}
           <ProfileHeader>
             <UserInfo>
-              <UserAvatar>
-                {userData.name.charAt(0).toUpperCase()}
-              </UserAvatar>
+              {/* ✅ Hiển thị avatar hoặc initial */}
+              {getAvatarUrl() ? (
+                <UserAvatar style={{ 
+                  backgroundImage: `url(${getAvatarUrl()})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center'
+                }} />
+              ) : (
+                <UserAvatar>
+                  {userData.name.charAt(0).toUpperCase()}
+                </UserAvatar>
+              )}
+              
               <UserDetails>
                 <UserName>{userData.name}</UserName>
                 <Username>{userData.username}</Username>
@@ -585,7 +631,7 @@ const Profile = () => {
             <SectionTitle>Thống kê</SectionTitle>
             <StatsGrid>
               {stats.map((stat, index) => (
-                <StatCard key={index} background={stat.background}>
+                <StatCardWrapper key={index} background={stat.background}>
                   <StatIcon color={stat.color}>{stat.icon}</StatIcon>
                   <StatInfo>
                     <StatValue>{stat.value}</StatValue>
@@ -596,7 +642,7 @@ const Profile = () => {
                       {stat.badge}
                     </StatBadge>
                   )}
-                </StatCard>
+                </StatCardWrapper>
               ))}
             </StatsGrid>
           </Section>

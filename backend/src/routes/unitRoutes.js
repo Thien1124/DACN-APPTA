@@ -20,7 +20,10 @@ router
 
 router.patch('/:id/publish', unitController.togglePublishUnit);
 
+<<<<<<< HEAD
 // Route để lấy unit theo khóa học
 router.get('/course/:courseId', unitController.getUnitsByCourse);
 
+=======
+>>>>>>> main
 module.exports = router;

@@ -1,7 +1,6 @@
 const express = require('express');
 const passport = require('passport');
 const router = express.Router();
-
 const authController = require('../controllers/authController');
 const { validateRegistration, validateLogin } = require('../middleware/validation');
 const { authenticate } = require('../middleware/auth');
@@ -19,39 +18,60 @@ router.post('/resend-otp', authController.resendOTP);
 router.post('/forgot-password', authController.forgotPassword);
 router.post('/reset-password', authController.resetPassword);
 
-// Google OAuth
+// Google OAuth routes
 router.get('/google',
-  passport.authenticate('google', { scope: ['profile', 'email'] })
+  (req, res, next) => {
+    console.log('📍 Starting Google OAuth flow');
+    next();
+  },
+  passport.authenticate('google', { 
+    scope: ['profile', 'email'],
+    session: false,
+    accessType: 'offline',
+    prompt: 'consent'
+  })
 );
 
 router.get('/google/callback',
+  (req, res, next) => {
+    console.log('📍 Google callback received:', {
+      query: req.query,
+      code: req.query.code
+    });
+    next();
+  },
   passport.authenticate('google', { 
-    session: false, 
-    failureRedirect: `${process.env.CLIENT_URL}/login?error=oauth` 
+    session: false,
+    failureRedirect: `${process.env.CLIENT_URL}/login?error=google_oauth`
   }),
   authController.oauthSuccessRedirect
 );
 
-// Facebook OAuth
+// Facebook OAuth routes
 router.get('/facebook',
-  passport.authenticate('facebook', { scope: ['email'] })
+  (req, res, next) => {
+    console.log('📍 Starting Facebook OAuth flow');
+    next();
+  },
+  passport.authenticate('facebook', {
+    scope: ['email', 'public_profile'],
+    session: false,
+    authType: 'rerequest'
+  })
 );
 
 router.get('/facebook/callback',
-  passport.authenticate('facebook', { 
-    session: false, 
-    failureRedirect: `${process.env.CLIENT_URL}/login?error=oauth` 
+  (req, res, next) => {
+    console.log('📍 Facebook callback received:', {
+      query: req.query
+    });
+    next();
+  },
+  passport.authenticate('facebook', {
+    session: false,
+    failureRedirect: `${process.env.CLIENT_URL}/login?error=facebook_oauth`
   }),
   authController.oauthSuccessRedirect
 );
-
-const { register,login } = require('../controllers/authController');
-const { validateRegistration,validateLogin } = require('../middleware/validation');
-
-// Route đăng ký
-router.post('/register', validateRegistration, register);
-// ✅ Route đăng nhập
-router.post('/login', validateLogin, login);
-
 
 module.exports = router;

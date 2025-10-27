@@ -2,6 +2,16 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import LeftSidebar from '../components/LeftSidebar';
+import {
+  Person,
+  Link,
+  Lock,
+  History,
+  Notifications,
+  Settings as SettingsIcon,
+  ArrowForward
+} from '@mui/icons-material';
+import Flag from '@mui/icons-material/Flag';
 
 const Settings = () => {
   const navigate = useNavigate();
@@ -10,35 +20,42 @@ const Settings = () => {
     {
       title: 'Hồ sơ',
       description: 'Thay đổi tên, email, ảnh đại diện và mật khẩu.',
-      icon: '👤',
+      icon: <Person sx={{ fontSize: 40, color: '#1CB0F6' }} />,
       path: '/settings/profile',
       color: '#1CB0F6'
     },
     {
       title: 'Tài khoản mạng xã hội',
       description: 'Kết nối / ngắt kết nối Google, Facebook.',
-      icon: '🔗',
+      icon: <Link sx={{ fontSize: 40, color: '#58CC02' }} />,
       path: '/settings/social',
       color: '#58CC02'
     },
     {
       title: 'Quyền riêng tư',
       description: 'Tùy chọn hiển thị hồ sơ và thông báo.',
-      icon: '🔒',
+      icon: <Lock sx={{ fontSize: 40, color: '#CE82FF' }} />,
       path: '/settings/privacy',
       color: '#CE82FF'
     },
     {
+      title: 'Lịch sử hoạt động',
+      description: 'Xem và quản lý hoạt động tài khoản của bạn.',
+      icon: <History sx={{ fontSize: 40, color: '#FFCD3A' }} />,
+      path: '/settings/audit-log',
+      color: '#FFCD3A'
+    },
+    {
       title: 'Thông báo',
       description: 'Quản lý email và thông báo nhắc nhở.',
-      icon: '🔔',
+      icon: <Notifications sx={{ fontSize: 40, color: '#FF9600' }} />,
       path: '/settings/notifications',
       color: '#FF9600'
     },
     {
       title: 'Cài đặt tài khoản',
       description: 'Các tuỳ chọn giao diện và trải nghiệm học tập.',
-      icon: '⚙️',
+      icon: <SettingsIcon sx={{ fontSize: 40, color: '#FF4B4B' }} />,
       path: '/settings/account',
       color: '#FF4B4B'
     }
@@ -68,7 +85,9 @@ const Settings = () => {
                   <CardIcon>{card.icon}</CardIcon>
                   <CardTitle>{card.title}</CardTitle>
                   <CardText>{card.description}</CardText>
-                  <CardArrow>→</CardArrow>
+                  <CardArrow>
+                    <ArrowForward sx={{ fontSize: 24 }} />
+                  </CardArrow>
                 </Card>
               ))}
             </CardGrid>
@@ -226,10 +245,12 @@ const Card = styled.div`
 `;
 
 const CardIcon = styled.div`
-  font-size: 3rem;
   margin-bottom: 1rem;
   filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.15));
   animation: bounce 2s ease infinite;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   @keyframes bounce {
     0%, 100% {

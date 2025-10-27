@@ -1,11 +1,14 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
-import streak from '../assets/streak.png';
-import lock from '../assets/lock.png';
-import missiontoday from '../assets/missiontoday.png';
-import Swal from 'sweetalert2';
 import { authService } from '../services/authService';
+import Swal from 'sweetalert2';
+// Import icons
+import { FiTarget, FiCheck, FiLock, FiLogOut, FiSettings } from 'react-icons/fi'; 
+import { BsFire, BsTrophy, BsInfoCircle } from 'react-icons/bs';
+import { BiStore } from 'react-icons/bi';
+import { MdWorkOutline, MdTrendingUp } from 'react-icons/md';
+import { HiOutlineDocumentText, HiOutlineShieldCheck } from 'react-icons/hi';
 
 // ========== ANIMATIONS ==========
 const fadeIn = keyframes`
@@ -544,16 +547,13 @@ const RightSidebar = ({
     }
   };
 
-  const handleSettings = () => {
-    navigate('/settings');
-  };
 
   return (
     <SidebarContainer>
       {/* Unlock Leaderboard */}
       <UnlockSection>
         <UnlockTitle>
-          <UnlockTitleIcon src={lock} alt="Lock" />
+          <FiLock size={24} /> {/* Thay thế 🔒 */}
           Mở khóa Bảng xếp hạng!
         </UnlockTitle>
         <UnlockDescription>
@@ -565,12 +565,11 @@ const RightSidebar = ({
       <GoalSection>
         <GoalHeader>
           <GoalTitle>Mục tiêu hàng ngày</GoalTitle>
-          <EditButton onClick={handleSettings}>CHỈNH SỬA</EditButton>
         </GoalHeader>
         
         <GoalCard>
           <GoalIcon>
-            {isCompleted ? '✓' : '🎯'}
+            {isCompleted ? <FiCheck size={24} /> : <FiTarget size={24} />} {/* Thay thế ✓ và 🎯 */}
           </GoalIcon>
           <GoalContent>
             <GoalLabel>{dailyGoal.label}</GoalLabel>
@@ -588,7 +587,7 @@ const RightSidebar = ({
       <StreakSection>
         <StreakHeader>
           <StreakTitle>Chuỗi ngày streak</StreakTitle>
-          <StreakIcon src={streak} alt="Streak" />
+          <BsFire size={24} color="#FF6B00" /> {/* Thay thế 🔥 */}
         </StreakHeader>
         <StreakCount>{streakCount}</StreakCount>
         <StreakDescription>ngày liên tiếp</StreakDescription>
@@ -616,6 +615,7 @@ const RightSidebar = ({
       {isLoggedIn && (
         <LogoutSection>
           <LogoutButton onClick={handleLogout}>
+            <FiLogOut size={20} style={{ marginRight: '8px' }} />
             Đăng xuất
           </LogoutButton>
         </LogoutSection>
@@ -623,13 +623,34 @@ const RightSidebar = ({
 
       {/* Footer Links */}
       <FooterLinks>
-        <FooterLink onClick={() => navigate('/about')}>Giới thiệu</FooterLink>
-        <FooterLink onClick={() => navigate('/shop')}>Cửa hàng</FooterLink>
-        <FooterLink onClick={() => navigate('/effectiveness')}>Tính hiệu quả</FooterLink>
-        <FooterLink onClick={() => navigate('/careers')}>Công việc</FooterLink>
-        <FooterLink onClick={() => navigate('/investors')}>Nhà đầu tư</FooterLink>
-        <FooterLink onClick={() => navigate('/terms')}>Điều khoản</FooterLink>
-        <FooterLink onClick={() => navigate('/privacy')}>Bảo mật</FooterLink>
+        <FooterLink onClick={() => navigate('/about')}>
+          <BsInfoCircle size={14} style={{ marginRight: '4px' }} />
+          Giới thiệu
+        </FooterLink>
+        <FooterLink onClick={() => navigate('/shop')}>
+          <BiStore size={14} style={{ marginRight: '4px' }} />
+          Cửa hàng
+        </FooterLink>
+        <FooterLink onClick={() => navigate('/effectiveness')}>
+          <MdTrendingUp size={14} style={{ marginRight: '4px' }} />
+          Tính hiệu quả
+        </FooterLink>
+        <FooterLink onClick={() => navigate('/careers')}>
+          <MdWorkOutline size={14} style={{ marginRight: '4px' }} />
+          Công việc
+        </FooterLink>
+        <FooterLink onClick={() => navigate('/investors')}>
+          <MdWorkOutline size={14} style={{ marginRight: '4px' }} />
+          Nhà đầu tư
+        </FooterLink>
+        <FooterLink onClick={() => navigate('/terms')}>
+          <HiOutlineDocumentText size={14} style={{ marginRight: '4px' }} />
+          Điều khoản
+        </FooterLink>
+        <FooterLink onClick={() => navigate('/privacy')}>
+          <HiOutlineShieldCheck size={14} style={{ marginRight: '4px' }} />
+          Bảo mật
+        </FooterLink>
       </FooterLinks>
     </SidebarContainer>
   );

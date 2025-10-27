@@ -1,5 +1,6 @@
 const User = require('../models/User');
 
+// Helper function để lấy thời điểm bắt đầu của một ngày (00:00:00)
 function startOfDay(date) {
   const d = new Date(date);
   d.setHours(0, 0, 0, 0);
@@ -19,15 +20,16 @@ exports.updateStreak = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Không tìm thấy người dùng' });
     }
 
-    const today = startOfDay(new Date());
-    const lastActivity = user.streak && user.streak.lastActivityDate ? startOfDay(user.streak.lastActivityDate) : null;
-
+    // Khởi tạo streak nếu chưa có
     if (!user.streak) {
       user.streak = { count: 0, lastActivityDate: null };
     }
 
+    const today = startOfDay(new Date());
+    const lastActivity = user.streak.lastActivityDate ? startOfDay(user.streak.lastActivityDate) : null;
+
+    // Trường hợp đã học trong ngày hôm nay, không làm gì cả
     if (lastActivity && lastActivity.getTime() === today.getTime()) {
-      // Đã học trong ngày hôm nay, không thay đổi streak
       return res.status(200).json({
         success: true,
         streak: user.streak.count,
@@ -37,19 +39,23 @@ exports.updateStreak = async (req, res) => {
     }
 
     if (!lastActivity) {
-      // Lần đầu học
+      // Lần đầu tiên học
       user.streak.count = 1;
     } else {
+      // Tính số ngày chênh lệch
       const diffMs = today.getTime() - lastActivity.getTime();
       const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
       if (diffDays === 1) {
+        // Học liên tiếp, tăng streak
         user.streak.count += 1;
       } else {
-        // Bỏ lỡ >= 1 ngày, reset về 1
+        // Bỏ lỡ ít nhất một ngày, reset streak về 1
         user.streak.count = 1;
       }
     }
 
+    // Cập nhật ngày hoạt động cuối cùng và lưu lại
     user.streak.lastActivityDate = today;
     await user.save();
 
@@ -78,6 +84,7 @@ exports.getStreak = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Không tìm thấy người dùng' });
     }
 
+    // Trả về streak mặc định nếu người dùng chưa có
     const streak = user.streak || { count: 0, lastActivityDate: null };
     return res.status(200).json({ success: true, streak });
   } catch (error) {

@@ -2,6 +2,8 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const TokenBlacklist = require('../models/TokenBlacklist');
 const { sendOTPEmail, sendPasswordResetOTP } = require('../services/emailService');
+const { logAudit, getIpAddress, getUserAgent } = require('../services/auditService');
+const { sendWelcomeNotification } = require('../services/notificationService');
 
 /**
  * Chuyển đổi chuỗi thời gian hết hạn thành milliseconds
@@ -9,13 +11,13 @@ const { sendOTPEmail, sendPasswordResetOTP } = require('../services/emailService
 const parseExpireToMs = (expire) => {
   if (!expire) return 1 * 24 * 60 * 60 * 1000;
   if (typeof expire === 'number') return expire * 1000;
-  
+
   const s = String(expire).trim();
   if (/^\d+$/.test(s)) return Number(s) * 1000;
 
   const match = s.match(/^(\d+)(d|h|m|s)$/i);
   if (!match) return 1 * 24 * 60 * 60 * 1000;
-  
+
   const value = Number(match[1]);
   const unit = match[2].toLowerCase();
 
@@ -34,8 +36,8 @@ const parseExpireToMs = (expire) => {
 const generateToken = (userId) => {
   return jwt.sign(
     { id: userId },
-    process.env.JWT_SECRET || 'default-secret-key',
-    { expiresIn: process.env.JWT_EXPIRE || '1d' }
+    process.env.JWT_SECRET,
+    { expiresIn: process.env.JWT_EXPIRE || '7d' }
   );
 };
 
@@ -49,9 +51,9 @@ const register = async (req, res) => {
     if (email) {
       const existingEmail = await User.findOne({ email });
       if (existingEmail) {
-        return res.status(400).json({ 
-          success: false, 
-          message: 'Email đã được sử dụng' 
+        return res.status(400).json({
+          success: false,
+          message: 'Email đã được sử dụng'
         });
       }
     }
@@ -76,12 +78,42 @@ const register = async (req, res) => {
     if (email) {
       const otp = user.generateOTP();
       await user.save();
-      
+
       try {
         await sendOTPEmail(email, otp, user.name);
-        console.log(`OTP đã gửi đến ${email}: ${otp}`);
+        console.log(`[INFO] OTP đã gửi đến ${email}: ${otp}`);
+
+        await logAudit({
+          userId: user._id,
+          action: 'REGISTER',
+          status: 'SUCCESS',
+          ipAddress: getIpAddress(req),
+          userAgent: getUserAgent(req),
+          details: {
+            email: user.email,
+            name: user.name,
+            provider: 'local',
+            hasEmail: true
+          }
+        });
+
       } catch (emailError) {
-        console.error('Lỗi gửi email:', emailError);
+        console.error('[ERROR] Lỗi gửi email:', emailError);
+
+        await logAudit({
+          userId: user._id,
+          action: 'REGISTER',
+          status: 'SUCCESS',
+          ipAddress: getIpAddress(req),
+          userAgent: getUserAgent(req),
+          details: {
+            email: user.email,
+            name: user.name,
+            emailSent: false,
+            emailError: emailError.message
+          }
+        });
+
         return res.status(201).json({
           success: true,
           message: 'Đăng ký thành công nhưng không thể gửi email. Vui lòng yêu cầu gửi lại OTP.',
@@ -95,12 +127,24 @@ const register = async (req, res) => {
           }
         });
       }
+    } else {
+      await logAudit({
+        userId: user._id,
+        action: 'REGISTER',
+        status: 'SUCCESS',
+        ipAddress: getIpAddress(req),
+        userAgent: getUserAgent(req),
+        details: {
+          name: user.name,
+          hasEmail: false
+        }
+      });
     }
 
     res.status(201).json({
       success: true,
-      message: email 
-        ? 'Đăng ký thành công! Vui lòng kiểm tra email để lấy mã OTP.' 
+      message: email
+        ? 'Đăng ký thành công! Vui lòng kiểm tra email để lấy mã OTP.'
         : 'Đăng ký thành công!',
       data: {
         user: {
@@ -113,19 +157,19 @@ const register = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Lỗi đăng ký:', error);
+    console.error('[ERROR] Lỗi đăng ký:', error);
 
     if (error && error.name === 'ValidationError') {
       const errors = Object.values(error.errors).map(err => err.message);
-      return res.status(400).json({ 
-        success: false, 
-        errors 
+      return res.status(400).json({
+        success: false,
+        errors
       });
     }
 
-    res.status(500).json({ 
-      success: false, 
-      message: 'Đã xảy ra lỗi khi đăng ký' 
+    res.status(500).json({
+      success: false,
+      message: 'Đã xảy ra lỗi khi đăng ký'
     });
   }
 };
@@ -164,12 +208,49 @@ const verifyOTP = async (req, res) => {
 
     if (!result.success) {
       await user.save();
+
+      await logAudit({
+        userId: user._id,
+        action: 'VERIFY_OTP',
+        status: 'FAILED',
+        ipAddress: getIpAddress(req),
+        userAgent: getUserAgent(req),
+        errorMessage: result.message,
+        details: {
+          attempts: user.otp?.attempts || 0
+        }
+      });
+
       return res.status(400).json(result);
     }
 
     await user.save();
 
+    await logAudit({
+      userId: user._id,
+      action: 'VERIFY_OTP',
+      status: 'SUCCESS',
+      ipAddress: getIpAddress(req),
+      userAgent: getUserAgent(req),
+      details: {
+        email: user.email,
+        accountActivated: true
+      }
+    });
+
+    // Gửi welcome notification
+    try {
+      await sendWelcomeNotification({
+        userId: user._id,
+        userName: user.name
+      });
+    } catch (notifError) {
+      console.error('[ERROR] Failed to send welcome notification:', notifError);
+    }
+
     const token = generateToken(user._id);
+
+    console.log(`[SUCCESS] User ${user.email} đã xác thực OTP thành công`);
 
     res.json({
       success: true,
@@ -189,7 +270,7 @@ const verifyOTP = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Lỗi verify OTP:', error);
+    console.error('[ERROR] Lỗi verify OTP:', error);
     res.status(500).json({
       success: false,
       message: 'Đã xảy ra lỗi khi xác thực OTP'
@@ -231,14 +312,26 @@ const resendOTP = async (req, res) => {
     await user.save();
 
     await sendOTPEmail(email, otp, user.name);
-    console.log(`OTP mới đã gửi đến ${email}: ${otp}`);
+
+    await logAudit({
+      userId: user._id,
+      action: 'RESEND_OTP',
+      status: 'SUCCESS',
+      ipAddress: getIpAddress(req),
+      userAgent: getUserAgent(req),
+      details: {
+        email: user.email
+      }
+    });
+
+    console.log(`[INFO] OTP mới đã gửi đến ${email}: ${otp}`);
 
     res.json({
       success: true,
       message: 'Mã OTP mới đã được gửi đến email của bạn'
     });
   } catch (error) {
-    console.error('Lỗi gửi lại OTP:', error);
+    console.error('[ERROR] Lỗi gửi lại OTP:', error);
     res.status(500).json({
       success: false,
       message: 'Đã xảy ra lỗi khi gửi lại OTP'
@@ -267,8 +360,8 @@ const login = async (req, res) => {
       });
     }
 
-    const user = await User.findOne({ 
-      email: email.toLowerCase().trim() 
+    const user = await User.findOne({
+      email: email.toLowerCase().trim()
     }).select('+password');
 
     if (!user) {
@@ -279,6 +372,15 @@ const login = async (req, res) => {
     }
 
     if (!user.isActive) {
+      await logAudit({
+        userId: user._id,
+        action: 'LOGIN',
+        status: 'FAILED',
+        ipAddress: getIpAddress(req),
+        userAgent: getUserAgent(req),
+        errorMessage: 'Tài khoản chưa được kích hoạt'
+      });
+
       return res.status(403).json({
         success: false,
         message: 'Tài khoản chưa được kích hoạt. Vui lòng xác thực OTP.',
@@ -293,6 +395,15 @@ const login = async (req, res) => {
     const isPasswordMatch = await user.comparePassword(password);
 
     if (!isPasswordMatch) {
+      await logAudit({
+        userId: user._id,
+        action: 'LOGIN',
+        status: 'FAILED',
+        ipAddress: getIpAddress(req),
+        userAgent: getUserAgent(req),
+        errorMessage: 'Mật khẩu không đúng'
+      });
+
       return res.status(401).json({
         success: false,
         message: 'Email hoặc mật khẩu không đúng'
@@ -303,6 +414,20 @@ const login = async (req, res) => {
 
     user.updatedAt = Date.now();
     await user.save();
+
+    await logAudit({
+      userId: user._id,
+      action: 'LOGIN',
+      status: 'SUCCESS',
+      ipAddress: getIpAddress(req),
+      userAgent: getUserAgent(req),
+      details: {
+        loginMethod: 'email',
+        provider: user.provider
+      }
+    });
+
+    console.log(`[SUCCESS] User ${user.email} đăng nhập thành công`);
 
     res.json({
       success: true,
@@ -324,7 +449,7 @@ const login = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Lỗi đăng nhập:', error);
+    console.error('[ERROR] Lỗi đăng nhập:', error);
     res.status(500).json({
       success: false,
       message: 'Đã xảy ra lỗi khi đăng nhập'
@@ -338,7 +463,7 @@ const login = async (req, res) => {
 const logout = async (req, res) => {
   try {
     const authHeader = req.headers.authorization;
-    
+
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return res.status(400).json({
         success: false,
@@ -350,7 +475,7 @@ const logout = async (req, res) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'default-secret-key');
 
     const existingToken = await TokenBlacklist.findOne({ token });
-    
+
     if (existingToken) {
       return res.status(400).json({
         success: false,
@@ -364,15 +489,23 @@ const logout = async (req, res) => {
       expiresAt: new Date(decoded.exp * 1000)
     });
 
-    console.log(`User ${req.user.email} đã đăng xuất - Token added to blacklist`);
+    await logAudit({
+      userId: req.user._id,
+      action: 'LOGOUT',
+      status: 'SUCCESS',
+      ipAddress: getIpAddress(req),
+      userAgent: getUserAgent(req)
+    });
+
+    console.log(`[SUCCESS] User ${req.user.email} đã đăng xuất - Token added to blacklist`);
 
     res.json({
       success: true,
       message: 'Đăng xuất thành công'
     });
   } catch (error) {
-    console.error('Lỗi đăng xuất:', error);
-    
+    console.error('[ERROR] Lỗi đăng xuất:', error);
+
     if (error.name === 'JsonWebTokenError') {
       return res.status(401).json({
         success: false,
@@ -396,15 +529,6 @@ const logout = async (req, res) => {
 
 /**
  * API quên mật khẩu - Gửi OTP
- * 
- * Endpoint: POST /api/auth/forgot-password
- * Body: { email }
- * 
- * Quy trình:
- * 1. Kiểm tra email có tồn tại không
- * 2. Kiểm tra tài khoản có phải local không (không phải OAuth)
- * 3. Tạo OTP reset password (10 phút)
- * 4. Gửi OTP qua email
  */
 const forgotPassword = async (req, res) => {
   try {
@@ -433,20 +557,40 @@ const forgotPassword = async (req, res) => {
       });
     }
 
-    // Kiểm tra tài khoản OAuth (không có password)
     if (user.provider !== 'local') {
+      await logAudit({
+        userId: user._id,
+        action: 'FORGOT_PASSWORD',
+        status: 'FAILED',
+        ipAddress: getIpAddress(req),
+        userAgent: getUserAgent(req),
+        errorMessage: `Tài khoản ${user.provider} không thể reset password`
+      });
+
       return res.status(400).json({
         success: false,
         message: `Tài khoản này đăng nhập bằng ${user.provider}. Không thể đặt lại mật khẩu.`
       });
     }
 
-    // Tạo OTP reset password (10 phút)
     const otp = user.generatePasswordResetOTP();
     await user.save();
 
-    // Gửi email
     await sendPasswordResetOTP(email, otp, user.name);
+
+    await logAudit({
+      userId: user._id,
+      action: 'FORGOT_PASSWORD',
+      status: 'SUCCESS',
+      ipAddress: getIpAddress(req),
+      userAgent: getUserAgent(req),
+      details: {
+        email: user.email,
+        otpSent: true
+      }
+    });
+
+    console.log(`[SUCCESS] Password reset OTP sent to ${email}: ${otp}`);
 
     res.json({
       success: true,
@@ -456,7 +600,7 @@ const forgotPassword = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Lỗi forgot password:', error);
+    console.error('[ERROR] Lỗi forgot password:', error);
     res.status(500).json({
       success: false,
       message: 'Đã xảy ra lỗi khi xử lý yêu cầu'
@@ -466,22 +610,11 @@ const forgotPassword = async (req, res) => {
 
 /**
  * API reset mật khẩu - Verify OTP và đổi password
- * 
- * Endpoint: POST /api/auth/reset-password
- * Body: { email, otp, newPassword, confirmPassword }
- * 
- * Quy trình:
- * 1. Tìm user bằng email
- * 2. Verify OTP reset password
- * 3. Validate password mới
- * 4. Cập nhật password
- * 5. Clear OTP reset
  */
 const resetPassword = async (req, res) => {
   try {
     const { email, otp, newPassword, confirmPassword } = req.body;
 
-    // Validate input
     if (!email || !otp || !newPassword) {
       return res.status(400).json({
         success: false,
@@ -503,9 +636,8 @@ const resetPassword = async (req, res) => {
       });
     }
 
-    // Tìm user và select passwordResetOTP
-    const user = await User.findOne({ 
-      email: email.toLowerCase().trim() 
+    const user = await User.findOne({
+      email: email.toLowerCase().trim()
     }).select('+passwordResetOTP.code +passwordResetOTP.expiresAt +passwordResetOTP.attempts +password');
 
     if (!user) {
@@ -515,27 +647,49 @@ const resetPassword = async (req, res) => {
       });
     }
 
-    // Verify OTP
     const result = user.verifyPasswordResetOTP(otp);
 
     if (!result.success) {
-      await user.save(); // Lưu số lần thử
+      await user.save();
+
+      await logAudit({
+        userId: user._id,
+        action: 'RESET_PASSWORD',
+        status: 'FAILED',
+        ipAddress: getIpAddress(req),
+        userAgent: getUserAgent(req),
+        errorMessage: result.message,
+        details: {
+          attempts: user.passwordResetOTP?.attempts || 0
+        }
+      });
+
       return res.status(400).json(result);
     }
 
-    // Đổi password
     user.password = newPassword;
     user.updatedAt = Date.now();
     await user.save();
 
-    console.log(`User ${email} đã đặt lại mật khẩu thành công`);
+    await logAudit({
+      userId: user._id,
+      action: 'RESET_PASSWORD',
+      status: 'SUCCESS',
+      ipAddress: getIpAddress(req),
+      userAgent: getUserAgent(req),
+      details: {
+        email: user.email
+      }
+    });
+
+    console.log(`[SUCCESS] User ${email} đã đặt lại mật khẩu thành công`);
 
     res.json({
       success: true,
       message: 'Đặt lại mật khẩu thành công. Vui lòng đăng nhập với mật khẩu mới.'
     });
   } catch (error) {
-    console.error('Lỗi reset password:', error);
+    console.error('[ERROR] Lỗi reset password:', error);
     res.status(500).json({
       success: false,
       message: 'Đã xảy ra lỗi khi đặt lại mật khẩu'
@@ -546,103 +700,61 @@ const resetPassword = async (req, res) => {
 /**
  * Xử lý callback OAuth
  */
-const oauthSuccessRedirect = (req, res) => {
+const oauthSuccessRedirect = async (req, res) => {
   try {
-    const user = req.user;
-    
+
+    let user = req.user;
     if (!user) {
-      return res.redirect(
-        `${process.env.CLIENT_URL || 'http://localhost:3000'}/login?error=oauth`
-      );
-    }
-
-    const token = generateToken(user._id);
-
-    const isProduction = process.env.NODE_ENV === 'production';
-    const secure = isProduction;
-    const sameSite = secure ? 'None' : 'Lax';
-    const maxAge = parseExpireToMs(process.env.JWT_EXPIRE || '1d');
-
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure,
-      sameSite,
-      maxAge
-    });
-
-    const redirectBase = process.env.CLIENT_URL || 'http://localhost:3000';
-    return res.redirect(`${redirectBase}/oauth-success`);
-    
-  } catch (err) {
-    console.error('Lỗi xử lý OAuth redirect:', err);
-    return res.redirect(
-      `${process.env.CLIENT_URL || 'http://localhost:3000'}/login?error=oauth`
-    );
-
-// Login - sẽ implement sau
-const login = async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    // Kiểm tra input
-    if (!email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: 'Vui lòng nhập email và mật khẩu'
-      });
-    }
-
-    // Tìm user theo email hoặc phone
-    const user = await User.findOne({
-      $or: [{ email }, { phone: email }]
-    }).select('+password');
-
-    if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: 'Email hoặc mật khẩu không đúng'
-      });
-    }
-
-    // Kiểm tra mật khẩu
-    const isPasswordValid = await user.comparePassword(password);
-
-    if (!isPasswordValid) {
-      return res.status(401).json({
-        success: false,
-        message: 'Email hoặc mật khẩu không đúng'
-      });
-    }
-    const token = generateToken(user._id);
-
-    // Trả về thông tin user (không có password)
-    res.status(200).json({
-      success: true,
-      message: 'Đăng nhập thành công',
-      data: {
-        user: {
-          id: user._id,
-          name: user.name,
-          email: user.email,
-          phone: user.phone,
-          role: user.role,
-          createdAt: user.createdAt
-        },
-        token
+      user = req.user;
+      if (!user) {
+        return res.redirect(`${process.env.CLIENT_URL}/login?error=no_user`);
       }
-    });
 
-  } catch (error) {
-    console.error('Lỗi đăng nhập:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Đã xảy ra lỗi khi đăng nhập'
-    });
+      user.isActive = true;
+      user.emailVerified = true;
+      await user.save();
 
+      await logAudit({
+        userId: user._id,
+        action: 'OAUTH_LOGIN',
+        status: 'SUCCESS',
+        ipAddress: getIpAddress(req),
+        userAgent: getUserAgent(req),
+        details: {
+          provider: user.provider,
+          email: user.email,
+          name: user.name
+        }
+      });
+
+      const token = generateToken(user._id);
+
+      const userData = {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        avatar: user.avatar,
+        provider: user.provider,
+        isActive: true,
+        emailVerified: true,
+        createdAt: user.createdAt
+      };
+
+      const encodedUser = encodeURIComponent(JSON.stringify(userData));
+      const timestamp = Date.now();
+      const redirectUrl = `${process.env.CLIENT_URL}/oauth/success?token=${token}&user=${encodedUser}&t=${timestamp}`;
+
+
+      return res.redirect(redirectUrl);
+
+    }
+  } catch (err) {
+    return res.redirect(`${process.env.CLIENT_URL}/login?error=server_error`);
   }
 };
 
-module.exports = { 
+module.exports = {
   register,
   login,
   logout,

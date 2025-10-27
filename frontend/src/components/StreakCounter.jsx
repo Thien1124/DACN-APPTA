@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import styled, { keyframes } from 'styled-components';
+// Import icons
+import { GiFire, GiAchievement } from 'react-icons/gi';
+import { FaCrown, FaStar, FaBullseye, FaTrophy, FaGem } from 'react-icons/fa';
 
 // ========== ANIMATIONS ==========
 
@@ -150,6 +153,15 @@ const MotivationText = styled.div`
   z-index: 1;
 `;
 
+// Thêm styled component mới cho icon wrapper
+const IconWrapper = styled.span`
+  color: white;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 0 10px rgba(255, 150, 0, 0.8));
+`;
+
 // ========== COMPONENT ==========
 
 const StreakCounter = ({
@@ -184,11 +196,36 @@ const StreakCounter = ({
   }, [streak]);
 
   const getMilestone = () => {
-    if (streak >= 365) return '🏆 Một năm liên tiếp! Tuyệt vời!';
-    if (streak >= 100) return '💎 100 ngày! Bạn là huyền thoại!';
-    if (streak >= 30) return '⭐ 30 ngày! Xuất sắc!';
-    if (streak >= 7) return '🎯 1 tuần! Tiếp tục phát huy!';
-    return '🔥 Giữ vững phong độ!';
+    if (streak >= 365) return (
+      <>
+        <IconWrapper><FaCrown size={24} /></IconWrapper>
+        {' Một năm liên tiếp! Tuyệt vời!'}
+      </>
+    );
+    if (streak >= 100) return (
+      <>
+        <IconWrapper><FaGem size={24} /></IconWrapper>
+        {' 100 ngày! Bạn là huyền thoại!'}
+      </>
+    );
+    if (streak >= 30) return (
+      <>
+        <IconWrapper><FaStar size={24} /></IconWrapper>
+        {' 30 ngày! Xuất sắc!'}
+      </>
+    );
+    if (streak >= 7) return (
+      <>
+        <IconWrapper><FaBullseye size={24} /></IconWrapper>
+        {' 1 tuần! Tiếp tục phát huy!'}
+      </>
+    );
+    return (
+      <>
+        <IconWrapper><GiFire size={24} /></IconWrapper>
+        {' Giữ vững phong độ!'}
+      </>
+    );
   };
 
   const getMotivation = () => {
@@ -204,7 +241,11 @@ const StreakCounter = ({
   
   return (
     <Container theme={theme}>
-      <FlameIcon size={iconSize}>🔥</FlameIcon>
+      <FlameIcon size={iconSize}>
+        <IconWrapper>
+          <GiFire size={parseInt(iconSize)} />
+        </IconWrapper>
+      </FlameIcon>
       <StreakNumber size={numberSize}>{animatedStreak}</StreakNumber>
       <StreakText size={textSize}>Ngày học liên tiếp!</StreakText>
 
@@ -226,7 +267,10 @@ const StreakCounter = ({
       )}
 
       {showMotivation && (
-        <MotivationText>"{getMotivation()}"</MotivationText>
+        <MotivationText>
+          <IconWrapper><GiAchievement size={16} /></IconWrapper>
+          {` "${getMotivation()}"`}
+        </MotivationText>
       )}
     </Container>
   );

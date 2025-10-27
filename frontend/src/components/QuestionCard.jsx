@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
+import { FaCheck, FaTimes } from 'react-icons/fa'; 
+import { BsTrophy } from 'react-icons/bs';
+import { IoMdHelpCircleOutline } from 'react-icons/io';
 
 // ========== STYLED COMPONENTS ==========
 
@@ -136,6 +139,13 @@ const OptionText = styled.span`
 
 const OptionIcon = styled.span`
   font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  svg {
+    color: #58CC02;
+  }
 `;
 
 const Explanation = styled.div`
@@ -169,6 +179,10 @@ const ExplanationTitle = styled.div`
   display: flex;
   align-items: center;
   gap: 0.5rem;
+
+  svg {
+    font-size: 1.25rem;
+  }
 `;
 
 const ExplanationText = styled.p`
@@ -242,13 +256,15 @@ const QuestionCard = ({
               isCorrect={index === correctAnswer}
               showAnswer={showAnswer}
             >
-              {showAnswer && index === correctAnswer ? '✓' : 
-               showAnswer && selectedOption === index && !isCorrectAnswer ? '✗' :
+              {showAnswer && index === correctAnswer ? <FaCheck /> : 
+               showAnswer && selectedOption === index && !isCorrectAnswer ? <FaTimes /> :
                optionLabels[index]}
             </OptionLabel>
             <OptionText>{option}</OptionText>
             {showAnswer && index === correctAnswer && (
-              <OptionIcon>🎉</OptionIcon>
+              <OptionIcon>
+                <BsTrophy />
+              </OptionIcon>
             )}
           </Option>
         ))}
@@ -257,7 +273,10 @@ const QuestionCard = ({
       {showAnswer && explanation && (
         <Explanation isCorrect={isCorrectAnswer}>
           <ExplanationTitle isCorrect={isCorrectAnswer}>
-            <span>{isCorrectAnswer ? '✓' : '✗'}</span>
+            {isCorrectAnswer ? 
+              <FaCheck /> : 
+              <FaTimes />
+            }
             {isCorrectAnswer ? 'Chính xác!' : 'Chưa đúng!'}
           </ExplanationTitle>
           <ExplanationText theme={theme}>{explanation}</ExplanationText>

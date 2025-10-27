@@ -1,5 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
+import api from '../utils/api';
+import Toast from './Toast';
+import useToast from '../hooks/useToast';
+import { AiOutlineCamera, AiOutlineLoading3Quarters, AiOutlineClose } from 'react-icons/ai';
 
 // ========== STYLED COMPONENTS ==========
 
@@ -122,6 +126,67 @@ const AvatarRole = styled.div`
   color: ${props => props.theme === 'dark' ? '#9ca3af' : '#6b7280'};
 `;
 
+const UploadOverlay = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  cursor: pointer;
+
+  ${AvatarCircle}:hover & {
+    opacity: 1;
+  }
+`;
+
+const UploadIcon = styled.div`
+  color: white;
+  font-size: 24px;
+`;
+
+const HiddenInput = styled.input`
+  display: none;
+`;
+
+const DeleteButton = styled.button`
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #ef4444;
+  color: white;
+  border: 2px solid white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  transition: all 0.3s ease;
+  z-index: 10;
+
+  &:hover {
+    background: #dc2626;
+    transform: scale(1.1);
+  }
+`;
+
+const LoadingIcon = styled(AiOutlineLoading3Quarters)`
+  animation: spin 1s linear infinite;
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+`;
+
 // ========== COMPONENT ==========
 
 const Avatar = ({
@@ -145,7 +210,15 @@ const Avatar = ({
   showName = false,
   showRole = false,
   theme = 'light',
+  editable = false, // ✅ Thêm prop cho phép upload
+  onAvatarChange, // ✅ Callback khi avatar thay đổi
+  allowDelete = false, // ✅ Cho phép xóa avatar
 }) => {
+  const { toast, showToast, hideToast } = useToast();
+  const [uploading, setUploading] = useState(false);
+  const [currentImage, setCurrentImage] = useState(image);
+  const fileInputRef = React.useRef(null);
+
   const getInitials = () => {
     if (name) {
       return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
@@ -153,49 +226,179 @@ const Avatar = ({
     return username.slice(0, 2).toUpperCase();
   };
 
-  return (
-    <div style={{ display: 'inline-block' }}>
-      <AvatarContainer size={size}>
-        {statusRing && <StatusRing color={statusColor} />}
+  // ✅ Xử lý upload avatar
+  const handleFileSelect = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate file
+    if (!file.type.startsWith('image/')) {
+      showToast('error', 'Lỗi', 'Vui lòng chọn file ảnh');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) { // 5MB
+      showToast('error', 'Lỗi', 'Kích thước file không được vượt quá 5MB');
+      return;
+    }
+
+    try {
+      setUploading(true);
+
+      const formData = new FormData();
+      formData.append('avatar', file);
+
+      const response = await api.post('/users/avatar', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      if (response.data.success) {
+        const newAvatarPath = response.data.data.avatar; // ✅ Lấy path từ response
+        const newAvatarUrl = response.data.data.avatarUrl; // Full URL
         
-        <AvatarCircle
-          size={size}
-          image={image}
-          borderWidth={borderWidth}
-          borderColor={borderColor}
-          shadow={shadow}
-          clickable={clickable}
-          online={online}
-          onClick={clickable ? onClick : undefined}
-        >
-          {!image && getInitials()}
-        </AvatarCircle>
+        setCurrentImage(newAvatarUrl);
+        showToast('success', 'Thành công', 'Đã cập nhật avatar');
+        
+        // ✅ Callback để parent component cập nhật
+        if (onAvatarChange) {
+          onAvatarChange(newAvatarPath); // Truyền path thay vì URL
+        }
 
-        {level && (
-          <LevelBadge size={size} position="bottom-right">
-            {level}
-          </LevelBadge>
-        )}
+        // ✅ Cập nhật localStorage với path
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        user.avatar = newAvatarPath;
+        localStorage.setItem('user', JSON.stringify(user));
 
-        {badge && (
-          <Badge 
-            size={size} 
-            position={badgePosition}
-            bgColor={badgeBgColor}
-          >
-            {badge}
-          </Badge>
-        )}
-      </AvatarContainer>
+        // ✅ Trigger custom event để các component khác cập nhật
+        window.dispatchEvent(new CustomEvent('avatarUpdated', { 
+          detail: { avatar: newAvatarPath } 
+        }));
+      }
+    } catch (error) {
+      console.error('Upload avatar error:', error);
+      showToast('error', 'Lỗi', error.response?.data?.message || 'Không thể upload avatar');
+    } finally {
+      setUploading(false);
+    }
+  };
 
-      {showName && name && (
-        <AvatarName theme={theme}>{name}</AvatarName>
-      )}
+  // ✅ Xử lý xóa avatar
+  const handleDeleteAvatar = async (e) => {
+    e.stopPropagation();
+
+    try {
+      const response = await api.delete('/users/avatar');
+
+      if (response.data.success) {
+        setCurrentImage(null);
+        showToast('success', 'Thành công', 'Đã xóa avatar');
+
+        if (onAvatarChange) {
+          onAvatarChange(null);
+        }
+
+        // ✅ Cập nhật localStorage
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        user.avatar = null;
+        localStorage.setItem('user', JSON.stringify(user));
+
+        // ✅ Trigger custom event
+        window.dispatchEvent(new CustomEvent('avatarUpdated', { 
+          detail: { avatar: null } 
+        }));
+      }
+    } catch (error) {
+      console.error('Delete avatar error:', error);
+      showToast('error', 'Lỗi', error.response?.data?.message || 'Không thể xóa avatar');
+    }
+  };
+
+  const handleAvatarClick = () => {
+    if (editable && !uploading) {
+      fileInputRef.current?.click();
+    } else if (clickable && onClick) {
+      onClick();
+    }
+  };
+
+  return (
+    <>
+      <Toast toast={toast} onClose={hideToast} />
       
-      {showRole && role && (
-        <AvatarRole theme={theme}>{role}</AvatarRole>
-      )}
-    </div>
+      <div style={{ display: 'inline-block', position: 'relative' }}>
+        <AvatarContainer size={size}>
+          {statusRing && <StatusRing color={statusColor} />}
+          
+          <AvatarCircle
+            size={size}
+            image={currentImage}
+            borderWidth={borderWidth}
+            borderColor={borderColor}
+            shadow={shadow}
+            clickable={editable || clickable}
+            online={online}
+            onClick={handleAvatarClick}
+          >
+            {!currentImage && getInitials()}
+
+            {editable && (
+              <UploadOverlay>
+                <UploadIcon>
+                  {uploading ? (
+                    <LoadingIcon size={24} />
+                  ) : (
+                    <AiOutlineCamera size={24} />
+                  )}
+                </UploadIcon>
+              </UploadOverlay>
+            )}
+          </AvatarCircle>
+
+          {level && (
+            <LevelBadge size={size} position="bottom-right">
+              {level}
+            </LevelBadge>
+          )}
+
+          {badge && (
+            <Badge 
+              size={size} 
+              position={badgePosition}
+              bgColor={badgeBgColor}
+            >
+              {badge}
+            </Badge>
+          )}
+
+          {/* ✅ Nút xóa avatar */}
+          {allowDelete && currentImage && (
+            <DeleteButton onClick={handleDeleteAvatar}>
+              <AiOutlineClose size={16} />
+            </DeleteButton>
+          )}
+        </AvatarContainer>
+
+        {/* ✅ Hidden file input */}
+        {editable && (
+          <HiddenInput
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleFileSelect}
+          />
+        )}
+
+        {showName && name && (
+          <AvatarName theme={theme}>{name}</AvatarName>
+        )}
+        
+        {showRole && role && (
+          <AvatarRole theme={theme}>{role}</AvatarRole>
+        )}
+      </div>
+    </>
   );
 };
 

@@ -11,9 +11,10 @@ import reportIcon from '../assets/report.png';
 import chibiImg from '../assets/chibi.png'; 
 import loopIcon from '../assets/loop.png';
 import logo from '../assets/logo.png';
-
+import horse from '../assets/horse.png'; 
 import Toast from '../components/Toast';
 import useToast from '../hooks/useToast';
+import Swal from 'sweetalert2';
 
 // ========== ANIMATIONS ==========
 const fadeIn = keyframes`
@@ -28,8 +29,8 @@ const scaleIn = keyframes`
 
 const shake = keyframes`
   0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-10px); }
-  75% { transform: translateX(10px); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
 `;
 
 const slideUp = keyframes`
@@ -94,7 +95,13 @@ const PageWrapper = styled.div`
   display: flex;
   flex-direction: column;
 `;
-
+const HorseImage = styled.img`
+  width: 200px;
+  height: 200px;
+  object-fit: contain;
+  margin: 1rem auto;
+  animation: ${bounce} 1s ease infinite;
+`;
 const Header = styled.div`
   position: fixed;
   top: 0;
@@ -192,6 +199,7 @@ const HeartsContainer = styled.div`
   font-weight: 700;
   font-size: 1.25rem;
   flex-shrink: 0;
+  animation: ${props => props.isShaking ? shake : 'none'} 0.5s ease;
 
   @media (max-width: 768px) {
     font-size: 1.125rem;
@@ -1942,11 +1950,36 @@ const handleContinue = () => {
     return Math.round((correctAnswers / total) * 100);
   };
   const handleSkip = () => {
+  if (hearts === 1) {
+    // Hiển thị dialog xác nhận khi còn 1 tim
+    Swal.fire({
+      title: 'Cảnh báo!',
+      text: 'Bạn chỉ còn 1 tim! Bạn có chắc muốn bỏ qua?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Bỏ qua',
+      cancelButtonText: 'Hủy',
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#6b7280',
+    }).then((result) => {
+      if (result.isConfirmed) {
+        setIsChecked(true);
+        setShowFeedback(true);
+        setIsSkipped(true);
+        setStreak(0);
+        setHearts(prev => Math.max(0, prev - 1)); // Trừ 1 tim
+        playSound('wrong');
+      }
+    });
+  } else {
     setIsChecked(true);
-    setShowFeedback(true);
+    setShowFeedback(true); 
     setIsSkipped(true);
     setStreak(0);
-  };
+    setHearts(prev => Math.max(0, prev - 1)); // Trừ 1 tim
+    playSound('wrong');
+  }
+};
 
   const handleClose = () => {
     if (window.confirm('Bạn có chắc muốn thoát? Tiến trình sẽ không được lưu.')) {
@@ -1977,14 +2010,27 @@ const handleContinue = () => {
   };
 
   useEffect(() => {
-    if (hearts === 0) {
-      playSound('wrong');
-      showToast('error', 'Hết trái tim! 💔', 'Bạn cần nghỉ ngơi hoặc mua thêm trái tim');
-      setTimeout(() => {
-        navigate('/learn');
-      }, 2000);
-    }
-  }, [hearts, navigate, showToast]);
+  if (hearts === 1) {
+    // Hiển thị toast cảnh báo khi còn 1 tim
+    showToast('warning', 'Cảnh báo! ❤️', 'Bạn chỉ còn 1 tim, hãy cẩn thận!');
+  }
+  
+  if (hearts === 0) {
+    // Hiển thị modal khi hết tim
+    Swal.fire({
+      title: 'Hết tim rồi! 💔',
+      text: 'Bạn cần nghỉ ngơi hoặc mua thêm tim để tiếp tục',
+      imageUrl: horse, // Sử dụng hình horse
+      imageWidth: 200,
+      imageHeight: 200,
+      confirmButtonText: 'Quay về',
+      confirmButtonColor: '#ef4444',
+      allowOutsideClick: false
+    }).then(() => {
+      navigate('/learn');
+    });
+  }
+}, [hearts, navigate, showToast]);
 
   
   const isCorrectAnswer = () => {
@@ -2293,7 +2339,7 @@ return (
             <ProgressBarContainer>
               <ProgressBarFill progress={progress} />
             </ProgressBarContainer>
-            <HeartsContainer>
+            <HeartsContainer isShaking={hearts <= 1}>
               ❤️ {hearts}
             </HeartsContainer>
           </HeaderContent>

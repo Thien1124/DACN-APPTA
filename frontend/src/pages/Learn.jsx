@@ -6,6 +6,12 @@ import RightSidebar from '../components/RightSidebar';
 import chibiImg from '../assets/chibi.png';
 import US from '../assets/US.png';
 
+import {  BiLock } from 'react-icons/bi';
+import { AiFillStar } from 'react-icons/ai';
+
+import { Star, Lock, LocalLibrary, LocalBar, Chat, Restaurant, 
+  FitnessCenter, EmojiEvents, MenuBook } from '@mui/icons-material';
+
 // ========== ANIMATIONS ==========
 const fadeIn = keyframes`
   from { opacity: 0; transform: translateY(20px); }
@@ -452,37 +458,39 @@ const LevelUpSubtext = styled.div`
 `;
 
 // ========== MOCK DATA ==========
+
 const unitsData = [
   {
     id: 1,
     unitNumber: 1,
-    title: 'Nói về thử cúng của bạn',
+    title: 'Nói về thú cưng của bạn',
     color: '#58CC02',
     shadowColor: '#46A302',
     lessons: [
-      { id: 1, type: 'lesson', icon: '📖', label: 'Mời khách xơi nước', completed: true, stars: 3, progress: '5/5' },
-      { id: 2, type: 'lesson', icon: '⭐', label: 'Đồ uống', completed: false, current: true, stars: 0, progress: '0/5' },
-      { id: 3, type: 'practice', icon: '💪', label: 'Luyện tập', locked: true },
-      { id: 4, type: 'lesson', icon: '💬', label: 'Hội thoại', locked: true },
-      { id: 5, type: 'story', icon: '📚', label: 'Câu chuyện', locked: true },
-      { id: 6, type: 'lesson', icon: '🍕', label: 'Đồ ăn', locked: true },
-      { id: 7, type: 'lesson', icon: '👋', label: 'Chào hỏi', locked: true },
-      { id: 8, type: 'practice', icon: '💪', label: 'Luyện tập 2', locked: true },
-      { id: 9, type: 'trophy', icon: '🏆', label: 'Kiểm tra cửa 1', locked: true },
-      { id: 10, type: 'lesson', icon: '📖', label: 'Review', locked: true },
+      { id: 1, type: 'lesson', icon: <LocalLibrary sx={{ fontSize: 24 }} />, label: 'Mời khách xơi nước', completed: true, stars: 3, progress: '5/5' },
+      { id: 2, type: 'lesson', icon: <Star sx={{ fontSize: 24 }} />, label: 'Đồ uống', completed: false, current: true, stars: 0, progress: '0/5' },
+      { id: 3, type: 'practice', icon: <FitnessCenter sx={{ fontSize: 24 }} />, label: 'Luyện tập', locked: true },
+      { id: 4, type: 'lesson', icon: <Chat sx={{ fontSize: 24 }} />, label: 'Hội thoại', locked: true },
+      { id: 5, type: 'story', icon: <MenuBook sx={{ fontSize: 24 }} />, label: 'Câu chuyện', locked: true },
+      { id: 6, type: 'lesson', icon: <Restaurant sx={{ fontSize: 24 }} />, label: 'Đồ ăn', locked: true }, 
+      { id: 7, type: 'lesson', icon: <LocalLibrary sx={{ fontSize: 24 }} />, label: 'Chào hỏi', locked: true },
+      { id: 8, type: 'practice', icon: <FitnessCenter sx={{ fontSize: 24 }} />, label: 'Luyện tập 2', locked: true },
+      { id: 9, type: 'trophy', icon: <EmojiEvents sx={{ fontSize: 24 }} />, label: 'Kiểm tra cửa 1', locked: true },
+      { id: 10, type: 'lesson', icon: <MenuBook sx={{ fontSize: 24 }} />, label: 'Review', locked: true },
     ]
   },
   {
     id: 2,
     unitNumber: 2,
-    title: 'Học từ, cụm từ và chủ điểm ngữ pháp để giao tiếp cơ bản',
+    title: 'Học từ, cụm từ và chủ điểm ngữ pháp để giao tiếp cơ bản', 
     color: '#CE82FF',
     shadowColor: '#A855F7',
     lessons: [
-      { id: 11, type: 'lesson', icon: '🔒', label: 'Bài học tiếp theo', locked: true },
+      { id: 11, type: 'lesson', icon: <Lock sx={{ fontSize: 24 }} />, label: 'Bài học tiếp theo', locked: true },
     ]
   }
 ];
+
 
 // ========== COMPONENT ==========
 const Learn = () => {
@@ -490,7 +498,7 @@ const Learn = () => {
   const [stats] = useState({
     streak: 1,
     gems: 505,
-    hearts: 4,
+    hearts: 5,
     flag: US,
     flagCount: 5
   });
@@ -512,11 +520,11 @@ const Learn = () => {
   };
 
   const getLessonIcon = (lesson) => {
-    if (lesson.completed) return '⭐';
+    if (lesson.completed) return <AiFillStar size={24} />;
     if (lesson.current) return lesson.icon;
-    if (lesson.locked) return '🔒';
-    return lesson.icon;
-  };
+    if (lesson.locked) return <BiLock size={24} />;
+  return lesson.icon;
+};
 
   const renderLessonButton = (lesson, unitId) => {
     if (lesson.type === 'trophy') {

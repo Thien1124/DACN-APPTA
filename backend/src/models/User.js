@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcrypt'); 
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -86,6 +86,70 @@ const userSchema = new mongoose.Schema({
     }
   },
 
+  // 2FA fields (Task 10) - MỚI THÊM
+  twoFactorAuth: {
+    enabled: {
+      type: Boolean,
+      default: false
+    },
+    secret: {
+      type: String,
+      select: false // Không trả về khi query user
+    },
+    backupCodes: {
+      type: [String],
+      select: false
+    }
+  },
+  
+  // Task 11: Theo dõi số ngày học liên tục
+  streak: {
+    count: {
+      type: Number,
+      default: 0
+    },
+    lastActivityDate: {
+      type: Date,
+      default: null
+    }
+  },
+  
+  // Task 12: Hệ thống XP
+  xp: {
+    total: {
+      type: Number,
+      default: 0
+    },
+    level: {
+      type: Number,
+      default: 1
+    }
+  },
+  
+  // Task 14: Hệ thống tim (hearts)
+  hearts: {
+    current: {
+      type: Number,
+      default: 5
+    },
+    max: {
+      type: Number,
+      default: 5
+    },
+    lastRefillDate: {
+      type: Date,
+      default: Date.now
+    }
+  },
+  
+  // Task 15: Hệ thống Gem (tiền tệ trong ứng dụng)
+  gems: {
+    amount: {
+      type: Number,
+      default: 0
+    }
+  },
+
   role: {
     type: String,
     enum: ['user', 'admin'],
@@ -122,7 +186,7 @@ userSchema.methods.comparePassword = async function(candidatePassword) {
 // Method: Tạo mã OTP ngẫu nhiên 6 số (cho đăng ký)
 userSchema.methods.generateOTP = function() {
   const code = Math.floor(100000 + Math.random() * 900000).toString();
-  const expiresAt = new Date(Date.now() + 1 * 60 * 1000); // 1 phút
+  const expiresAt = new Date(Date.now() + 1 * 60 * 1000);
   
   this.otp = {
     code: code,
@@ -136,7 +200,7 @@ userSchema.methods.generateOTP = function() {
 // Method: Tạo mã OTP cho reset password (10 phút)
 userSchema.methods.generatePasswordResetOTP = function() {
   const code = Math.floor(100000 + Math.random() * 900000).toString();
-  const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 phút
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
   
   this.passwordResetOTP = {
     code: code,
@@ -178,7 +242,6 @@ userSchema.methods.verifyOTP = function(inputCode) {
     };
   }
   
-  // OTP đúng
   this.otp = undefined;
   this.isActive = true;
   this.emailVerified = true;
@@ -220,7 +283,6 @@ userSchema.methods.verifyPasswordResetOTP = function(inputCode) {
     };
   }
   
-  // OTP đúng - xóa OTP reset
   this.passwordResetOTP = undefined;
   
   return { 

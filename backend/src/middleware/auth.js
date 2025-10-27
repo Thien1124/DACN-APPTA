@@ -4,24 +4,35 @@ const TokenBlacklist = require('../models/TokenBlacklist');
 
 /**
  * Middleware xác thực JWT token
- * Kiểm tra token có trong blacklist không
+ * Kiểm tra:
+ * - Token có tồn tại và đúng format không
+ * - Token có trong blacklist không (đã logout)
+ * - Token có hợp lệ không (verify)
+ * - User có tồn tại và active không
  */
 const authenticate = async (req, res, next) => {
   try {
-    // Lấy token từ header Authorization
+    // Bước 1: Kiểm tra Authorization header
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return res.status(401).json({
         success: false,
-        message: 'Không tìm thấy token xác thực. Vui lòng đăng nhập.'
+        message: 'Không có token xác thực. Vui lòng đăng nhập.'
       });
     }
 
-    // Extract token
+    // Bước 2: Extract token
     const token = authHeader.split(' ')[1];
 
-    // Kiểm tra token có trong blacklist không
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: 'Token không hợp lệ.'
+      });
+    }
+
+    // Bước 3: Kiểm tra token có trong blacklist không
     const isBlacklisted = await TokenBlacklist.findOne({ token });
 
     if (isBlacklisted) {
@@ -31,10 +42,10 @@ const authenticate = async (req, res, next) => {
       });
     }
 
-    // Verify token
+    // Bước 4: Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'default-secret-key');
 
-    // Tìm user từ ID trong token
+    // Bước 5: Tìm user từ ID trong token
     const user = await User.findById(decoded.id);
 
     if (!user) {
@@ -44,20 +55,22 @@ const authenticate = async (req, res, next) => {
       });
     }
 
-    // Kiểm tra user có active không
+    // Bước 6: Kiểm tra user có active không
     if (!user.isActive) {
       return res.status(403).json({
         success: false,
-        message: 'Tài khoản đã bị vô hiệu hóa.'
+        message: 'Tài khoản đã bị vô hiệu hóa. Vui lòng liên hệ admin.'
       });
     }
 
-    // Gán user vào req
+    // Bước 7: Gán user vào request object
     req.user = user;
     next();
+
   } catch (error) {
     console.error('Lỗi xác thực JWT:', error.message);
 
+    // Xử lý các loại lỗi khác nhau
     if (error.name === 'JsonWebTokenError') {
       return res.status(401).json({
         success: false,
@@ -72,7 +85,8 @@ const authenticate = async (req, res, next) => {
       });
     }
 
-    res.status(500).json({
+    // Lỗi khác
+    return res.status(500).json({
       success: false,
       message: 'Lỗi xác thực token.'
     });
@@ -81,17 +95,53 @@ const authenticate = async (req, res, next) => {
 
 /**
  * Middleware kiểm tra role
+ * 
+ * Usage:
+ * router.delete('/users/:id', authenticate, authorize('admin'), deleteUser);
  */
-const authorizeRoles = (...roles) => {
+const authorize = (...roles) => {
   return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Chưa xác thực. Vui lòng đăng nhập.'
+      });
+    }
+
     if (!roles.includes(req.user.role)) {
       return res.status(403).json({
         success: false,
-        message: `Bạn không có quyền truy cập. Yêu cầu role: ${roles.join(', ')}`
+        message: `Không có quyền truy cập. Yêu cầu role: ${roles.join(' hoặc ')}`
       });
     }
+
     next();
   };
 };
 
-module.exports = { authenticate, authorizeRoles };
+/**
+ * Middleware kiểm tra user đã verify email chưa
+ */
+const requireEmailVerified = (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({
+      success: false,
+      message: 'Chưa xác thực. Vui lòng đăng nhập.'
+    });
+  }
+
+  if (!req.user.emailVerified) {
+    return res.status(403).json({
+      success: false,
+      message: 'Vui lòng xác thực email trước khi sử dụng tính năng này.'
+    });
+  }
+
+  next();
+};
+
+module.exports = {
+  authenticate,
+  authorize,
+  requireEmailVerified
+};

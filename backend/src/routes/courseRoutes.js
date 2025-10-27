@@ -1,4 +1,5 @@
 const express = require('express');
+<<<<<<< HEAD
 const {
   getCourses,
   getCourse,
@@ -33,5 +34,27 @@ router
 router
   .route('/:id/publish')
   .put(protect, authorize('admin'), togglePublishCourse);
+=======
+const router = express.Router();
+const courseController = require('../controllers/courseController');
+const { protect, authorize } = require('../middleware/authMiddleware');
+
+// Tất cả routes đều yêu cầu đăng nhập và quyền admin
+router.use(protect);
+router.use(authorize('admin'));
+
+router
+  .route('/')
+  .get(courseController.getAllCourses)
+  .post(courseController.createCourse);
+
+router
+  .route('/:id')
+  .get(courseController.getCourseById)
+  .put(courseController.updateCourse)
+  .delete(courseController.deleteCourse);
+
+router.patch('/:id/publish', courseController.togglePublishCourse);
+>>>>>>> main
 
 module.exports = router;

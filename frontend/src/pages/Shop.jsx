@@ -7,6 +7,14 @@ import Toast from '../components/Toast';
 import useToast from '../hooks/useToast';
 import Swal from 'sweetalert2';
 
+import {
+  Diamond,
+  Timer,
+  Favorite,
+  Bolt,
+  Person
+} from '@mui/icons-material';
+import WhatshotIcon from '@mui/icons-material/Whatshot';
 // ========== STYLED COMPONENTS ==========
 
 const PageWrapper = styled.div`
@@ -296,7 +304,7 @@ const shopProducts = {
   powerups: [
     {
       id: 1,
-      icon: '❄️',
+      icon: <WhatshotIcon sx={{ fontSize: 40, color: 'white' }} />,
       name: 'Streak Freeze',
       description: 'Bảo vệ streak của bạn 1 ngày khi không học',
       price: 200,
@@ -304,7 +312,7 @@ const shopProducts = {
     },
     {
       id: 2,
-      icon: '💪',
+      icon: <Favorite sx={{ fontSize: 40, color: 'white' }} />,
       name: 'Refill Hearts',
       description: 'Khôi phục toàn bộ trái tim ngay lập tức',
       price: 350,
@@ -312,7 +320,7 @@ const shopProducts = {
     },
     {
       id: 3,
-      icon: '⏰',
+      icon: <Timer sx={{ fontSize: 40, color: 'white' }} />,
       name: 'Unlimited Hearts',
       description: 'Trái tim không giới hạn trong 2 giờ',
       price: 450,
@@ -349,7 +357,7 @@ const shopProducts = {
   gems: [
     {
       id: 7,
-      icon: '💎',
+      icon: <Diamond sx={{ fontSize: 32, color: 'white' }} />,
       name: '100 Gems',
       description: 'Gói gems nhỏ',
       price: '$0.99',
@@ -357,7 +365,7 @@ const shopProducts = {
     },
     {
       id: 8,
-      icon: '💎💎',
+      icon: <Diamond sx={{ fontSize: 32, color: 'white' }} />,
       name: '500 Gems',
       description: 'Gói gems trung bình',
       price: '$4.99',
@@ -365,7 +373,7 @@ const shopProducts = {
     },
     {
       id: 9,
-      icon: '💎💎💎',
+      icon: <Diamond sx={{ fontSize: 32, color: 'white' }} />,
       name: '1000 Gems',
       description: 'Gói gems lớn',
       price: '$9.99',
@@ -447,21 +455,23 @@ const Shop = () => {
       <MainContent>
         <Container>
           <Header>
-            <Title>🛍️ Cửa hàng</Title>
+            <Title> Cửa hàng</Title>
             <Subtitle>Mua vật phẩm để nâng cao trải nghiệm học tập!</Subtitle>
           </Header>
 
           {/* Balance Card */}
           <BalanceCard>
             <BalanceInfo>
-              <BalanceIcon>💎</BalanceIcon>
+              <BalanceIcon>
+                <Diamond sx={{ fontSize: 32, color: 'white' }} />
+              </BalanceIcon>
               <BalanceText>
                 <BalanceLabel>Số dư hiện tại</BalanceLabel>
                 <BalanceAmount>{userGems.toLocaleString()} Gems</BalanceAmount>
               </BalanceText>
             </BalanceInfo>
             <EarnGemsButton onClick={handleEarnGems}>
-              ⚡ Kiếm thêm gems
+              <Bolt sx={{ fontSize: 20 }} /> Kiếm thêm gems
             </EarnGemsButton>
           </BalanceCard>
 
@@ -471,19 +481,19 @@ const Shop = () => {
               active={activeTab === 'powerups'} 
               onClick={() => setActiveTab('powerups')}
             >
-              ⚡ Power-ups
+              <Bolt sx={{ fontSize: 20 }} /> Power-ups
             </Tab>
             <Tab 
               active={activeTab === 'outfits'} 
               onClick={() => setActiveTab('outfits')}
             >
-              👔 Trang phục
+              <Person sx={{ fontSize: 20 }} /> Trang phục
             </Tab>
             <Tab 
               active={activeTab === 'gems'} 
               onClick={() => setActiveTab('gems')}
             >
-              💎 Mua Gems
+              <Diamond sx={{ fontSize: 20 }} /> Mua Gems
             </Tab>
           </TabsContainer>
 
@@ -503,7 +513,7 @@ const Shop = () => {
                 <ProductPrice>
                   {typeof product.price === 'number' ? (
                     <>
-                      <span>💎</span>
+                      <span><Diamond sx={{ fontSize: 20 }} /></span>
                       <span>{product.price}</span>
                     </>
                   ) : (

@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import Toast from '../components/Toast'; 
 import useToast from '../hooks/useToast'; 
 import { authService } from '../services/authService';
+import Swal from 'sweetalert2';
 
 // ========== STYLED COMPONENTS ==========
 
@@ -491,16 +492,19 @@ const LoadingSpinner = styled.div`
 
 const Login = () => {
   const navigate = useNavigate();
-  const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
   const { toast, showToast, hideToast } = useToast();
-  
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
-  
-  const [errors, setErrors] = useState({});
+
+  const [errors, setErrors] = useState({
+    email: '',
+    password: '',
+  });
 
   // Handle input change
   const handleChange = (e) => {
@@ -540,6 +544,8 @@ const Login = () => {
   // Handle submit
   const handleSubmit = async (e) => {
     e.preventDefault();
+    e.stopPropagation(); // Ngăn event bubbling
+
 
     if (!validateForm()) {
       showToast('error', 'Lỗi!', 'Vui lòng kiểm tra lại thông tin đăng nhập');
@@ -549,75 +555,139 @@ const Login = () => {
     setLoading(true);
 
     try {
+      
       const response = await authService.login({
-        email: formData.email,
+        email: formData.email.trim(),
         password: formData.password,
       });
 
+      
+      const user = response.data?.user;
+      
+      if (!user) {
+        throw new Error('Không nhận được thông tin người dùng');
+      }
+
+      // Kiểm tra tài khoản đã kích hoạt chưa
+      if (!user.isActive) {
+        setLoading(false);
+        
+        await Swal.fire({
+          icon: 'warning',
+          title: 'Tài khoản chưa kích hoạt',
+          html: `
+            <p>Vui lòng kiểm tra email <strong>${user.email}</strong> để kích hoạt tài khoản.</p>
+            <p style="margin-top: 1rem; font-size: 0.875rem; color: #6b7280;">
+              Chưa nhận được email? 
+            </p>
+          `,
+          showCancelButton: true,
+          confirmButtonText: 'Gửi lại OTP',
+          cancelButtonText: 'Đóng',
+          confirmButtonColor: '#58CC02',
+          cancelButtonColor: '#6b7280'
+        }).then(async (result) => {
+          if (result.isConfirmed) {
+            try {
+              await authService.resendOTP(user.email);
+              showToast('success', 'Đã gửi!', 'Vui lòng kiểm tra email của bạn');
+            } catch (error) {
+              showToast('error', 'Lỗi!', error.message || 'Không thể gửi lại OTP');
+            }
+          }
+        });
+        
+        authService.logout();
+        return;
+      }
+
       showToast('success', 'Thành công!', 'Đăng nhập thành công!');
       
-      // Chờ 1 giây rồi chuyển hướng
       setTimeout(() => {
-        navigate('/learn');
+        if (user.role === 'admin') {
+          navigate('/admin');
+        } else {
+          navigate('/learn');
+        }
       }, 1000);
-    } catch (error) {
-      console.error('Login error:', error);
       
-      // Xử lý các loại lỗi cụ thể
+    } catch (error) {
+      console.error('❌ Login error:', error); // Debug
+      console.error('📋 Error details:', {
+        response: error.response,
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data
+      }); // Debug chi tiết
+
+      setLoading(false);
+      
       let errorMessage = 'Đăng nhập thất bại. Vui lòng thử lại!';
+      let fieldErrors = {};
       
       if (error.response) {
-        // Lỗi từ server trả về
         const status = error.response.status;
         const data = error.response.data;
         
+       
         switch (status) {
+          case 400:
+            errorMessage = data.message || 'Thông tin đăng nhập không hợp lệ';
+            break;
+            
           case 401:
             errorMessage = 'Email hoặc mật khẩu không chính xác!';
-            // Highlight các trường bị lỗi
-            setErrors({
-              email: 'Email hoặc mật khẩu không đúng',
+            fieldErrors = {
               password: 'Email hoặc mật khẩu không đúng'
-            });
+            };
             break;
+            
+          case 403:
+            if (data.data?.needsVerification) {
+              return; // Đã xử lý ở trên
+            }
+            errorMessage = data.message || 'Tài khoản của bạn đã bị khóa!';
+            break;
+            
           case 404:
             errorMessage = 'Tài khoản không tồn tại!';
-            setErrors({ email: 'Tài khoản không tồn tại' });
+            fieldErrors = { email: 'Tài khoản không tồn tại' };
             break;
-          case 403:
-            errorMessage = 'Tài khoản của bạn đã bị khóa!';
-            break;
-          case 422:
-            errorMessage = data?.message || 'Thông tin đăng nhập không hợp lệ!';
-            break;
+            
           case 500:
-            errorMessage = 'Lỗi máy chủ. Vui lòng thử lại sau!';
+            errorMessage = 'Lỗi server. Vui lòng thử lại sau!';
             break;
+            
           default:
-            errorMessage = data?.message || error.message || 'Đăng nhập thất bại!';
+            errorMessage = data.message || errorMessage;
         }
+        
+        // Set field errors nếu có
+        if (Object.keys(fieldErrors).length > 0) {
+          setErrors(fieldErrors);
+        }
+        
       } else if (error.request) {
-        // Lỗi không nhận được response từ server
-        errorMessage = 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng!';
-      } else {
-        // Lỗi khác
-        errorMessage = error.message || 'Đã có lỗi xảy ra!';
+        // Request được gửi nhưng không nhận được response
+        errorMessage = 'Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng!';
+        console.error('🌐 No response received:', error.request);
+        
+      } else if (error.message) {
+        errorMessage = error.message;
       }
       
+     
+      // Hiển thị toast error
       showToast('error', 'Đăng nhập thất bại!', errorMessage);
+      
     } finally {
       setLoading(false);
     }
   };
-  // Handle social login - Cập nhật
+
+  // Handle social login
   const handleSocialLogin = (provider) => {
-    const backendUrl = process.env.REACT_APP_API_URL ;
-    
-    if (provider === 'Google') {
-      window.location.href = `${backendUrl}/auth/google`;
-    } else if (provider === 'Facebook') {
-      window.location.href = `${backendUrl}/auth/facebook`;
-    }
+    authService.handleSocialLogin(provider); 
   };
 
   // Handle close
@@ -704,7 +774,7 @@ const Login = () => {
                     </svg>
                   ) : (
                     <svg viewBox="0 0 24 24">
-                      <path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"/>
+                      <path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-4.75 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"/>
                     </svg>
                   )}
                 </PasswordToggle>
@@ -723,9 +793,9 @@ const Login = () => {
 
             <SocialButtons>
               <SocialButton
-                type="button"
+                type="button" 
                 provider="google"
-                onClick={() => handleSocialLogin('Google')}
+                onClick={() => handleSocialLogin('google')}
               >
                 <svg viewBox="0 0 24 24">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>

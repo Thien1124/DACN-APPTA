@@ -3,6 +3,36 @@ import { useNavigate } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
 import logo from '../assets/logo.png';
 import home from '../assets/home.png';
+import { authService } from '../services/authService'; // ✅ Import authService
+import {
+  MenuBook,
+  FlashOn,
+  SportsEsports,
+  Psychology,
+  Timer,
+  EmojiEvents,
+  ShowChart,
+  Favorite,
+  Public,
+  Facebook,
+  Twitter,
+  Instagram,
+  YouTube,
+  Info,
+  Group,
+  Work,
+  Newspaper,
+  School,
+  Podcasts,
+  AutoStories,
+  Event,
+  Help,
+  ContactSupport,
+  Security,
+  Gavel
+} from '@mui/icons-material';
+import MyLocationIcon from '@mui/icons-material/MyLocation';
+
 // ========== ANIMATIONS ==========
 const float = keyframes`
   0%, 100% { transform: translateY(0px); }
@@ -166,6 +196,7 @@ const BtnGetStarted = styled.button`
     box-shadow: 0 6px 20px rgba(88, 204, 2, 0.4);
   }
 `;
+
 
 const HeroSection = styled.section`
   max-width: 1280px;
@@ -707,6 +738,52 @@ const Home = () => {
     setTheme(prev => prev === 'light' ? 'dark' : 'light');
   };
 
+  // ✅ Hàm kiểm tra đăng nhập và phân quyền
+  const checkAuthAndRedirect = () => {
+    const isAuthenticated = authService.isAuthenticated();
+    
+    if (isAuthenticated) {
+      const user = authService.getCurrentUser();
+      
+      // Kiểm tra role và chuyển hướng
+      if (user?.role === 'admin') {
+        navigate('/admin'); // Admin -> Admin Dashboard
+      } else {
+        navigate('/learn'); // User -> Learn page
+      }
+      return true; // Đã đăng nhập
+    }
+    
+    return false; // Chưa đăng nhập
+  };
+
+  // ✅ Xử lý nút "Bắt đầu ngay" (Nút chính)
+  const handleGetStarted = () => {
+    const isLoggedIn = checkAuthAndRedirect();
+    
+    if (!isLoggedIn) {
+      navigate('/register');
+    }
+  };
+
+  // ✅ Xử lý nút "Bắt đầu ngay" trong hero
+  const handleStartNow = () => {
+    const isLoggedIn = checkAuthAndRedirect();
+    
+    if (!isLoggedIn) {
+      navigate('/register');
+    }
+  };
+
+  // ✅ Xử lý nút "Tôi đã có tài khoản"
+  const handleLogin = () => {
+    const isLoggedIn = checkAuthAndRedirect();
+    
+    if (!isLoggedIn) {
+      navigate('/login');
+    }
+  };
+
   return (
     <PageWrapper theme={theme}>
       {/* Navbar */}
@@ -717,11 +794,10 @@ const Home = () => {
             <h1>EnglishMaster</h1>
           </Logo>
           <NavLinks>
-            
-            <BtnSignIn onClick={() => navigate('/login')}>
+            <BtnSignIn onClick={handleLogin}>
               TÔI ĐÃ CÓ TÀI KHOẢN
             </BtnSignIn>
-            <BtnGetStarted onClick={() => navigate('/welcome')}>
+            <BtnGetStarted onClick={handleGetStarted}>
               BẮT ĐẦU
             </BtnGetStarted>
           </NavLinks>
@@ -739,10 +815,10 @@ const Home = () => {
             Tham gia cùng hàng triệu người học mỗi ngày!
           </HeroSubtitle>
           <HeroButtons>
-            <BtnPrimary onClick={() => navigate('/register')}>
+            <BtnPrimary onClick={handleStartNow}>
               Bắt đầu ngay
             </BtnPrimary>
-            <BtnSecondary theme={theme} onClick={() => navigate('/login')}>
+            <BtnSecondary theme={theme} onClick={handleLogin}>
               Tôi đã có tài khoản
             </BtnSecondary>
           </HeroButtons>
@@ -757,18 +833,16 @@ const Home = () => {
           </IllustrationWrapper>
           
           <FloatingElement theme={theme} delay="0s" style={{top: '10%', left: '5%'}}>
-            <span>📚</span>
+            <MenuBook sx={{ fontSize: 24 }} />
             <span>Học mọi lúc</span>
           </FloatingElement>
-          
-          <FloatingElement theme={theme} delay="1s" style={{top: '50%', right: '0'}}>
-            <span>🎯</span>
-            <span>Hiệu quả cao</span>
+          <FloatingElement theme={theme} delay="1s" style={{top: '20%', right: '10%'}}>
+            <MyLocationIcon sx={{ fontSize: 24 }} />
+            <span>Hiệu quả</span>
           </FloatingElement>
-          
           <FloatingElement theme={theme} delay="2s" style={{bottom: '15%', left: '10%'}}>
-            <span>🏆</span>
-            <span>Miễn phí 100%</span>
+            <FlashOn sx={{ fontSize: 24 }} />
+            <span>Nhanh chóng</span>
           </FloatingElement>
         </HeroIllustration>
       </HeroSection>
@@ -778,7 +852,7 @@ const Home = () => {
         <StatsGrid>
           <StatCard theme={theme}>
             <StatNumber>500M+</StatNumber>
-            <StatLabel theme={theme}>Học viên trên toàn cầu</StatLabel>
+            <StatLabel theme={theme}>Người học</StatLabel>
           </StatCard>
           <StatCard theme={theme}>
             <StatNumber>40+</StatNumber>
@@ -806,47 +880,59 @@ const Home = () => {
         
         <FeaturesGrid>
           <FeatureCard theme={theme} color="#58CC02">
-            <FeatureIcon color="green">🎮</FeatureIcon>
+            <FeatureIcon color="green">
+              <SportsEsports sx={{ fontSize: 40 }} />
+            </FeatureIcon>
             <FeatureTitle theme={theme}>Học như chơi game</FeatureTitle>
             <FeatureDescription theme={theme}>
-              Bài học thú vị như trò chơi. Tích điểm, nâng cấp và mở khóa thành tựu mới mỗi ngày.
+              Bài học vui nhộn với điểm số, cấp độ và thử thách hấp dẫn.
             </FeatureDescription>
           </FeatureCard>
 
           <FeatureCard theme={theme} color="#1CB0F6">
-            <FeatureIcon color="blue">🎯</FeatureIcon>
-            <FeatureTitle theme={theme}>Được cá nhân hóa</FeatureTitle>
+            <FeatureIcon color="blue">
+              <Psychology sx={{ fontSize: 40 }} />
+            </FeatureIcon>
+            <FeatureTitle theme={theme}>Khoa học chứng minh</FeatureTitle>
             <FeatureDescription theme={theme}>
-              AI thông minh điều chỉnh bài học phù hợp với trình độ và tốc độ học của bạn.
+              Phương pháp học dựa trên nghiên cứu khoa học về não bộ và trí nhớ.
             </FeatureDescription>
           </FeatureCard>
 
-          <FeatureCard theme={theme} color="#8b5cf6">
-            <FeatureIcon color="purple">🔥</FeatureIcon>
-            <FeatureTitle theme={theme}>Duy trì động lực</FeatureTitle>
+          <FeatureCard theme={theme} color="#CE82FF">
+            <FeatureIcon color="purple">
+              <Timer sx={{ fontSize: 40 }} />
+            </FeatureIcon>
+            <FeatureTitle theme={theme}>Bài học ngắn gọn</FeatureTitle>
             <FeatureDescription theme={theme}>
-              Streak counter, nhắc nhở thông minh giúp bạn kiên trì học mỗi ngày.
+              Chỉ 5-10 phút mỗi ngày để duy trì tiến độ học tập hiệu quả.
             </FeatureDescription>
           </FeatureCard>
 
           <FeatureCard theme={theme} color="#FF9600">
-            <FeatureIcon color="orange">🎤</FeatureIcon>
-            <FeatureTitle theme={theme}>Luyện phát âm</FeatureTitle>
+            <FeatureIcon color="orange">
+              <EmojiEvents sx={{ fontSize: 40 }} />
+            </FeatureIcon>
+            <FeatureTitle theme={theme}>Theo dõi tiến độ</FeatureTitle>
             <FeatureDescription theme={theme}>
-              Công nghệ nhận diện giọng nói giúp bạn cải thiện phát âm chuẩn.
+              Xem tiến độ học tập và cạnh tranh với bạn bè trên bảng xếp hạng.
             </FeatureDescription>
           </FeatureCard>
 
-          <FeatureCard theme={theme} color="#ec4899">
-            <FeatureIcon color="pink">📊</FeatureIcon>
-            <FeatureTitle theme={theme}>Theo dõi tiến độ</FeatureTitle>
+          <FeatureCard theme={theme} color="#FF4B4B">
+            <FeatureIcon color="red">
+              <Favorite sx={{ fontSize: 40 }} />
+            </FeatureIcon>
+            <FeatureTitle theme={theme}>Động lực thường xuyên</FeatureTitle>
             <FeatureDescription theme={theme}>
-              Biểu đồ chi tiết giúp bạn thấy rõ sự tiến bộ và điểm cần cải thiện.
+              Nhắc nhở thông minh và hệ thống streak giúp bạn giữ động lực học tập.
             </FeatureDescription>
           </FeatureCard>
 
           <FeatureCard theme={theme} color="#facc15">
-            <FeatureIcon color="yellow">🌍</FeatureIcon>
+            <FeatureIcon color="yellow">
+              <Public sx={{ fontSize: 40 }} />
+            </FeatureIcon>
             <FeatureTitle theme={theme}>Học mọi lúc mọi nơi</FeatureTitle>
             <FeatureDescription theme={theme}>
               Đồng bộ trên mọi thiết bị. Học trên điện thoại, máy tính bảng hoặc máy tính.
@@ -862,7 +948,7 @@ const Home = () => {
           <CTADescription>
             Tham gia cùng hàng triệu người đang học tiếng Anh mỗi ngày
           </CTADescription>
-          <CTAButton onClick={() => navigate('/register')}>
+          <CTAButton onClick={handleStartNow}>
             Bắt đầu miễn phí
           </CTAButton>
         </CTACard>
@@ -874,40 +960,48 @@ const Home = () => {
           <FooterSection>
             <FooterTitle>Về chúng tôi</FooterTitle>
             <FooterLinks theme={theme}>
-              <FooterLink><a href="#about">Giới thiệu</a></FooterLink>
-              <FooterLink><a href="#team">Đội ngũ</a></FooterLink>
-              <FooterLink><a href="#careers">Tuyển dụng</a></FooterLink>
-              <FooterLink><a href="#press">Báo chí</a></FooterLink>
+              <FooterLink><a href="#about"><Info sx={{ fontSize: 16, marginRight: 1 }} />Giới thiệu</a></FooterLink>
+              <FooterLink><a href="#team"><Group sx={{ fontSize: 16, marginRight: 1 }} />Đội ngũ</a></FooterLink>
+              <FooterLink><a href="#careers"><Work sx={{ fontSize: 16, marginRight: 1 }} />Tuyển dụng</a></FooterLink>
+              <FooterLink><a href="#press"><Newspaper sx={{ fontSize: 16, marginRight: 1 }} />Báo chí</a></FooterLink>
             </FooterLinks>
           </FooterSection>
 
           <FooterSection>
             <FooterTitle>Sản phẩm</FooterTitle>
             <FooterLinks theme={theme}>
-              <FooterLink><a href="#app">Ứng dụng di động</a></FooterLink>
-              <FooterLink><a href="#premium">Premium</a></FooterLink>
-              <FooterLink><a href="#schools">Dành cho trường học</a></FooterLink>
-              <FooterLink><a href="#business">Dành cho doanh nghiệp</a></FooterLink>
+              <FooterLink><a href="#courses"><School sx={{ fontSize: 16, marginRight: 1 }} />Khóa học</a></FooterLink>
+              <FooterLink><a href="#podcast"><Podcasts sx={{ fontSize: 16, marginRight: 1 }} />Podcast</a></FooterLink>
+              <FooterLink><a href="#stories"><AutoStories sx={{ fontSize: 16, marginRight: 1 }} />Stories</a></FooterLink>
+              <FooterLink><a href="#events"><Event sx={{ fontSize: 16, marginRight: 1 }} />Events</a></FooterLink>
             </FooterLinks>
           </FooterSection>
 
           <FooterSection>
             <FooterTitle>Hỗ trợ</FooterTitle>
             <FooterLinks theme={theme}>
-              <FooterLink><a href="#help">Trung tâm hỗ trợ</a></FooterLink>
-              <FooterLink><a href="#faq">Câu hỏi thường gặp</a></FooterLink>
-              <FooterLink><a href="#contact">Liên hệ</a></FooterLink>
-              <FooterLink><a href="#privacy">Chính sách bảo mật</a></FooterLink>
+              <FooterLink><a href="#faq"><Help sx={{ fontSize: 16, marginRight: 1 }} />FAQ</a></FooterLink>
+              <FooterLink><a href="#contact"><ContactSupport sx={{ fontSize: 16, marginRight: 1 }} />Liên hệ</a></FooterLink>
+              <FooterLink><a href="#privacy"><Security sx={{ fontSize: 16, marginRight: 1 }} />Bảo mật</a></FooterLink>
+              <FooterLink><a href="#terms"><Gavel sx={{ fontSize: 16, marginRight: 1 }} />Điều khoản</a></FooterLink>
             </FooterLinks>
           </FooterSection>
 
           <FooterSection>
-            <FooterTitle>Kết nối với chúng tôi</FooterTitle>
+            <FooterTitle>Kết nối</FooterTitle>
             <SocialLinks>
-              <SocialLink href="#facebook" theme={theme}>📘</SocialLink>
-              <SocialLink href="#twitter" theme={theme}>🐦</SocialLink>
-              <SocialLink href="#instagram" theme={theme}>📷</SocialLink>
-              <SocialLink href="#youtube" theme={theme}>📺</SocialLink>
+              <SocialLink href="#facebook" aria-label="Facebook">
+                <Facebook sx={{ fontSize: 24, color: theme === 'dark' ? '#f9fafb' : '#1a1a1a' }} />
+              </SocialLink>
+              <SocialLink href="#twitter" aria-label="Twitter">
+                <Twitter sx={{ fontSize: 24, color: theme === 'dark' ? '#f9fafb' : '#1a1a1a' }} />
+              </SocialLink>
+              <SocialLink href="#instagram" aria-label="Instagram">
+                <Instagram sx={{ fontSize: 24, color: theme === 'dark' ? '#f9fafb' : '#1a1a1a' }} />
+              </SocialLink>
+              <SocialLink href="#youtube" aria-label="YouTube">
+                <YouTube sx={{ fontSize: 24, color: theme === 'dark' ? '#f9fafb' : '#1a1a1a' }} />
+              </SocialLink>
             </SocialLinks>
           </FooterSection>
         </FooterContent>
