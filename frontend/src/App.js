@@ -33,8 +33,15 @@ import AuditLog from './pages/AuditLog';
 import Notifications from './pages/Notifications';
 import LearningGoals from './pages/LearningGoals';
 import TopicFlashcards from './pages/TopicFlashcards';
-import Topics from './pages/Topics';
+import Decks from './pages/Decks';
 import Flashcards from './pages/Flashcards';
+import PracticeTest from './pages/PracticeTest';
+import Worldbank from './pages/Worldbank';
+import DeckReviews from './pages/DeckReviews';
+import QuizBank from './pages/QuizBank';
+import PersonalizedRoadmap from './pages/PersonalizedRoadmap';
+import FlashcardReview from './pages/FlashcardReview';
+import AIFlashcardGenerator from './pages/AIFlashcardGenerator';
 
 // Admin Pages
 import AdminDashboard from './pages/AdminDashboard';
@@ -189,17 +196,12 @@ function App() {
               <LearningGoals />
             </ProtectedRoute>
           } />
-          {/* Flashcards & Decks Routes */}
-          <Route path="/topics" element={
-            <ProtectedRoute>
-              <Topics />
-            </ProtectedRoute>
-          } />
+          
           
          
           <Route path="/decks" element={
             <ProtectedRoute>
-              <Topics />
+              <Decks />
             </ProtectedRoute>
           } />
 
@@ -230,11 +232,22 @@ function App() {
               <Practice />
             </ProtectedRoute>
           } />
+          <Route path="/practice/:id" element={
+            <ProtectedRoute>
+              <PracticeTest />
+            </ProtectedRoute>
+          } />
           <Route path="/flashcards" element={
             <ProtectedRoute>
               <Flashcards />
             </ProtectedRoute>
           } />
+          <Route path="/worldbank" element={<Worldbank />} />
+          <Route path="/decks/:deckId/reviews" element={<DeckReviews />} />
+          <Route path="/quiz-bank" element={<QuizBank />} />
+          <Route path="/roadmap" element={<PersonalizedRoadmap />} />
+          <Route path="/flashcards/review/:deckId" element={<FlashcardReview />} />
+          <Route path="/ai-flashcards" element={<AIFlashcardGenerator />} />
           {/* ========== ADMIN DASHBOARD & PAGES ========== */}
           
           {/* Dashboard */}
