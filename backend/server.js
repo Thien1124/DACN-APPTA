@@ -28,6 +28,7 @@ const deckRoutes = require('./src/routes/deckRoutes');
 const flashcardRoutes = require('./src/routes/flashcardRoutes');
 const leaderboardRoutes = require('./src/routes/leaderboardRoutes');
 const studyRoutes = require('./src/routes/studyRoutes');
+const reviewRoutes = require('./src/routes/reviewRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 1124;
@@ -87,6 +88,7 @@ app.use('/api/decks', deckRoutes);
 app.use('/api/flashcards', flashcardRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/study', studyRoutes);
+app.use('/api/reviews', reviewRoutes); // Task 17: Review actions
 
 // Health root route
 app.get('/', (req, res) => {

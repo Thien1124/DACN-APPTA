@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const deckController = require('../controllers/deckController');
+const deckPreviewController = require('../controllers/deckPreviewController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
 // ==================== PUBLIC ROUTES (Task 15) ====================
@@ -8,6 +9,16 @@ const { protect, authorize } = require('../middleware/authMiddleware');
 
 // Browse & Filter decks (giống Duolingo)
 router.get('/browse', deckController.browseDecks);
+
+// ==================== TASK 16: TÌM KIẾM ====================
+// Advanced search với từ khóa và tags
+router.get('/search', deckController.searchDecks);
+
+// Search suggestions (autocomplete)
+router.get('/search/suggestions', deckController.getSearchSuggestions);
+
+// Get all tags with counts
+router.get('/tags', deckController.getAllTags);
 
 // Get all categories with counts
 router.get('/categories', deckController.getCategories);
@@ -17,6 +28,22 @@ router.get('/featured', deckController.getFeaturedDecks);
 
 // Get popular decks
 router.get('/popular', deckController.getPopularDecks);
+
+// ==================== TASK 17: XEM TRƯỚC & ĐÁNH GIÁ ====================
+// Deck preview với sample cards (Public)
+router.get('/:id/preview', deckPreviewController.getDeckPreview);
+
+// Get all reviews for a deck (Public)
+router.get('/:id/reviews', deckPreviewController.getDeckReviews);
+
+// Get my review for a deck (Private)
+router.get('/:id/reviews/my', protect, deckPreviewController.getMyReview);
+
+// Create/Update review (Private)
+router.post('/:id/reviews', protect, deckPreviewController.createOrUpdateReview);
+
+// Delete my review (Private)
+router.delete('/:id/reviews', protect, deckPreviewController.deleteReview);
 
 // Increment view count (public - khi user xem deck)
 router.post('/:id/view', deckController.incrementViewCount);
