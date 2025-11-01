@@ -111,6 +111,42 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+
+  // Task 11: Streak - Theo dõi số ngày học liên tục
+  streak: {
+    count: {
+      type: Number,
+      default: 0,
+      min: 0
+    },
+    lastActivityDate: {
+      type: Date
+    }
+  },
+
+  // Task 12: XP System - Điểm kinh nghiệm
+  xp: {
+    total: {
+      type: Number,
+      default: 0,
+      min: 0
+    },
+    level: {
+      type: Number,
+      default: 1,
+      min: 1
+    }
+  },
+
+  // Task 15: Gems - Tiền tệ trong game để mua vật phẩm
+  gems: {
+    amount: {
+      type: Number,
+      default: 0,
+      min: 0
+    }
+  },
+
   createdAt: {
     type: Date,
     default: Date.now
