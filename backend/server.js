@@ -27,6 +27,7 @@ const achievementRoutes = require('./src/routes/achievementRoutes');
 const deckRoutes = require('./src/routes/deckRoutes');
 const flashcardRoutes = require('./src/routes/flashcardRoutes');
 const leaderboardRoutes = require('./src/routes/leaderboardRoutes');
+const studyRoutes = require('./src/routes/studyRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 1124;
@@ -85,6 +86,7 @@ app.use('/api/achievements', achievementRoutes);
 app.use('/api/decks', deckRoutes);
 app.use('/api/flashcards', flashcardRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
+app.use('/api/study', studyRoutes);
 
 // Health root route
 app.get('/', (req, res) => {
