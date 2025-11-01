@@ -28,6 +28,13 @@ const deckRoutes = require('./src/routes/deckRoutes');
 const flashcardRoutes = require('./src/routes/flashcardRoutes');
 const leaderboardRoutes = require('./src/routes/leaderboardRoutes');
 const studyRoutes = require('./src/routes/studyRoutes');
+const streakRoutes = require('./src/routes/streakRoutes');
+const heartRoutes = require('./src/routes/heartRoutes');
+const xpRoutes = require('./src/routes/xpRoutes');
+const missionRoutes = require('./src/routes/missionRoutes');
+const shopRoutes = require('./src/routes/shopRoutes');
+
+
 
 const app = express();
 const PORT = process.env.PORT || 1124;
@@ -87,6 +94,11 @@ app.use('/api/decks', deckRoutes);
 app.use('/api/flashcards', flashcardRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/study', studyRoutes);
+app.use('/api/streaks', streakRoutes);
+app.use('/api/hearts', heartRoutes);
+app.use('/api/xp', xpRoutes);
+app.use('/api/missions', missionRoutes);
+app.use('/api/shop', shopRoutes);
 
 // Health root route
 app.get('/', (req, res) => {
