@@ -32,6 +32,63 @@
 
 ---
 
+## ✅ Task 19: Note Type System (COMPLETED - Nov 1, 2025)
+
+**Tính năng:** Tạo flashcard với 4 kiểu note: WORD, PHRASE, SENTENCE, CLOZE
+
+### Đã hoàn thành:
+- ✅ Updated `Flashcard` model với noteType field
+- ✅ 4 note types: WORD, PHRASE, SENTENCE, CLOZE
+- ✅ API `/note-type` - Tạo flashcard theo note type
+- ✅ API `/note-type/bulk` - Tạo nhiều flashcards
+- ✅ API `/note-type/:noteType` - Lấy flashcards theo type
+- ✅ API `/note-type/stats/:deckId` - Thống kê note types
+- ✅ CLOZE support với {{c1::answer}} format
+- ✅ Pronunciation field (IPA)
+- ✅ Hints field
+- ✅ Auto-fill front/back based on noteType
+- ✅ API Documentation
+
+### Features:
+1. **WORD** - Từ đơn (word, meaning, pronunciation, example)
+2. **PHRASE** - Cụm từ (phrase, meaning, example)
+3. **SENTENCE** - Câu (sentence, translation, context)
+4. **CLOZE** - Điền khuyết (clozeText, clozeAnswers)
+
+### Files tạo mới:
+1. `/src/controllers/noteTypeController.js` - Controller cho note types
+2. `/docs/TASK_19_NOTE_TYPE_SYSTEM.md` - Documentation
+
+### Files đã cập nhật:
+1. `/src/models/Flashcard.js` - Thêm noteType, clozeText, clozeAnswers, pronunciation, hints
+2. `/src/routes/flashcardRoutes.js` - Thêm note type routes
+
+### Test Commands:
+```bash
+# Create WORD
+POST /api/flashcards/note-type
+{
+  "noteType": "WORD",
+  "deckId": "...",
+  "word": "beautiful",
+  "meaning": "đẹp"
+}
+
+# Create CLOZE
+POST /api/flashcards/note-type
+{
+  "noteType": "CLOZE",
+  "deckId": "...",
+  "clozeText": "I {{c1::am}} happy.",
+  "clozeAnswers": ["am"]
+}
+
+# Get stats
+GET /api/flashcards/note-type/stats/:deckId
+```
+
+---
+
 ## ✅ Task 16: Tìm kiếm theo từ khóa và tags (COMPLETED - Nov 1, 2025)
 
 **Tính năng:** Tìm kiếm bộ thẻ bằng từ khóa hoặc tag liên quan
@@ -135,6 +192,51 @@ Body: { "rating": 5, "comment": "Great deck!" }
 
 # Mark helpful (Private)
 POST /api/reviews/:reviewId/helpful
+```
+
+---
+
+## ✅ Task 18: Tạo/Sao chép/Hợp nhất/Tách Deck (COMPLETED - Nov 1, 2025)
+
+**Tính năng:** Quản lý deck nâng cao để tùy chỉnh nội dung học tập
+
+### Đã hoàn thành:
+- ✅ Clone/Copy deck - Sao chép deck + flashcards
+- ✅ Merge decks - Hợp nhất nhiều deck thành 1
+- ✅ Split deck - Tách deck theo size/count/custom
+- ✅ Permission checks (ownership, public access)
+- ✅ Auto-copy flashcards
+- ✅ Tags merging
+- ✅ API Documentation
+
+### Features:
+1. **Clone Deck** - Sao chép toàn bộ deck với flashcards
+2. **Merge Decks** - Gộp 2+ decks thành 1 deck mới
+3. **Split Deck** - Tách deck theo:
+   - Size (số thẻ mỗi deck)
+   - Count (số deck muốn tách)
+   - Custom (chọn cards cụ thể)
+
+### Files tạo mới:
+1. `/src/controllers/deckManagementController.js` - 3 controllers
+2. `/docs/TASK_18_DECK_MANAGEMENT.md` - Documentation
+
+### Files đã cập nhật:
+1. `/src/routes/deckRoutes.js` - Thêm 3 routes mới
+
+### Test với Postman:
+```bash
+# Clone deck
+POST /api/decks/:id/clone
+Body: { "newTitle": "My Copy", "isPublic": false }
+
+# Merge decks
+POST /api/decks/merge
+Body: { "deckIds": ["id1", "id2"], "newTitle": "Merged" }
+
+# Split deck
+POST /api/decks/:id/split
+Body: { "splitBy": "count", "criteria": "3" }
 ```
 
 ---

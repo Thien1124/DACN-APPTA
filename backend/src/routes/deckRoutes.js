@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const deckController = require('../controllers/deckController');
 const deckPreviewController = require('../controllers/deckPreviewController');
+const deckManagementController = require('../controllers/deckManagementController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
 // ==================== PUBLIC ROUTES (Task 15) ====================
@@ -50,6 +51,16 @@ router.post('/:id/view', deckController.incrementViewCount);
 
 // Increment study count (yêu cầu đăng nhập)
 router.post('/:id/study', protect, deckController.incrementStudyCount);
+
+// ==================== TASK 18: DECK MANAGEMENT ====================
+// Clone/Copy deck (Private)
+router.post('/:id/clone', protect, deckManagementController.cloneDeck);
+
+// Merge multiple decks (Private)
+router.post('/merge', protect, deckManagementController.mergeDecks);
+
+// Split deck (Private)
+router.post('/:id/split', protect, deckManagementController.splitDeck);
 
 router.post('/', protect, deckController.createDeck);
 
