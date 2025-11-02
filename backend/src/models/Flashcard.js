@@ -40,6 +40,42 @@ const flashcardSchema = new mongoose.Schema({
     trim: true
   },
   
+  // ==================== TASK 20: RICH DATA FIELDS ====================
+  
+  // Vocabulary data
+  partOfSpeech: {
+    type: String,
+    enum: ['noun', 'verb', 'adjective', 'adverb', 'preposition', 'conjunction', 'pronoun', 'interjection', 'phrase', 'idiom', 'other'],
+    trim: true
+  },
+  
+  // Meanings (multiple definitions)
+  meanings: [{
+    definition: String,
+    example: String,
+    translation: String
+  }],
+  
+  // Synonyms (đồng nghĩa)
+  synonyms: [{
+    word: String,
+    note: String
+  }],
+  
+  // Antonyms (trái nghĩa)
+  antonyms: [{
+    word: String,
+    note: String
+  }],
+  
+  // Collocations (kết hợp từ)
+  collocations: [{
+    phrase: String,
+    meaning: String,
+    example: String
+  }],
+  
+  // Media
   imageUrl: {
     type: String
   },
@@ -47,10 +83,57 @@ const flashcardSchema = new mongoose.Schema({
     type: String
   },
   
+  // Multiple images
+  images: [{
+    url: String,
+    caption: String
+  }],
+  
+  // Multiple audio files
+  audios: [{
+    url: String,
+    accent: {
+      type: String,
+      enum: ['US', 'UK', 'AU', 'other']
+    },
+    speaker: String
+  }],
+  
+  // Usage notes
+  usageNotes: {
+    type: String,
+    trim: true
+  },
+  
+  // Grammar notes
+  grammarNotes: {
+    type: String,
+    trim: true
+  },
+  
   // Additional metadata
   hints: {
     type: String,
     trim: true
+  },
+  
+  // Tags for categorization
+  tags: [{
+    type: String,
+    trim: true
+  }],
+  
+  // Difficulty level
+  difficulty: {
+    type: String,
+    enum: ['beginner', 'elementary', 'intermediate', 'upper-intermediate', 'advanced'],
+    default: 'intermediate'
+  },
+  
+  // CEFR level
+  cefrLevel: {
+    type: String,
+    enum: ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
   },
   
   deck: {

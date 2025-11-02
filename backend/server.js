@@ -26,9 +26,11 @@ const exerciseRoutes = require('./src/routes/exerciseRoutes');
 const achievementRoutes = require('./src/routes/achievementRoutes');
 const deckRoutes = require('./src/routes/deckRoutes');
 const flashcardRoutes = require('./src/routes/flashcardRoutes');
+const richFlashcardRoutes = require('./src/routes/richFlashcardRoutes');
 const leaderboardRoutes = require('./src/routes/leaderboardRoutes');
 const studyRoutes = require('./src/routes/studyRoutes');
 const reviewRoutes = require('./src/routes/reviewRoutes');
+const aiRoutes = require('./src/routes/aiRoutes'); // Task 21: AI integration
 
 const app = express();
 const PORT = process.env.PORT || 1124;
@@ -86,9 +88,11 @@ app.use('/api/exercises', exerciseRoutes);
 app.use('/api/achievements', achievementRoutes);
 app.use('/api/decks', deckRoutes);
 app.use('/api/flashcards', flashcardRoutes);
+app.use('/api/flashcards-rich', richFlashcardRoutes); // Task 20: Rich flashcard data
 app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/study', studyRoutes);
 app.use('/api/reviews', reviewRoutes); // Task 17: Review actions
+app.use('/api/ai', aiRoutes); // Task 21: AI Gemini integration
 
 // Health root route
 app.get('/', (req, res) => {

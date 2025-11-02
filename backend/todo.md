@@ -32,6 +32,65 @@
 
 ---
 
+## ✅ Task 20: Rich Flashcard Data (COMPLETED - Nov 2, 2025)
+
+**Tính năng:** Thêm dữ liệu phong phú cho flashcard: IPA, meanings, synonyms, antonyms, collocations, images, audios
+
+### Đã hoàn thành:
+- ✅ Extended `Flashcard` model với rich data fields
+- ✅ Multiple meanings với definition + example + translation
+- ✅ Synonyms (đồng nghĩa) với note
+- ✅ Antonyms (trái nghĩa) với note
+- ✅ Collocations (kết hợp từ) với phrase + meaning + example
+- ✅ Multiple images với caption
+- ✅ Multiple audios với accent (US/UK/AU) + speaker
+- ✅ Part of speech (noun, verb, adjective, etc.)
+- ✅ Usage notes & Grammar notes
+- ✅ Tags, difficulty level, CEFR level
+- ✅ 14 API endpoints cho rich data
+- ✅ API Documentation
+
+### Features:
+1. **Vocabulary Data** - Word + IPA + part of speech
+2. **Multiple Meanings** - Definition + example + translation per meaning
+3. **Related Words** - Synonyms & antonyms with notes
+4. **Collocations** - Common word combinations
+5. **Media** - Multiple images & audio files (US/UK accents)
+6. **Metadata** - Tags, difficulty, CEFR level
+7. **Notes** - Usage notes & grammar notes
+8. **Search** - By tags, difficulty, CEFR, part of speech
+
+### Files tạo mới:
+1. `/src/controllers/richFlashcardController.js` - 14 controllers for rich data
+2. `/src/routes/richFlashcardRoutes.js` - Rich flashcard routes
+3. `/docs/TASK_20_RICH_DATA.md` - Full documentation
+
+### Files đã cập nhật:
+1. `/src/models/Flashcard.js` - Added partOfSpeech, meanings, synonyms, antonyms, collocations, images, audios, usageNotes, grammarNotes, tags, difficulty, cefrLevel
+2. `server.js` - Added `/api/flashcards-rich` routes
+
+### Test Commands:
+```bash
+# Create vocabulary card
+POST /api/flashcards-rich/vocabulary
+{
+  "deckId": "...",
+  "word": "amazing",
+  "pronunciation": "/əˈmeɪzɪŋ/",
+  "meanings": [{ "definition": "...", "example": "..." }],
+  "synonyms": [{ "word": "wonderful" }]
+}
+
+# Add synonym
+POST /api/flashcards-rich/:id/synonyms
+{ "word": "fantastic", "note": "informal" }
+
+# Search by tags
+GET /api/flashcards-rich/search/tags?tags=adjective,common
+```
+
+---
+
 ## ✅ Task 19: Note Type System (COMPLETED - Nov 1, 2025)
 
 **Tính năng:** Tạo flashcard với 4 kiểu note: WORD, PHRASE, SENTENCE, CLOZE
@@ -238,6 +297,81 @@ Body: { "deckIds": ["id1", "id2"], "newTitle": "Merged" }
 POST /api/decks/:id/split
 Body: { "splitBy": "count", "criteria": "3" }
 ```
+
+---
+
+## ✅ Task 21: Google Gemini AI Integration (COMPLETED - Nov 2, 2025)
+
+**Tính năng:** Tích hợp Google Gemini AI để tự động sinh dữ liệu phong phú cho flashcard
+
+### Đã hoàn thành:
+- ✅ Gemini Service với 6 functions
+- ✅ 9 API endpoints cho AI features
+- ✅ Analyze word - Phân tích toàn diện
+- ✅ Detect polysemy - Phát hiện từ đa nghĩa
+- ✅ Generate examples - Sinh câu ví dụ tự nhiên
+- ✅ Suggest collocations - Gợi ý kết hợp từ
+- ✅ Image keywords - Gợi ý từ khóa hình ảnh
+- ✅ Batch processing - Xử lý hàng loạt (max 20 words)
+- ✅ Create flashcard with AI - Tạo flashcard tự động
+- ✅ Enrich existing flashcard - Làm giàu flashcard cũ
+- ✅ API Documentation
+
+### Features:
+1. **Word Analysis** - IPA, meanings, synonyms, antonyms, collocations, usage notes
+2. **Polysemy Detection** - Phát hiện từ có nhiều nghĩa khác nhau
+3. **Example Generation** - Sinh câu ví dụ tự nhiên theo context
+4. **Collocation Suggestions** - Gợi ý kết hợp từ thường gặp
+5. **Image Keywords** - Gợi ý từ khóa để tìm hình minh họa
+6. **Batch Operations** - Phân tích/tạo nhiều flashcards cùng lúc
+7. **Smart Enrichment** - Fill missing data hoặc regenerate all
+8. **Auto Difficulty** - Tự động phân loại difficulty & CEFR level
+
+### Files tạo mới:
+1. `/src/services/geminiService.js` - AI service với Gemini API
+2. `/src/controllers/aiController.js` - 9 controllers
+3. `/src/routes/aiRoutes.js` - AI routes
+4. `/docs/TASK_21_GEMINI_AI.md` - Full documentation
+5. `/TASK_21_COMPLETE.md` - Summary
+
+### Files đã cập nhật:
+1. `server.js` - Added `/api/ai` routes
+2. `package.json` - Added `@google/generative-ai` dependency
+
+### Setup Required:
+1. **Install**: `npm install @google/generative-ai` ✅
+2. **Get API Key**: https://makersuite.google.com/app/apikey
+3. **Add to .env**: `GEMINI_API_KEY=your_key`
+4. **Restart server**: `npm run dev`
+
+### Test Commands:
+```bash
+# Analyze word
+POST /api/ai/analyze
+Body: { "word": "beautiful" }
+
+# Create flashcard with AI
+POST /api/ai/analyze-and-create
+Body: { "deckId": "...", "word": "amazing" }
+
+# Detect polysemy
+POST /api/ai/detect-polysemy
+Body: { "word": "bank" }
+
+# Batch create
+POST /api/ai/batch-create
+Body: { "deckId": "...", "words": ["happy", "sad", "angry"] }
+
+# Enrich existing
+POST /api/ai/enrich/:flashcardId
+Body: { "regenerate": false }
+```
+
+### Use Cases:
+- ✅ **Quick Create** - Teacher nhập từ → AI tạo flashcard đầy đủ
+- ✅ **Batch Import** - Import list 20 từ → AI tạo tất cả
+- ✅ **Polysemy Alert** - Cảnh báo từ đa nghĩa → Tạo nhiều thẻ
+- ✅ **Enrich Old Cards** - Làm giàu flashcard cũ với AI data
 
 ---
 
