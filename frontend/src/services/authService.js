@@ -139,6 +139,37 @@ export const authService = {
     }
   },
 
+  // Xác thực OTP cho đăng ký
+  verifyOtp: async (email, otp) => {
+    try {
+      const response = await api.post('/auth/verify-otp', { email, otp });
+      if (response.data.success) {
+        // Lưu token và user nếu có
+        if (response.data.data?.token) {
+          localStorage.setItem('token', response.data.data.token);
+        }
+        if (response.data.data?.user) {
+          localStorage.setItem('user', JSON.stringify(response.data.data.user));
+        }
+        return response.data;
+      } else {
+        throw new Error(response.data.message || 'Xác thực OTP thất bại');
+      }
+    } catch (error) {
+      throw new Error(error.response?.data?.message || 'Xác thực OTP thất bại');
+    }
+  },
+
+  // Gửi lại OTP cho đăng ký
+  resendOtp: async (email) => {
+    try {
+      const response = await api.post('/auth/resend-otp', { email });
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.message || 'Gửi lại OTP thất bại');
+    }
+  },
+
   // ✅ Cập nhật profile
   updateProfile: async (data) => {
     try {

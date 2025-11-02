@@ -31,6 +31,13 @@ const leaderboardRoutes = require('./src/routes/leaderboardRoutes');
 const studyRoutes = require('./src/routes/studyRoutes');
 const reviewRoutes = require('./src/routes/reviewRoutes');
 const aiRoutes = require('./src/routes/aiRoutes'); // Task 21: AI integration
+const streakRoutes = require('./src/routes/streakRoutes');
+const heartRoutes = require('./src/routes/heartRoutes');
+const xpRoutes = require('./src/routes/xpRoutes');
+const missionRoutes = require('./src/routes/missionRoutes');
+const shopRoutes = require('./src/routes/shopRoutes');
+
+
 
 const app = express();
 const PORT = process.env.PORT || 1124;
@@ -93,6 +100,13 @@ app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/study', studyRoutes);
 app.use('/api/reviews', reviewRoutes); // Task 17: Review actions
 app.use('/api/ai', aiRoutes); // Task 21: AI Gemini integration
+=======
+app.use('/api/streaks', streakRoutes);
+app.use('/api/hearts', heartRoutes);
+app.use('/api/xp', xpRoutes);
+app.use('/api/missions', missionRoutes);
+app.use('/api/shop', shopRoutes);
+
 
 // Health root route
 app.get('/', (req, res) => {

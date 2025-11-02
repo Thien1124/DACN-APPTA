@@ -504,7 +504,10 @@ const Register = () => {
   const { toast, showToast, hideToast } = useToast();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  
+  const [otp, setOtp] = useState(''); // Thêm state cho OTP
+  const [showOtpForm, setShowOtpForm] = useState(false); // State để hiển thị form OTP
+  const [resendLoading, setResendLoading] = useState(false); // Thêm state cho loading resend
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -559,6 +562,42 @@ const Register = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  // Handle resend OTP
+  const handleResendOtp = async () => {
+    setResendLoading(true);
+    try {
+      await authService.resendOtp(formData.email);
+      showToast('success', 'Gửi lại mã thành công!', 'Kiểm tra email của bạn.');
+    } catch (error) {
+      showToast('error', 'Gửi lại mã thất bại!', error.message || 'Vui lòng thử lại.');
+    }
+    setResendLoading(false);
+  };
+
+  // Handle submit OTP
+  const handleOtpSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const response = await authService.verifyOtp(formData.email, otp);
+      setLoading(false);
+      
+      // Thông báo thành công
+      await Swal.fire({
+        icon: 'success',
+        title: 'Xác minh thành công!',
+        text: 'Tài khoản của bạn đã được kích hoạt.',
+        confirmButtonText: 'Đồng ý',
+        confirmButtonColor: '#58CC02',
+      });
+      
+      navigate('/login');
+    } catch (error) {
+      setLoading(false);
+      showToast('error', 'Xác minh thất bại!', error.response?.data?.message || 'Mã OTP không đúng hoặc đã hết hạn.');
+    }
+  };
+
   // Handle submit
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -580,22 +619,16 @@ const Register = () => {
 
       setLoading(false);
 
-      // Hiển thị thông báo thành công và hướng dẫn kích hoạt
+      // Hiển thị thông báo và chuyển sang form OTP
       await Swal.fire({
         icon: 'success',
         title: 'Đăng ký thành công!',
-        html: `
-          <p>Một email xác thực đã được gửi đến <strong>${formData.email}</strong></p>
-          <p style="margin-top: 1rem; font-size: 0.875rem; color: #6b7280;">
-            Vui lòng kiểm tra hộp thư và nhập mã OTP để kích hoạt tài khoản.
-          </p>
-        `,
+        text: 'Email xác thực đã được gửi. Vui lòng nhập mã OTP.',
         confirmButtonText: 'Đồng ý',
         confirmButtonColor: '#58CC02',
       });
 
-      // Chuyển đến trang login
-      navigate('/login');
+      setShowOtpForm(true); // Hiển thị form OTP
 
     } catch (error) {
       console.error('Register error:', error);
@@ -668,127 +701,156 @@ const Register = () => {
       {/* Right Section - Form */}
       <RightSection>
         <RegisterContainer>
-          <Title>Tạo hồ sơ</Title>
+          {!showOtpForm ? (
+            <>
+              <Title>Tạo hồ sơ</Title>
+              <Form onSubmit={handleSubmit}>
+                <FormGroup>
+                  <Input
+                    type="text"
+                    name="name"
+                    placeholder="Tên (tùy chọn)"
+                    value={formData.name}
+                    onChange={handleChange}
+                    error={errors.name}
+                  />
+                  {errors.name && <ErrorMessage>{errors.name}</ErrorMessage>}
+                </FormGroup>
 
-          <Form onSubmit={handleSubmit}>
-            <FormGroup>
-              <Input
-                type="text"
-                name="name"
-                placeholder="Tên (tùy chọn)"
-                value={formData.name}
-                onChange={handleChange}
-                error={errors.name}
-              />
-              {errors.name && <ErrorMessage>{errors.name}</ErrorMessage>}
-            </FormGroup>
+                <FormGroup>
+                  <Input
+                    type="email"
+                    name="email"
+                    placeholder="Email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    error={errors.email}
+                    autoComplete="email"
+                  />
+                  {errors.email && <ErrorMessage>{errors.email}</ErrorMessage>}
+                </FormGroup>
 
-            <FormGroup>
-              <Input
-                type="email"
-                name="email"
-                placeholder="Email"
-                value={formData.email}
-                onChange={handleChange}
-                error={errors.email}
-                autoComplete="email"
-              />
-              {errors.email && <ErrorMessage>{errors.email}</ErrorMessage>}
-            </FormGroup>
+                <FormGroup>
+                  <InputWrapper>
+                    <Input
+                      type={showPassword ? 'text' : 'password'}
+                      name="password"
+                      placeholder="Mật khẩu"
+                      value={formData.password}
+                      onChange={handleChange}
+                      error={errors.password}
+                      autoComplete="new-password"
+                    />
+                    <PasswordToggle
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                    >
+                      {showPassword ? (
+                        <svg viewBox="0 0 24 24">
+                          <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                        </svg>
+                      ) : (
+                        <svg viewBox="0 0 24 24">
+                          <path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-4.75 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"/>
+                        </svg>
+                      )}
+                    </PasswordToggle>
+                  </InputWrapper>
+                  {errors.password && <ErrorMessage>{errors.password}</ErrorMessage>}
+                </FormGroup>
 
-            <FormGroup>
-              <InputWrapper>
-                <Input
-                  type={showPassword ? 'text' : 'password'}
-                  name="password"
-                  placeholder="Mật khẩu"
-                  value={formData.password}
-                  onChange={handleChange}
-                  error={errors.password}
-                  autoComplete="new-password"
-                />
-                <PasswordToggle
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                <FormGroup>
+                  <Input
+                    type="text"
+                    name="age"
+                    placeholder="Tuổi"
+                    value={formData.age}
+                    onChange={handleChange}
+                    error={errors.age}
+                    maxLength="3"
+                  />
+                  {errors.age && <ErrorMessage>{errors.age}</ErrorMessage>}
+                  <AgeNotice>
+                    Hãy cho chúng tôi biết tuổi của bạn để có trải nghiệm học phù hợp nhất. Vui lòng xem{' '}
+                    <a href="/privacy">Chính sách quyền riêng tư</a> để biết thêm chi tiết.
+                  </AgeNotice>
+                </FormGroup>
+
+                <SubmitButton type="submit" disabled={loading}>
+                  {loading ? <LoadingSpinner /> : 'Tạo tài khoản'}
+                </SubmitButton>
+
+                <Divider>
+                  <DividerText>Hoặc</DividerText>
+                </Divider>
+
+                <SocialButtons>
+                  <SocialButton
+                    type="button"
+                    provider="google"
+                    onClick={() => handleSocialRegister('Google')}
+                  >
+                    <svg viewBox="0 0 24 24">
+                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                    </svg>
+                    Google
+                  </SocialButton>
+                  <SocialButton
+                    type="button"
+                    provider="facebook"
+                    onClick={() => handleSocialRegister('Facebook')}
+                  >
+                    <svg viewBox="0 0 24 24">
+                      <path fill="#1877F2" d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                    </svg>
+                    Facebook
+                  </SocialButton>
+                </SocialButtons>
+
+                <TermsText>
+                  Khi đăng ký, bạn đã đồng ý với{' '}
+                  <a href="/terms">Điều khoản dịch vụ</a> và{' '}
+                  <a href="/privacy">Chính sách bảo mật</a> của chúng tôi.
+                </TermsText>
+
+                <ReCaptchaText>
+                  Trang này được reCAPTCHA Enterprise bảo hộ và theo{' '}
+                  <a href="https://policies.google.com/privacy">Chính sách bảo mật</a> và{' '}
+                  <a href="https://policies.google.com/terms">Điều khoản dịch vụ</a> của Google.
+                </ReCaptchaText>
+              </Form>
+            </>
+          ) : (
+            <>
+              <Title>Nhập mã xác minh</Title>
+              <Form onSubmit={handleOtpSubmit}>
+                <FormGroup>
+                  <Input
+                    type="text"
+                    placeholder="Nhập mã OTP"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value)}
+                    maxLength="6"
+                  />
+                </FormGroup>
+                <SubmitButton type="submit" disabled={loading}>
+                  {loading ? <LoadingSpinner /> : 'Xác minh'}
+                </SubmitButton>
+                <SubmitButton 
+                  type="button" 
+                  onClick={handleResendOtp} 
+                  disabled={resendLoading || loading}
+                  style={{ background: 'linear-gradient(135deg, #1cb0f6 0%, #0e8fc7 100%)', marginTop: '0.5rem' }}
                 >
-                  {showPassword ? (
-                    <svg viewBox="0 0 24 24">
-                      <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
-                    </svg>
-                  ) : (
-                    <svg viewBox="0 0 24 24">
-                      <path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-4.75 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"/>
-                    </svg>
-                  )}
-                </PasswordToggle>
-              </InputWrapper>
-              {errors.password && <ErrorMessage>{errors.password}</ErrorMessage>}
-            </FormGroup>
-
-            <FormGroup>
-              <Input
-                type="text"
-                name="age"
-                placeholder="Tuổi"
-                value={formData.age}
-                onChange={handleChange}
-                error={errors.age}
-                maxLength="3"
-              />
-              {errors.age && <ErrorMessage>{errors.age}</ErrorMessage>}
-              <AgeNotice>
-                Hãy cho chúng tôi biết tuổi của bạn để có trải nghiệm học phù hợp nhất. Vui lòng xem{' '}
-                <a href="/privacy">Chính sách quyền riêng tư</a> để biết thêm chi tiết.
-              </AgeNotice>
-            </FormGroup>
-
-            <SubmitButton type="submit" disabled={loading}>
-              {loading ? <LoadingSpinner /> : 'Tạo tài khoản'}
-            </SubmitButton>
-
-            <Divider>
-              <DividerText>Hoặc</DividerText>
-            </Divider>
-
-            <SocialButtons>
-              <SocialButton
-                type="button"
-                provider="google"
-                onClick={() => handleSocialRegister('Google')}
-              >
-                <svg viewBox="0 0 24 24">
-                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                </svg>
-                Google
-              </SocialButton>
-              <SocialButton
-                type="button"
-                provider="facebook"
-                onClick={() => handleSocialRegister('Facebook')}
-              >
-                <svg viewBox="0 0 24 24">
-                  <path fill="#1877F2" d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                </svg>
-                Facebook
-              </SocialButton>
-            </SocialButtons>
-
-            <TermsText>
-              Khi đăng ký, bạn đã đồng ý với{' '}
-              <a href="/terms">Điều khoản dịch vụ</a> và{' '}
-              <a href="/privacy">Chính sách bảo mật</a> của chúng tôi.
-            </TermsText>
-
-            <ReCaptchaText>
-              Trang này được reCAPTCHA Enterprise bảo hộ và theo{' '}
-              <a href="https://policies.google.com/privacy">Chính sách bảo mật</a> và{' '}
-              <a href="https://policies.google.com/terms">Điều khoản dịch vụ</a> của Google.
-            </ReCaptchaText>
-          </Form>
+                  {resendLoading ? <LoadingSpinner /> : 'Gửi lại mã'}
+                </SubmitButton>
+              </Form>
+            </>
+          )}
         </RegisterContainer>
       </RightSection>
 
