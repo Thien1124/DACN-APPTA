@@ -237,7 +237,301 @@ exports.togglePublishDeck = async (req, res) => {
   }
 };
 
-// ==================== MỚI - TASK 15 ====================
+// ==================== MỚI - TASK 15 & 16 ====================
+
+// @desc    Advanced Search Decks với từ khóa và tags (Task 16)
+// @route   GET /api/decks/search
+// @access  Public
+exports.searchDecks = async (req, res) => {
+  try {
+    const {
+      keyword,      // Từ khóa tìm kiếm
+      tags,         // Tags (comma-separated)
+      category,
+      level,
+      difficulty,
+      minCards,
+      maxCards,
+      minRating,
+      sort = 'relevance',
+      page = 1,
+      limit = 20
+    } = req.query;
+
+    // Validate có ít nhất keyword hoặc tags
+    if (!keyword && !tags) {
+      return res.status(400).json({
+        success: false,
+        message: 'Vui lòng nhập từ khóa hoặc tag để tìm kiếm'
+      });
+    }
+
+    // Build query
+    const query = { isPublic: true };
+    const searchConditions = [];
+
+    // 1. Text Search với từ khóa (full-text search)
+    if (keyword) {
+      const keywordRegex = { $regex: keyword.trim(), $options: 'i' };
+      searchConditions.push(
+        { title: keywordRegex },
+        { description: keywordRegex },
+        { tags: keywordRegex },
+        { subcategory: keywordRegex }
+      );
+    }
+
+    // 2. Tag Search (exact match hoặc partial)
+    if (tags) {
+      const tagArray = tags.split(',').map(tag => tag.trim().toLowerCase());
+      
+      // Tìm kiếm tags có chứa bất kỳ tag nào trong array
+      const tagConditions = tagArray.map(tag => ({
+        tags: { $regex: tag, $options: 'i' }
+      }));
+      
+      searchConditions.push(...tagConditions);
+    }
+
+    // Apply search conditions với OR
+    if (searchConditions.length > 0) {
+      query.$or = searchConditions;
+    }
+
+    // 3. Additional Filters
+    if (category) {
+      query.category = category.toUpperCase();
+    }
+
+    if (level) {
+      const levels = level.split(',').map(l => l.toUpperCase());
+      query.level = { $in: levels };
+    }
+
+    if (difficulty) {
+      const difficulties = difficulty.split(',').map(d => d.toUpperCase());
+      query.difficulty = { $in: difficulties };
+    }
+
+    // Filter by card count
+    if (minCards || maxCards) {
+      query.totalCards = {};
+      if (minCards) query.totalCards.$gte = parseInt(minCards);
+      if (maxCards) query.totalCards.$lte = parseInt(maxCards);
+    }
+
+    // Filter by rating
+    if (minRating) {
+      query.rating = { $gte: parseFloat(minRating) };
+      query.ratingCount = { $gt: 0 }; // Chỉ lấy deck đã có rating
+    }
+
+    // 4. Sort options
+    let sortOption = {};
+    switch (sort) {
+      case 'relevance':
+        // Sắp xếp theo relevance (studyCount + viewCount)
+        sortOption = { studyCount: -1, viewCount: -1, rating: -1 };
+        break;
+      case 'popular':
+        sortOption = { studyCount: -1 };
+        break;
+      case 'rating':
+        sortOption = { rating: -1, ratingCount: -1 };
+        break;
+      case 'newest':
+        sortOption = { createdAt: -1 };
+        break;
+      case 'cards':
+        sortOption = { totalCards: -1 };
+        break;
+      default:
+        sortOption = { studyCount: -1, viewCount: -1 };
+    }
+
+    // 5. Pagination
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    // Execute query
+    const decks = await Deck.find(query)
+      .populate('createdBy', 'fullName avatar')
+      .populate('course', 'title')
+      .populate('unit', 'title')
+      .sort(sortOption)
+      .skip(skip)
+      .limit(parseInt(limit))
+      .lean();
+
+    const total = await Deck.countDocuments(query);
+
+    // 6. Highlight matching terms (optional - for frontend)
+    const results = decks.map(deck => ({
+      ...deck,
+      matchedTags: tags ? deck.tags.filter(tag => 
+        tags.split(',').some(searchTag => 
+          tag.toLowerCase().includes(searchTag.trim().toLowerCase())
+        )
+      ) : []
+    }));
+
+    res.json({
+      success: true,
+      count: results.length,
+      data: {
+        decks: results,
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total,
+          pages: Math.ceil(total / parseInt(limit))
+        },
+        searchQuery: {
+          keyword,
+          tags: tags ? tags.split(',').map(t => t.trim()) : [],
+          filters: {
+            category,
+            level,
+            difficulty,
+            minCards,
+            maxCards,
+            minRating
+          },
+          sort
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('[ERROR] Search decks:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi khi tìm kiếm bộ thẻ',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Get search suggestions (autocomplete)
+// @route   GET /api/decks/search/suggestions
+// @access  Public
+exports.getSearchSuggestions = async (req, res) => {
+  try {
+    const { q, limit = 10 } = req.query;
+
+    if (!q || q.length < 2) {
+      return res.json({
+        success: true,
+        data: {
+          titles: [],
+          tags: [],
+          categories: []
+        }
+      });
+    }
+
+    const regex = { $regex: q.trim(), $options: 'i' };
+    const queryLimit = parseInt(limit);
+
+    // 1. Tìm deck titles khớp
+    const titleMatches = await Deck.find({
+      isPublic: true,
+      title: regex
+    })
+      .select('title category')
+      .limit(queryLimit)
+      .lean();
+
+    // 2. Tìm tags khớp
+    const tagMatches = await Deck.aggregate([
+      { $match: { isPublic: true } },
+      { $unwind: '$tags' },
+      { $match: { tags: regex } },
+      { $group: { _id: '$tags', count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: queryLimit }
+    ]);
+
+    // 3. Categories
+    const categories = [
+      'ACADEMIC', 'TRAVEL', 'BUSINESS', 'DAILY_LIFE',
+      'TECHNOLOGY', 'HEALTH', 'ENTERTAINMENT', 'FOOD', 'GENERAL'
+    ].filter(cat => cat.toLowerCase().includes(q.toLowerCase()));
+
+    res.json({
+      success: true,
+      data: {
+        titles: titleMatches.map(d => ({
+          id: d._id,
+          title: d.title,
+          category: d.category
+        })),
+        tags: tagMatches.map(t => ({
+          tag: t._id,
+          count: t.count
+        })),
+        categories: categories.map(cat => ({
+          category: cat,
+          displayName: cat.replace('_', ' ')
+        }))
+      }
+    });
+
+  } catch (error) {
+    console.error('[ERROR] Get suggestions:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi khi lấy gợi ý tìm kiếm',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Get all tags with counts (for tag cloud/filter)
+// @route   GET /api/decks/tags
+// @access  Public
+exports.getAllTags = async (req, res) => {
+  try {
+    const { category, minCount = 1, limit = 50 } = req.query;
+
+    const matchStage = { isPublic: true };
+    if (category) {
+      matchStage.category = category.toUpperCase();
+    }
+
+    const tags = await Deck.aggregate([
+      { $match: matchStage },
+      { $unwind: '$tags' },
+      {
+        $group: {
+          _id: '$tags',
+          count: { $sum: 1 },
+          categories: { $addToSet: '$category' }
+        }
+      },
+      { $match: { count: { $gte: parseInt(minCount) } } },
+      { $sort: { count: -1 } },
+      { $limit: parseInt(limit) }
+    ]);
+
+    res.json({
+      success: true,
+      count: tags.length,
+      data: tags.map(tag => ({
+        tag: tag._id,
+        deckCount: tag.count,
+        categories: tag.categories
+      }))
+    });
+
+  } catch (error) {
+    console.error('[ERROR] Get all tags:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi khi lấy danh sách tags',
+      error: error.message
+    });
+  }
+};
 
 // @desc    Browse & Filter Decks (giống Duolingo)
 // @route   GET /api/decks/browse
