@@ -4,6 +4,74 @@ const User = require('../models/User');
 
 /**
  * ==========================================
+ * ADMIN ENDPOINTS - Tạo/Sửa/Xóa Nhiệm Vụ
+ * ==========================================
+ * 
+ * 1) Tạo nhiệm vụ
+ * POST /api/missions
+ * Headers: Authorization: Bearer {admin_token}
+ * Body ví dụ:
+ * {
+ *   "title": "Hoàn thành 5 bài học",
+ *   "description": "Học siêng năng mỗi ngày",
+ *   "type": "daily", // daily | weekly | achievement
+ *   "requirement": { "type": "lesson_complete", "count": 5 },
+ *   "rewards": { "xp": 100, "gems": 50, "hearts": 1 },
+ *   "isActive": true,
+ *   "expiresAt": null
+ * }
+ */
+exports.createMission = async (req, res) => {
+  try {
+    const payload = req.body;
+    const mission = await Mission.create(payload);
+    return res.status(201).json({ success: true, mission });
+  } catch (error) {
+    console.error('Lỗi khi tạo nhiệm vụ:', error);
+    return res.status(400).json({ success: false, message: 'Không thể tạo nhiệm vụ', error: error.message });
+  }
+};
+
+/**
+ * 2) Cập nhật nhiệm vụ
+ * PUT /api/missions/:id
+ * Headers: Authorization: Bearer {admin_token}
+ */
+exports.updateMissionAdmin = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const payload = req.body;
+    const mission = await Mission.findByIdAndUpdate(id, payload, { new: true, runValidators: true });
+    if (!mission) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy nhiệm vụ' });
+    }
+    return res.status(200).json({ success: true, mission });
+  } catch (error) {
+    console.error('Lỗi khi cập nhật nhiệm vụ:', error);
+    return res.status(400).json({ success: false, message: 'Không thể cập nhật nhiệm vụ', error: error.message });
+  }
+};
+
+/**
+ * 3) Xóa nhiệm vụ
+ * DELETE /api/missions/:id
+ * Headers: Authorization: Bearer {admin_token}
+ */
+exports.deleteMission = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const mission = await Mission.findById(id);
+    if (!mission) return res.status(404).json({ success: false, message: 'Không tìm thấy nhiệm vụ' });
+    await mission.deleteOne();
+    return res.status(200).json({ success: true, message: 'Đã xóa nhiệm vụ' });
+  } catch (error) {
+    console.error('Lỗi khi xóa nhiệm vụ:', error);
+    return res.status(500).json({ success: false, message: 'Không thể xóa nhiệm vụ' });
+  }
+};
+
+/**
+ * ==========================================
  * TASK 13: MISSION SYSTEM - Quản lý nhiệm vụ
  * ==========================================
  * 
