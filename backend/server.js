@@ -36,6 +36,7 @@ const shopRoutes = require('./src/routes/shopRoutes');
 const practiceRoutes = require('./src/routes/practiceRoutes');
 const grammarQuizRoutes = require('./src/routes/grammarQuizRoutes');
 const analyticsRoutes = require('./src/routes/analyticsRoutes');
+const friendsRoutes = require('./src/routes/friendsRoutes');
 const roadmapRoutes = require('./src/routes/roadmapRoutes');
 const scheduleRoutes = require('./src/routes/scheduleRoutes');
 const calendarRoutes = require('./src/routes/calendarRoutes');
@@ -108,6 +109,7 @@ app.use('/api/shop', shopRoutes);
 app.use('/api/practice', practiceRoutes); // Task 16: Practice - Collocation/Phrasal Verbs/Word Family
 app.use('/api/grammar-quiz', grammarQuizRoutes); // Task 17: Grammar Quiz gắn với flashcard
 app.use('/api/analytics', analyticsRoutes); // Task 18/19: Error analysis & recommendations
+app.use('/api/friends', friendsRoutes); // Task 22: Friends/Social
 app.use('/api/roadmap', roadmapRoutes); // Task 20: Lộ trình theo mục tiêu
 app.use('/api/schedule', scheduleRoutes); // Task 21: Lịch học tuần/tháng
 app.use('/api/calendar', calendarRoutes); // Task 21: Đồng bộ Google Calendar (stub)

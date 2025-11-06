@@ -1379,3 +1379,60 @@ Response: `{ success, syncedEvents, calendar }`
 
 **Chúc bạn test thành công! 🎉**
 
+---
+
+## 👥 TASK 22: Friends/Social - Follow & Feed
+
+### Follow người dùng
+Endpoint: `POST /api/friends/follow`
+
+Headers:
+```
+Authorization: Bearer {token}
+Content-Type: application/json
+```
+
+Body:
+```json
+{ "userId": "TARGET_USER_ID" }
+```
+
+### Unfollow
+Endpoint: `DELETE /api/friends/unfollow/:userId`
+
+### Danh sách đang theo dõi
+Endpoint: `GET /api/friends/following`
+
+### Danh sách theo dõi tôi
+Endpoint: `GET /api/friends/followers`
+
+### Feed tiến độ bạn bè (7 ngày gần nhất)
+Endpoint: `GET /api/friends/feed`
+
+Response mẫu:
+```json
+{
+  "success": true,
+  "feed": [
+    {
+      "user": { "_id": "...", "name": "Alice" },
+      "deck": { "_id": "...", "title": "IELTS B1" },
+      "studyMode": "FLIP",
+      "sessionType": "LEARN_NEW",
+      "score": 85,
+      "xpEarned": 30,
+      "startTime": "2025-01-15T10:00:00.000Z"
+    }
+  ]
+}
+```
+
+### Gửi lời chúc mừng
+Endpoint: `POST /api/friends/congrats`
+
+Body:
+```json
+{ "userId": "TARGET_USER_ID", "message": "Quá đỉnh!" }
+```
+
+
