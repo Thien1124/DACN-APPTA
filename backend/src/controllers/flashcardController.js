@@ -117,6 +117,14 @@ exports.createBulkFlashcards = async (req, res) => {
     // Tạo nhiều flashcard cùng lúc
     const createdFlashcards = await Flashcard.insertMany(flashcardsWithDeck);
     
+     await Deck.findByIdAndUpdate(deckId, {
+      $push: {
+        flashcards: {
+          $each: createdFlashcards.map(f => f._id)
+        }
+      }
+    });
+    
     res.status(201).json({
       success: true,
       count: createdFlashcards.length,

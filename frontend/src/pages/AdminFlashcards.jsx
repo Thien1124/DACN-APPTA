@@ -358,7 +358,7 @@ const AdminFlashcards = () => {
                   {flashcard.back}
                 </CardBack>
                 <CardInfo theme={theme}>
-                  Deck: {flashcard.deck?.name || 'N/A'}
+                  Deck: {flashcard.deck?.title || flashcard.deck?.name || 'N/A'}
                 </CardInfo>
                 <ActionButtons>
                   <ActionButton variant="edit" onClick={() => handleEdit(flashcard._id)}>

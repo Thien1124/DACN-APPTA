@@ -210,6 +210,7 @@ const Modal = styled.div`
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  padding: 1rem; // Add padding for small screens
 `;
 
 const ModalContent = styled.div`
@@ -218,13 +219,21 @@ const ModalContent = styled.div`
     : 'rgba(255, 255, 255, 0.98)'
   };
   backdrop-filter: blur(16px);
-  padding: 2.5rem;
-  border-radius: 24px;
+  padding: 2rem; // Reduce padding
+  border-radius: 20px;
   width: 100%;
-  max-width: 550px;
+  max-width: 600px; // Reduce from 700px to 600px
+  max-height: 90vh; // Add max height
+  overflow-y: auto; // Add scroll if content is too long
   position: relative;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   animation: modalFadeIn 0.3s ease;
+
+  @media (max-width: 640px) {
+    padding: 1.5rem;
+    max-width: 95vw; // Responsive on small screens
+    margin: 0 0.5rem;
+  }
 
   @keyframes modalFadeIn {
     from {
@@ -363,7 +372,12 @@ const GoalCard = styled.div`
     box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
   }
 `;
-
+const HelpText = styled.p`
+  font-size: 0.875rem;
+  color: ${props => props.theme === 'dark' ? '#9ca3af' : '#6b7280'};
+  margin-top: -1rem;
+  margin-bottom: 1rem;
+`;
 const ToastWrapper = styled.div`
   position: fixed;
   top: 20px;
@@ -424,10 +438,15 @@ const LearningGoals = () => {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    type: 'TEST',
+    type: 'POMODORO', // Default to POMODORO
     skill: 'READING',
-    target: 10,
-    deadline: ''
+    target: 4, // Default to 4 Pomodoro sessions
+    deadline: '', // ✅ Không set deadline mặc định
+    // New Pomodoro fields
+    workDuration: 25,
+    shortBreakDuration: 5,
+    longBreakInterval: 4,
+    longBreakDuration: 15
   });
 
   useEffect(() => {
@@ -459,10 +478,15 @@ const LearningGoals = () => {
     setFormData({
       title: '',
       description: '',
-      type: 'TEST',
+      type: 'POMODORO', // Default to POMODORO
       skill: 'READING',
-      target: 10,
-      deadline: ''
+      target: 4, // Default to 4 Pomodoro sessions
+      deadline: '', // ✅ Không set deadline mặc định
+      // New Pomodoro fields
+      workDuration: 25,
+      shortBreakDuration: 5,
+      longBreakInterval: 4,
+      longBreakDuration: 15
     });
     setEditingGoal(null);
   };
@@ -478,20 +502,28 @@ const LearningGoals = () => {
 
   const handleEditGoal = (goal) => {
     try {
-      setEditingGoal(goal); // Store the entire goal object
+      setEditingGoal(goal);
     
-      // Format the deadline date properly
-      const deadlineDate = goal.deadline ? new Date(goal.deadline) : new Date();
-      const formattedDate = deadlineDate.toISOString().split('T')[0];
-
+      // ✅ Chỉ set deadline nếu không phải POMODORO
+      let deadlineValue = '';
+      if (goal.type !== 'POMODORO' && goal.deadline) {
+        const deadlineDate = new Date(goal.deadline);
+        deadlineValue = deadlineDate.toISOString().split('T')[0];
+      }
+      
       setFormData({
         title: goal.title || '',
         description: goal.description || '',
-        type: goal.type || 'TEST',
+        type: goal.type || 'POMODORO',
         skill: goal.skill || 'READING',
-        target: goal.target || 10,
-        deadline: formattedDate,
-        current: goal.current || 0 // Add current progress if needed
+        target: goal.target || 4,
+        deadline: deadlineValue, // ✅ Chỉ set nếu không phải POMODORO
+        current: goal.current || 0,
+        // Add Pomodoro fields with defaults if not present
+        workDuration: goal.workDuration || 25,
+        shortBreakDuration: goal.shortBreakDuration || 5,
+        longBreakInterval: goal.longBreakInterval || 4,
+        longBreakDuration: goal.longBreakDuration || 15
       });
       setShowModal(true);
     } catch (error) {
@@ -604,8 +636,8 @@ const LearningGoals = () => {
                 <GoalsList>
                   {goals.map(goal => {
                     const progress = (goal.current / goal.target) * 100;
-                    const daysLeft = calculateDaysLeft(goal.deadline);
-                    const status = daysLeft <= 15 ? 'danger' : 'success';
+                    const daysLeft = goal.type === 'POMODORO' ? 0 : calculateDaysLeft(goal.deadline);
+                    const status = goal.type === 'POMODORO' ? 'success' : (daysLeft <= 15 ? 'danger' : 'success');
 
                     return (
                       <GoalCard key={goal._id} theme={theme}>
@@ -626,9 +658,13 @@ const LearningGoals = () => {
                           </GoalActions>
                         </GoalHeader>
 
+                        {/* ✅ Cải thiện hiển thị deadline/status */}
                         <AlertBadge status={status}>
                           <AccessTime fontSize="small" />
-                          {daysLeft} ngày còn lại
+                          {goal.type === 'POMODORO' 
+                            ? 'Hoàn thành trong ngày' 
+                            : `${daysLeft} ngày còn lại`
+                          }
                         </AlertBadge>
 
                         <ProgressBar theme={theme}>
@@ -651,6 +687,25 @@ const LearningGoals = () => {
                             </StatItem>
                           )}
                           
+                          {/* ✅ Thêm thông tin Pomodoro nếu là POMODORO goal */}
+                          {goal.type === 'POMODORO' && (
+                            <StatItem theme={theme}>
+                              <StatValue theme={theme}>
+                                {goal.workDuration}min/{goal.shortBreakDuration}min
+                              </StatValue>
+                              <StatLabel theme={theme}>Làm việc/Nghỉ</StatLabel>
+                            </StatItem>
+                          )}
+                          
+                          {/* ✅ Thêm deadline cho non-POMODORO goals */}
+                          {goal.type !== 'POMODORO' && goal.deadline && (
+                            <StatItem theme={theme}>
+                              <StatValue theme={theme}>
+                                {new Date(goal.deadline).toLocaleDateString('vi-VN')}
+                              </StatValue>
+                              <StatLabel theme={theme}>Hạn hoàn thành</StatLabel>
+                            </StatItem>
+                          )}
                         </GoalStats>
                       </GoalCard>
                     );
@@ -672,7 +727,7 @@ const LearningGoals = () => {
       {showModal && (
         <Modal onClick={handleModalClose}>
           <ModalContent theme={theme} onClick={e => e.stopPropagation()}>
-            <PageTitle theme={theme}>
+            <PageTitle theme={theme} style={{ marginBottom: '1.5rem' }}>
               {editingGoal ? 'Chỉnh sửa mục tiêu' : 'Thêm mục tiêu mới'}
             </PageTitle>
 
@@ -685,7 +740,7 @@ const LearningGoals = () => {
                   name="title"
                   value={formData.title}
                   onChange={handleChange}
-                  placeholder="VD: Hoàn thành 10 bài test IELTS"
+                  placeholder="VD: Hoàn thành 4 phiên học Reading"
                   required
                 />
               </FormGroup>
@@ -698,10 +753,11 @@ const LearningGoals = () => {
                   name="description"
                   value={formData.description}
                   onChange={handleChange}
-                  placeholder="VD: Luyện tập 10 bài test Reading trong tháng này"
+                  placeholder="VD: Tập trung học Reading với phương pháp Pomodoro"
                 />
               </FormGroup>
 
+              {/* ✅ Thêm field chọn Type */}
               <FormGroup>
                 <Label theme={theme}>Loại mục tiêu</Label>
                 <Select
@@ -711,16 +767,16 @@ const LearningGoals = () => {
                   onChange={handleChange}
                   required
                 >
+                  <option value="POMODORO">Pomodoro</option>
+                  <option value="SCORE">Điểm số</option>
+                  <option value="CHAPTER">Chương học</option>
                   <option value="TEST">Bài kiểm tra</option>
                   <option value="LESSON">Bài học</option>
-                  <option value="CHAPTER">Chương học</option>
-                  <option value="SCORE">Điểm số</option>
-                  <option value="VOCAB">Từ vựng</option>
                 </Select>
               </FormGroup>
 
               <FormGroup>
-                <Label theme={theme}>Kỹ năng</Label>
+                <Label theme={theme}>Kỹ năng cần tập trung</Label>
                 <Select
                   theme={theme}
                   name="skill"
@@ -732,33 +788,202 @@ const LearningGoals = () => {
                   <option value="LISTENING">Listening</option>
                   <option value="WRITING">Writing</option>
                   <option value="SPEAKING">Speaking</option>
+                  <option value="VOCABULARY">Vocabulary</option>
+                  <option value="GRAMMAR">Grammar</option>
+                  <option value="MIXED">Mixed</option>
                 </Select>
               </FormGroup>
 
-              <FormGroup>
-                <Label theme={theme}>Mục tiêu</Label>
-                <Input
-                  theme={theme}
-                  type="number"
-                  name="target"
-                  value={formData.target}
-                  onChange={handleChange}
-                  min="1"
-                  required
-                />
-              </FormGroup>
+              {/* ✅ Chỉ hiển thị target cho POMODORO */}
+              {formData.type === 'POMODORO' && (
+                <FormGroup>
+                  <Label theme={theme}>
+                    Số phiên mục tiêu
+                    <span style={{ 
+                      display: 'block', 
+                      fontSize: '0.8rem', 
+                      fontWeight: 'normal',
+                      color: theme === 'dark' ? '#9ca3af' : '#6b7280',
+                      marginTop: '0.25rem'
+                    }}>
+                      Mỗi phiên = {formData.workDuration} phút làm việc + {formData.shortBreakDuration} phút nghỉ
+                    </span>
+                  </Label>
+                  <Input
+                    theme={theme}
+                    type="number"
+                    name="target"
+                    value={formData.target}
+                    onChange={handleChange}
+                    min="1"
+                    max="20"
+                    placeholder="VD: 4"
+                    required
+                  />
+                  <div style={{ 
+                    fontSize: '0.8rem', 
+                    color: theme === 'dark' ? '#9ca3af' : '#6b7280',
+                    marginTop: '0.25rem'
+                  }}>
+                    Với cài đặt hiện tại, bạn cần {formData.target} phiên × {formData.workDuration} phút = {formData.target * formData.workDuration} phút học tập
+                  </div>
+                </FormGroup>
+              )}
 
-              <FormGroup>
-                <Label theme={theme}>Hạn hoàn thành</Label>
-                <Input
-                  theme={theme}
-                  type="date"
-                  name="deadline"
-                  value={formData.deadline}
-                  onChange={handleChange}
-                  required
-                />
-              </FormGroup>
+              {/* ✅ Chỉ hiển thị target cho các type khác */}
+              {formData.type !== 'POMODORO' && (
+                <FormGroup>
+                  <Label theme={theme}>
+                    {formData.type === 'SCORE' && 'Điểm số mục tiêu'}
+                    {formData.type === 'CHAPTER' && 'Số chương mục tiêu'}
+                    {formData.type === 'TEST' && 'Số bài kiểm tra mục tiêu'}
+                    {formData.type === 'LESSON' && 'Số bài học mục tiêu'}
+                  </Label>
+                  <Input
+                    theme={theme}
+                    type="number"
+                    name="target"
+                    value={formData.target}
+                    onChange={handleChange}
+                    min="1"
+                    placeholder={
+                      formData.type === 'SCORE' ? 'VD: 80' :
+                      formData.type === 'CHAPTER' ? 'VD: 5' :
+                      formData.type === 'TEST' ? 'VD: 3' : 'VD: 10'
+                    }
+                    required
+                  />
+                </FormGroup>
+              )}
+
+              {/* ✅ Chỉ hiển thị Pomodoro Settings khi type = POMODORO */}
+              {formData.type === 'POMODORO' && (
+                <div style={{ 
+                  border: `2px solid ${theme === 'dark' ? '#667eea' : '#58CC02'}`, 
+                  borderRadius: '12px', 
+                  padding: '1.25rem',
+                  marginBottom: '1.5rem',
+                  background: theme === 'dark' 
+                    ? 'linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)'
+                    : 'linear-gradient(135deg, rgba(88, 204, 2, 0.05) 0%, rgba(69, 163, 2, 0.05) 100%)'
+                }}>
+                  <Label theme={theme} style={{ 
+                    marginBottom: '0.75rem', 
+                    display: 'block', 
+                    fontWeight: 'bold',
+                    fontSize: '1rem'
+                  }}>
+                    Cài đặt Pomodoro
+                  </Label>
+                  <p style={{ 
+                    fontSize: '0.85rem',
+                    color: theme === 'dark' ? '#9ca3af' : '#6b7280',
+                    marginBottom: '1rem',
+                    lineHeight: '1.4'
+                  }}>
+                    <strong>{formData.workDuration} phút</strong> làm việc → 
+                    <strong>{formData.shortBreakDuration} phút</strong> nghỉ → 
+                    Sau <strong>{formData.longBreakInterval} phiên</strong> → 
+                    <strong>{formData.longBreakDuration} phút</strong> nghỉ dài
+                  </p>
+
+                  <div style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+                    gap: '0.75rem'
+                  }}>
+                    <FormGroup style={{ marginBottom: '0' }}>
+                      <Label theme={theme} style={{ fontSize: '0.8rem', fontWeight: '600' }}>Làm việc</Label>
+                      <Input
+                        theme={theme}
+                        type="number"
+                        name="workDuration"
+                        value={formData.workDuration}
+                        onChange={handleChange}
+                        min="15"
+                        max="60"
+                        placeholder="25"
+                        required
+                        style={{ padding: '0.5rem' }}
+                      />
+                      <span style={{ fontSize: '0.7rem', color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}>phút</span>
+                    </FormGroup>
+
+                    <FormGroup style={{ marginBottom: '0' }}>
+                      <Label theme={theme} style={{ fontSize: '0.8rem', fontWeight: '600' }}>Nghỉ ngắn</Label>
+                      <Input
+                        theme={theme}
+                        type="number"
+                        name="shortBreakDuration"
+                        value={formData.shortBreakDuration}
+                        onChange={handleChange}
+                        min="3"
+                        max="15"
+                        placeholder="5"
+                        required
+                        style={{ padding: '0.5rem' }}
+                      />
+                      <span style={{ fontSize: '0.7rem', color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}>phút</span>
+                    </FormGroup>
+
+                    <FormGroup style={{ marginBottom: '0' }}>
+                      <Label theme={theme} style={{ fontSize: '0.8rem', fontWeight: '600' }}>Sau mỗi</Label>
+                      <Input
+                        theme={theme}
+                        type="number"
+                        name="longBreakInterval"
+                        value={formData.longBreakInterval}
+                        onChange={handleChange}
+                        min="2"
+                        max="8"
+                        placeholder="4"
+                        required
+                        style={{ padding: '0.5rem' }}
+                      />
+                      <span style={{ fontSize: '0.7rem', color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}>phiên</span>
+                    </FormGroup>
+
+                    <FormGroup style={{ marginBottom: '0' }}>
+                      <Label theme={theme} style={{ fontSize: '0.8rem', fontWeight: '600' }}>Nghỉ dài</Label>
+                      <Input
+                        theme={theme}
+                        type="number"
+                        name="longBreakDuration"
+                        value={formData.longBreakDuration}
+                        onChange={handleChange}
+                        min="10"
+                        max="30"
+                        placeholder="15"
+                        required
+                        style={{ padding: '0.5rem' }}
+                      />
+                      <span style={{ fontSize: '0.7rem', color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}>phút</span>
+                    </FormGroup>
+                  </div>
+                </div>
+              )}
+
+              {/* ✅ Chỉ hiển thị deadline khi không phải POMODORO */}
+              {formData.type !== 'POMODORO' && (
+                <FormGroup>
+                  <Label theme={theme}>Hạn hoàn thành</Label>
+                  <Input
+                    theme={theme}
+                    type="date"
+                    name="deadline"
+                    value={formData.deadline}
+                    onChange={handleChange}
+                    required
+                  />
+                </FormGroup>
+              )}
+
+              {/* ✅ Hiển thị help text cho POMODORO */}
+              {formData.type === 'POMODORO' && (
+                <HelpText theme={theme}>
+                  Mục tiêu Pomodoro hoàn thành trong ngày hôm nay
+                </HelpText>
+              )}
 
               <ButtonGroup>
                 <Button 
@@ -774,7 +999,7 @@ const LearningGoals = () => {
                   variant="primary"
                   disabled={loading}
                 >
-                  {loading ? 'Đang xử lý...' : (editingGoal ? 'Cập nhật' : 'Tạo mới')}
+                  {loading ? 'Đang xử lý...' : (editingGoal ? 'Cập nhật' : 'Tạo mục tiêu')}
                 </Button>
               </ButtonGroup>
             </form>

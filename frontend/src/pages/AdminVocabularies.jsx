@@ -403,7 +403,6 @@ const AdminVocabularies = () => {
             <thead>
               <tr>
                 <Th theme={theme}>Từ vựng</Th>
-                <Th theme={theme}>Loại từ</Th>
                 <Th theme={theme}>Bài học</Th>
                 <Th theme={theme}>Ví dụ</Th>
                 <Th theme={theme}>Hành động</Th>

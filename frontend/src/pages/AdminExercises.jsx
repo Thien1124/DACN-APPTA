@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import AdminLayout from '../layouts/AdminLayout';
@@ -15,7 +15,9 @@ import {
   Delete,
   MenuBook,
   Star,
-  School
+  School,
+  CloudUpload,
+  Download
 } from '@mui/icons-material';
 
 // ========== STYLED COMPONENTS ==========
@@ -56,6 +58,25 @@ const CreateButton = styled.button`
   &:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 16px rgba(88, 204, 2, 0.3);
+  }
+`;
+
+const UploadButton = styled.button`
+  background: #f59e0b;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(245, 158, 11, 0.3);
   }
 `;
 
@@ -215,6 +236,10 @@ const EmptyState = styled.div`
   color: ${props => props.theme === 'dark' ? '#9ca3af' : '#6b7280'};
 `;
 
+const HiddenFileInput = styled.input`
+  display: none;
+`;
+
 // ========== COMPONENT ==========
 
 const AdminExercises = () => {
@@ -227,6 +252,8 @@ const AdminExercises = () => {
   const [typeFilter, setTypeFilter] = useState('all');
   const [lessonFilter, setLessonFilter] = useState('all');
   const [difficultyFilter, setDifficultyFilter] = useState('all');
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     fetchLessons();
@@ -317,6 +344,94 @@ const AdminExercises = () => {
     }
   };
 
+
+const handleDownloadTemplate = async () => {
+  try {
+    const response = await adminService.exercises.downloadTemplate();
+    
+    // ✅ Xử lý blob response
+    const blob = new Blob([response], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'exercise_template.xlsx';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+    
+    showToast('success', 'Thành công', 'Đã tải template Excel');
+  } catch (error) {
+    console.error('Error downloading template:', error);
+    showToast('error', 'Lỗi', error.response?.data?.message || 'Không thể tải template');
+  }
+};
+
+  const handleFileSelect = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      handleImportExcel(file);
+    }
+  };
+
+  const handleImportExcel = async (file) => {
+    // Validate file type
+    const validTypes = [
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.ms-excel'
+    ];
+    
+    if (!validTypes.includes(file.type)) {
+      showToast('error', 'Lỗi', 'Vui lòng chọn file Excel (.xlsx hoặc .xls)');
+      return;
+    }
+
+    try {
+      setUploading(true);
+      
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const response = await adminService.exercises.importFromExcel(formData);
+      
+      if (response.data.errors && response.data.errors.length > 0) {
+        // Show detailed errors
+        const errorList = response.data.errors.slice(0, 5).join('<br>');
+        const moreErrors = response.data.errors.length > 5 
+          ? `<br>... và ${response.data.errors.length - 5} lỗi khác`
+          : '';
+        
+        Swal.fire({
+          icon: 'warning',
+          title: 'Import hoàn tất với lỗi',
+          html: `
+            <p><strong>Thành công:</strong> ${response.data.created} bài tập</p>
+            <p><strong>Thất bại:</strong> ${response.data.failed} bài tập</p>
+            <hr>
+            <div style="text-align: left; font-size: 0.875rem; max-height: 200px; overflow-y: auto;">
+              ${errorList}${moreErrors}
+            </div>
+          `,
+          confirmButtonColor: '#58CC02'
+        });
+      } else {
+        showToast('success', 'Thành công', `Đã import ${response.data.created} bài tập`);
+      }
+      
+      fetchExercises();
+    } catch (error) {
+      console.error('Error importing Excel:', error);
+      showToast('error', 'Lỗi', error.response?.data?.message || 'Không thể import file Excel');
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
   const getTypeLabel = (type) => {
     const labels = {
       'multiple-choice': 'Trắc nghiệm',
@@ -355,6 +470,27 @@ const AdminExercises = () => {
             <FileCopy />
             Tạo hàng loạt
           </CreateButton>
+          
+          {/* ✅ NEW: Import/Export buttons */}
+          <UploadButton onClick={handleDownloadTemplate}>
+            <Download />
+            Tải Template
+          </UploadButton>
+          
+          <UploadButton 
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+          >
+            <CloudUpload />
+            {uploading ? 'Đang import...' : 'Import Excel'}
+          </UploadButton>
+          
+          <HiddenFileInput
+            ref={fileInputRef}
+            type="file"
+            accept=".xlsx,.xls"
+            onChange={handleFileSelect}
+          />
         </ButtonGroup>
       </PageHeader>
 

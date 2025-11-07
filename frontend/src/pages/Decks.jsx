@@ -15,14 +15,23 @@ import {
   Edit,
   Delete,
   RateReview,
-  Public, // ← Icon công khai
-  Lock, // ← Icon ẩn
-  Visibility, // ← Alternative
-  VisibilityOff,
+  Public,
+  Lock,
+  ContentCopy,
+  Share,
+  GetApp,
+  Archive,
+  Favorite,
+  FavoriteBorder,
+  Notifications,
+  NotificationsOff,
+  Whatshot, // Thêm cho tab Thịnh hành
 } from "@mui/icons-material";
 import BeachAccessIcon from "@mui/icons-material/BeachAccess";
 import { useToast } from "../hooks/useToast";
 import { deckService } from "../services/deckService";
+import { deckPreviewService } from "../services/deckPreviewService";
+import { deckManagementService } from "../services/deckManagementService";
 import { geminiService } from "../services/geminiService";
 
 // Update PageWrapper and add FormWrapper
@@ -47,7 +56,7 @@ const PublicBadge = styled.div`
   font-size: 0.75rem;
   font-weight: 600;
   background: ${(props) =>
-    props.isPublic
+    props.$isPublic
       ? "linear-gradient(135deg, #58CC02 0%, #45a302 100%)"
       : "linear-gradient(135deg, #6b7280 0%, #4b5563 100%)"};
   color: white;
@@ -96,7 +105,7 @@ const ToggleButton = styled.button`
   font-size: 0.8rem;
   cursor: pointer;
   background: ${(props) =>
-    props.isPublic
+    props.$isPublic
       ? "linear-gradient(135deg, #10b981 0%, #059669 100%)"
       : "linear-gradient(135deg, #6b7280 0%, #4b5563 100%)"};
   color: white;
@@ -174,21 +183,21 @@ const TopicCard = styled.div`
   padding: 1.25rem;
   cursor: pointer;
   transition: all 0.3s ease;
-  border: 2px solid ${(props) => (props.isPublic ? "#58CC02" : "#e5e7eb")}; // ← Thêm border khác màu
+  border: 2px solid ${(props) => (props.$isPublic ? "#58CC02" : "#e5e7eb")};
   display: flex;
   flex-direction: column;
   height: fit-content;
   min-height: 180px;
   max-width: 100%;
-  position: relative; // ← Thêm để đặt badge
+  position: relative;
 
   /* Thêm hiệu ứng cho deck riêng tư */
-  opacity: ${(props) => (props.isPublic ? 1 : 0.85)};
+  opacity: ${(props) => (props.$isPublic ? 1 : 0.85)};
 
   &:hover {
     transform: translateY(-4px);
     border-color: #58cc02;
-    box-shadow: 0 8px 24px rgba(88, 204, 2, 0.15);
+    box-shadow: 0 8px 24px rgba(88,204,2,0.15);
   }
 `;
 
@@ -305,6 +314,24 @@ const Form = styled.form`
   gap: 1rem;
 `;
 
+// Add styled checkbox
+const CheckboxContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+`;
+
+const Checkbox = styled.input`
+  width: 18px;
+  height: 18px;
+  accent-color: #58CC02;
+`;
+
+const CheckboxLabel = styled.label`
+  font-size: 0.875rem;
+  color: ${(props) => (props.theme === "dark" ? "#f9fafb" : "#1f2937")};
+`;
+
 const Input = styled.input`
   padding: 0.75rem 1rem;
   border: 1px solid
@@ -390,7 +417,7 @@ const Decks = () => {
   const [loading, setLoading] = useState(true);
   const { showToast } = useToast();
   const [showModal, setShowModal] = useState(false);
-  const [editingDeck, setEditingDeck] = useState(null); // Add this line
+  const [editingDeck, setEditingDeck] = useState(null);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -401,6 +428,16 @@ const Decks = () => {
     isPublic: true,
     imageUrl: "/images/default-deck.png",
   });
+
+  // ========== NEW STATE ==========
+  const [publicDecks, setPublicDecks] = useState([]);
+  const [trendingDecks, setTrendingDecks] = useState([]);
+  const [favoriteDecks, setFavoriteDecks] = useState([]);
+  const [subscribedDecks, setSubscribedDecks] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeTab, setActiveTab] = useState("my-decks"); // my-decks, public, trending, favorites, subscribed
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   // Update fetchTopics to use getMyDecks
   const fetchTopics = async () => {
@@ -420,9 +457,201 @@ const Decks = () => {
     }
   };
 
+  // ========== NEW FETCH FUNCTIONS ==========
+
+  // Fetch public decks
+  const fetchPublicDecks = async (page = 1) => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      showToast("warning", "Cần đăng nhập", "Vui lòng đăng nhập để xem bộ thẻ công khai");
+      setPublicDecks([]);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const res = await deckService.getPublicDecks(page, 20);
+      console.log("fetchPublicDecks response:", res);
+
+      const payload = res?.data ?? res;
+      const maybeArray =
+        Array.isArray(payload) ? payload :
+        Array.isArray(payload?.items) ? payload.items :
+        Array.isArray(payload?.decks) ? payload.decks :
+        Array.isArray(res) ? res : [];
+
+      const decks = maybeArray;
+
+      const publicOnly = decks.filter((d) => {
+        if (typeof d.isPublic === "boolean") return d.isPublic;
+        if (typeof d.isPublic === "string") return d.isPublic === "true" || d.isPublic === "1";
+        return true;
+      });
+
+      console.log("Normalized public decks:", publicOnly);
+
+      setPublicDecks(publicOnly);
+      setTotalPages(
+        payload?.pagination?.totalPages ??
+        payload?.totalPages ??
+        res?.pagination?.totalPages ??
+        1
+      );
+      setCurrentPage(page);
+    } catch (error) {
+      console.error("Fetch public decks error:", error);
+      if (error.response?.status === 403) {
+        showToast("warning", "Cần đăng nhập", "Vui lòng đăng nhập để xem bộ thẻ công khai");
+        setPublicDecks([]);
+      } else {
+        showToast("error", "Lỗi", "Không thể tải bộ thẻ công khai");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch trending decks
+  const fetchTrendingDecks = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      showToast("warning", "Cần đăng nhập", "Vui lòng đăng nhập để xem bộ thẻ thịnh hành");
+      setTrendingDecks([]);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await deckService.getTrendingDecks(20);
+      if (response.success) {
+        setTrendingDecks(response.data);
+      }
+    } catch (error) {
+      console.error("Fetch trending decks error:", error);
+      if (error.response?.status === 403) {
+        showToast("warning", "Cần đăng nhập", "Vui lòng đăng nhập để xem bộ thẻ thịnh hành");
+        setTrendingDecks([]);
+      } else {
+        showToast("error", "Lỗi", "Không thể tải bộ thẻ thịnh hành");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch favorite decks
+  const fetchFavoriteDecks = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      showToast("warning", "Cần đăng nhập", "Vui lòng đăng nhập để xem bộ thẻ yêu thích");
+      setFavoriteDecks([]);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await deckService.getFavoriteDecks();
+      if (response.success) {
+        setFavoriteDecks(response.data);
+      }
+    } catch (error) {
+      console.error("Fetch favorite decks error:", error);
+      if (error.response?.status === 403) {
+        showToast("warning", "Cần đăng nhập", "Vui lòng đăng nhập để xem bộ thẻ yêu thích");
+        setFavoriteDecks([]);
+      } else {
+        showToast("error", "Lỗi", "Không thể tải bộ thẻ yêu thích");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch subscribed decks
+  const fetchSubscribedDecks = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      showToast("warning", "Cần đăng nhập", "Vui lòng đăng nhập để xem bộ thẻ đã đăng ký");
+      setSubscribedDecks([]);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await deckService.getSubscribedDecks();
+      if (response.success) {
+        setSubscribedDecks(response.data);
+      }
+    } catch (error) {
+      console.error("Fetch subscribed decks error:", error);
+      if (error.response?.status === 403) {
+        showToast("warning", "Cần đăng nhập", "Vui lòng đăng nhập để xem bộ thẻ đã đăng ký");
+        setSubscribedDecks([]);
+      } else {
+        showToast("error", "Lỗi", "Không thể tải bộ thẻ đã đăng ký");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Search decks
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) {
+      showToast("warning", "Cảnh báo", "Vui lòng nhập từ khóa tìm kiếm");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await deckService.searchDecks(searchQuery);
+      if (response.success) {
+        setPublicDecks(response.data);
+        setActiveTab("public");
+      }
+    } catch (error) {
+      console.error("Search decks error:", error);
+      showToast("error", "Lỗi", "Không thể tìm kiếm bộ thẻ");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchTopics();
-  }, []); // Remove showToast from dependencies
+    // Fix: Remove API calls from initial useEffect to prevent 403 errors when not logged in
+    // fetchPublicDecks(1);
+    // fetchTrendingDecks();
+    // fetchFavoriteDecks();
+    // fetchSubscribedDecks();
+  }, []);
+
+  // Load data based on active tab
+  useEffect(() => {
+    switch (activeTab) {
+      case "my-decks":
+        fetchTopics();
+        break;
+      case "public":
+        fetchPublicDecks(1);
+        break;
+      case "trending":
+        fetchTrendingDecks();
+        break;
+      case "favorites":
+        fetchFavoriteDecks();
+        break;
+      case "subscribed":
+        fetchSubscribedDecks();
+        break;
+      default:
+        break;
+    }
+  }, [activeTab]);
 
   const handleTopicClick = (topicId) => {
     navigate(`/topics/${encodeURIComponent(topicId)}`);
@@ -499,23 +728,41 @@ const Decks = () => {
     }
   };
 
+  // Sửa handleGenerateAI để bỏ kiểm tra role
   const handleGenerateAI = async (deck) => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      showToast("warning", "Cần đăng nhập", "Vui lòng đăng nhập để sử dụng tính năng AI");
+      return;
+    }
+
     try {
-      showToast("info", "Đang xử lý", "🤖 AI đang tạo từ vựng...");
+      showToast("info", "Đang xử lý", "🤖 AI đang phân tích và tạo từ vựng...");
 
-      const result = await deckService.generateAIFlashcards(
-        deck._id,
-        deck.title
-      );
+      // Bước 1: Generate danh sách từ từ deck title
+      const words = generateWordsFromTitle(deck.title, 5); // Tạo 5 từ mặc định
 
-      if (result.success) {
-        showToast(
-          "success",
-          "Thành công",
-          `✅ Đã tạo ${result.data.length} từ vựng cho bộ "${deck.title}"`
-        );
-        fetchTopics(); // Refresh để cập nhật số lượng thẻ
+      // Bước 2: Dùng batchAnalyze để phân tích
+      const analyzeResult = await geminiService.batchAnalyze(words);
+
+      if (!analyzeResult.success) {
+        throw new Error(analyzeResult.message || 'Không thể phân tích từ vựng');
       }
+
+      // Bước 3: Dùng batchCreate để tạo flashcards
+      const createResult = await geminiService.batchCreate(deck._id, words);
+
+      if (!createResult.success) {
+        throw new Error(createResult.message || 'Không thể tạo flashcards');
+      }
+
+      showToast(
+        "success",
+        "Thành công",
+        `✅ Đã tạo ${createResult.data.length} flashcards cho bộ "${deck.title}"`
+      );
+      fetchTopics(); // Refresh để cập nhật số lượng thẻ
+
     } catch (error) {
       console.error("Generate AI error:", error);
       showToast(
@@ -525,6 +772,25 @@ const Decks = () => {
       );
     }
   };
+
+  // Helper: Generate danh sách từ từ deck title
+  const generateWordsFromTitle = (title, count = 5) => {
+    // Logic đơn giản: split title và lấy keywords
+    // Trong thực tế, có thể dùng AI để generate từ liên quan
+    
+    const commonWords = [
+      'beautiful', 'amazing', 'wonderful', 'fantastic', 'excellent',
+      'important', 'necessary', 'essential', 'crucial', 'vital',
+      'interesting', 'fascinating', 'exciting', 'thrilling', 'amusing',
+      'difficult', 'challenging', 'complex', 'complicated', 'hard',
+      'easy', 'simple', 'straightforward', 'clear', 'obvious'
+    ];
+
+    // Shuffle và lấy count từ
+    const shuffled = [...commonWords].sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, count);
+  };
+
   // Thêm sau hàm handleDelete
   const handleTogglePublic = async (deck) => {
     try {
@@ -574,6 +840,226 @@ const Decks = () => {
   const handleViewReviews = (deckId) => {
     navigate(`/decks/${deckId}/reviews`);
   };
+
+  // ========== DECK MANAGEMENT FUNCTIONS ==========
+
+  // Clone deck
+  const handleCloneDeck = async (deck) => {
+    try {
+      showToast("info", "Đang xử lý", "🔄 Đang sao chép bộ thẻ...");
+
+      const result = await deckManagementService.cloneDeck(deck._id);
+
+      if (result.success) {
+        showToast("success", "Thành công", `✅ Đã sao chép bộ thẻ "${result.data.title}"`);
+        fetchTopics(); // Refresh deck list
+      }
+    } catch (error) {
+      console.error("Clone deck error:", error);
+      showToast("error", "Lỗi", error.response?.data?.message || "Không thể sao chép bộ thẻ");
+    }
+  };
+
+  // Share deck
+  const handleShareDeck = async (deck) => {
+    try {
+      const shareSettings = {
+        allowClone: true,
+        allowDownload: true,
+        requireLogin: false,
+      };
+
+      const result = await deckManagementService.shareDeck(deck._id, shareSettings);
+
+      if (result.success) {
+        const shareUrl = `${window.location.origin}/decks/shared/${result.data.shareToken}`;
+
+        // Copy to clipboard
+        await navigator.clipboard.writeText(shareUrl);
+
+        showToast(
+          "success",
+          "Đã sao chép link",
+          "🔗 Link chia sẻ đã được sao chép vào clipboard"
+        );
+      }
+    } catch (error) {
+      console.error("Share deck error:", error);
+      showToast("error", "Lỗi", error.response?.data?.message || "Không thể chia sẻ bộ thẻ");
+    }
+  };
+
+  // Export deck
+  const handleExportDeck = async (deck, format = 'json') => {
+    try {
+      showToast("info", "Đang xử lý", `📥 Đang xuất bộ thẻ dạng ${format.toUpperCase()}...`);
+
+      const blob = await deckManagementService.exportDeck(deck._id, format);
+
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${deck.title}.${format}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      showToast("success", "Thành công", `✅ Đã xuất bộ thẻ "${deck.title}"`);
+    } catch (error) {
+      console.error("Export deck error:", error);
+      showToast("error", "Lỗi", error.response?.data?.message || "Không thể xuất bộ thẻ");
+    }
+  };
+
+  // Archive deck
+  const handleArchiveDeck = async (deck) => {
+    try {
+      const result = await deckManagementService.archiveDeck(deck._id);
+
+      if (result.success) {
+        showToast("success", "Thành công", `📦 Đã lưu trữ bộ thẻ "${deck.title}"`);
+        fetchTopics();
+      }
+    } catch (error) {
+      console.error("Archive deck error:", error);
+      showToast("error", "Lỗi", error.response?.data?.message || "Không thể lưu trữ bộ thẻ");
+    }
+  };
+
+  // View deck preview
+  const handleViewPreview = async (deckId) => {
+    try {
+      const preview = await deckPreviewService.getDeckPreview(deckId);
+
+      if (preview.success) {
+        // Navigate to preview page or show modal
+        navigate(`/decks/${deckId}/preview`);
+      }
+    } catch (error) {
+      console.error("View preview error:", error);
+      showToast("error", "Lỗi", error.response?.data?.message || "Không thể xem trước bộ thẻ");
+    }
+  };
+
+  // Get deck stats
+  const handleViewStats = async (deckId) => {
+    try {
+      const stats = await deckPreviewService.getDeckStats(deckId);
+
+      if (stats.success) {
+        // Show stats in modal or navigate to stats page
+        console.log("Deck stats:", stats.data);
+        showToast(
+          "info",
+          "Thống kê",
+          `📊 Tổng lượt xem: ${stats.data.totalViews}, Lượt học: ${stats.data.totalStudies}`
+        );
+      }
+    } catch (error) {
+      console.error("View stats error:", error);
+      showToast("error", "Lỗi", error.response?.data?.message || "Không thể xem thống kê");
+    }
+  };
+
+  // ========== NEW HANDLERS ==========
+
+  // Favorite/Unfavorite deck
+  const handleToggleFavorite = async (deck) => {
+    try {
+      if (deck.isFavorited) {
+        await deckService.unfavoriteDeck(deck._id);
+        showToast("success", "Đã bỏ yêu thích", "💔 Đã xóa khỏi danh sách yêu thích");
+      } else {
+        await deckService.favoriteDeck(deck._id);
+        showToast("success", "Đã yêu thích", "❤️ Đã thêm vào danh sách yêu thích");
+      }
+
+      // Refresh current tab
+      switch (activeTab) {
+        case "public":
+          fetchPublicDecks(currentPage);
+          break;
+        case "trending":
+          fetchTrendingDecks();
+          break;
+        case "favorites":
+          fetchFavoriteDecks();
+          break;
+        default:
+          break;
+      }
+    } catch (error) {
+      console.error("Toggle favorite error:", error);
+      showToast("error", "Lỗi", "Không thể thực hiện thao tác");
+    }
+  };
+
+  // Subscribe/Unsubscribe deck
+  const handleToggleSubscribe = async (deck) => {
+    try {
+      if (deck.isSubscribed) {
+        await deckService.unsubscribeDeck(deck._id);
+        showToast("success", "Đã hủy đăng ký", "🔕 Không còn nhận cập nhật từ bộ thẻ này");
+      } else {
+        await deckService.subscribeDeck(deck._id);
+        showToast("success", "Đã đăng ký", "🔔 Bạn sẽ nhận thông báo khi có cập nhật mới");
+      }
+
+      // Refresh current tab
+      switch (activeTab) {
+        case "public":
+          fetchPublicDecks(currentPage);
+          break;
+        case "subscribed":
+          fetchSubscribedDecks();
+          break;
+        default:
+          break;
+      }
+    } catch (error) {
+      console.error("Toggle subscribe error:", error);
+      showToast("error", "Lỗi", "Không thể thực hiện thao tác");
+    }
+  };
+
+  // Clone deck (enhanced)
+  const handleCloneDeckEnhanced = async (deck) => {
+    try {
+      showToast("info", "Đang xử lý", "🔄 Đang sao chép bộ thẻ...");
+
+      const newTitle = `${deck.title} (Sao chép)`;
+      const result = await deckService.cloneDeck(deck._id, newTitle, false);
+
+      if (result.success) {
+        showToast("success", "Thành công", `✅ Đã sao chép bộ thẻ "${newTitle}"`);
+        fetchTopics(); // Refresh my decks
+      }
+    } catch (error) {
+      console.error("Clone deck error:", error);
+      showToast("error", "Lỗi", error.message || "Không thể sao chép bộ thẻ");
+    }
+  };
+
+  // Get current deck list based on active tab
+  const getCurrentDeckList = () => {
+    switch (activeTab) {
+      case "my-decks":
+        return topics;
+      case "public":
+        return publicDecks;
+      case "trending":
+        return trendingDecks;
+      case "favorites":
+        return favoriteDecks;
+      case "subscribed":
+        return subscribedDecks;
+      default:
+        return [];
+    }
+  };
+
   return (
     <PageWrapper theme={theme}>
       <LeftSidebar />
@@ -583,6 +1069,15 @@ const Decks = () => {
             <HeaderSection>
               <Title theme={theme}>Chủ Đề</Title>
               <HeaderButtons>
+                {/* Search Bar */}
+                <Input
+                  theme={theme}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                  placeholder="🔍 Tìm kiếm bộ thẻ..."
+                  style={{ width: '300px' }}
+                />
                 <AIButton onClick={handleNavigateToAI}>
                   <AutoAwesome /> Tạo bằng AI
                 </AIButton>
@@ -591,27 +1086,43 @@ const Decks = () => {
                 </AddButton>
               </HeaderButtons>
             </HeaderSection>
+
+            {/* Tab Navigation */}
+            <TabContainer>
+              <Tab active={activeTab === "my-decks"} onClick={() => setActiveTab("my-decks")}>
+                <MenuBook sx={{ fontSize: 18, marginRight: 1 }} /> Bộ thẻ của tôi
+              </Tab>
+              <Tab active={activeTab === "public"} onClick={() => setActiveTab("public")}>
+                <Public sx={{ fontSize: 18, marginRight: 1 }} /> Công khai
+              </Tab>
+              <Tab active={activeTab === "trending"} onClick={() => setActiveTab("trending")}>
+                <Whatshot sx={{ fontSize: 18, marginRight: 1 }} /> Thịnh hành
+              </Tab>
+              <Tab active={activeTab === "favorites"} onClick={() => setActiveTab("favorites")}>
+                <Favorite sx={{ fontSize: 18, marginRight: 1 }} /> Yêu thích
+              </Tab>
+              <Tab active={activeTab === "subscribed"} onClick={() => setActiveTab("subscribed")}>
+                <Notifications sx={{ fontSize: 18, marginRight: 1 }} /> Đã đăng ký
+              </Tab>
+            </TabContainer>
+
             {loading ? (
               <div style={{ textAlign: "center", padding: "2rem" }}>
                 <div>Đang tải dữ liệu...</div>
               </div>
-            ) : topics.length === 0 ? (
+            ) : getCurrentDeckList().length === 0 ? (
               <div style={{ textAlign: "center", padding: "2rem" }}>
-                <div>Chưa có chủ đề nào</div>
-                <div style={{ fontSize: "0.875rem", marginTop: "0.5rem" }}>
-                  Nhấn nút "Thêm chủ đề mới" để bắt đầu
-                </div>
+                <div>Chưa có bộ thẻ nào</div>
               </div>
             ) : (
               <TopicsGrid>
-                {topics.map((deck) => (
+                {getCurrentDeckList().map((deck) => (
                   <TopicCard
                     key={deck._id}
                     theme={theme}
-                    isPublic={deck.isPublic} // ← Thêm prop
+                    $isPublic={deck.isPublic}
                   >
-                    {/* Badge hiển thị trạng thái */}
-                    <PublicBadge isPublic={deck.isPublic}>
+                    <PublicBadge $isPublic={deck.isPublic}>
                       {deck.isPublic ? (
                         <>
                           <Public sx={{ fontSize: 14 }} />
@@ -634,18 +1145,18 @@ const Decks = () => {
                       <span>{deck.flashcards?.length || 0} thẻ</span>
                       <span>•</span>
                       <span>{deck.category}</span>
-                      {!deck.isPublic && (
+                      {activeTab !== "my-decks" && (
                         <>
                           <span>•</span>
-                          <span style={{ color: "#6b7280" }}>
-                            🔒 Chỉ mình tôi
-                          </span>
+                          <span>👁️ {deck.viewCount || 0}</span>
+                          <span>•</span>
+                          <span>📖 {deck.studyCount || 0}</span>
                         </>
                       )}
                     </TopicStats>
 
                     <TopicActions>
-                      {/* Nút Ôn tập */}
+                      {/* Ôn tập */}
                       <ActionButton
                         onClick={(e) => {
                           e.stopPropagation();
@@ -655,26 +1166,86 @@ const Decks = () => {
                         <MenuBook sx={{ fontSize: 18 }} /> Ôn tập
                       </ActionButton>
 
-                      {/* Nút Toggle Công khai/Ẩn - MỚI */}
-                      <ToggleButton
-                        isPublic={deck.isPublic}
+                      {/* Sao chép */}
+                      <ActionButton
+                        variant="ai"
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleTogglePublic(deck);
+                          handleCloneDeckEnhanced(deck);
                         }}
                       >
-                        {deck.isPublic ? (
-                          <>
-                            <Public sx={{ fontSize: 16 }} /> Công khai
-                          </>
-                        ) : (
-                          <>
-                            <Lock sx={{ fontSize: 16 }} /> Riêng tư
-                          </>
-                        )}
-                      </ToggleButton>
+                        <ContentCopy sx={{ fontSize: 18 }} /> Sao chép
+                      </ActionButton>
 
-                      {/* Nút Đánh giá - Chỉ hiện khi công khai */}
+                      {/* Favorite - Only for public/trending tabs */}
+                      {(activeTab === "public" || activeTab === "trending") && (
+                        <ActionButton
+                          variant={deck.isFavorited ? "delete" : "review"}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleToggleFavorite(deck);
+                          }}
+                        >
+                          {deck.isFavorited ? (
+                            <>
+                              <Favorite sx={{ fontSize: 18 }} /> Bỏ thích
+                            </>
+                          ) : (
+                            <>
+                              <FavoriteBorder sx={{ fontSize: 18 }} /> Yêu thích
+                            </>
+                          )}
+                        </ActionButton>
+                      )}
+
+                      {/* Subscribe - Only for public decks not owned by user */}
+                      {activeTab === "public" && deck.creator !== "currentUserId" && (
+                        <ActionButton
+                          variant="ai"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleToggleSubscribe(deck);
+                          }}
+                        >
+                          {deck.isSubscribed ? (
+                            <>
+                              <NotificationsOff sx={{ fontSize: 18 }} /> Hủy đăng ký
+                            </>
+                          ) : (
+                            <>
+                              <Notifications sx={{ fontSize: 18 }} /> Đăng ký
+                            </>
+                          )}
+                        </ActionButton>
+                      )}
+
+                      {/* Chia sẻ */}
+                      {deck.isPublic && activeTab === "my-decks" && (
+                        <ActionButton
+                          variant="ai"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleShareDeck(deck);
+                          }}
+                        >
+                          <Share sx={{ fontSize: 18 }} /> Chia sẻ
+                        </ActionButton>
+                      )}
+
+                      {/* Xuất file */}
+                      {activeTab === "my-decks" && (
+                        <ActionButton
+                          variant="edit"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleExportDeck(deck);
+                          }}
+                        >
+                          <GetApp sx={{ fontSize: 18 }} /> Xuất
+                        </ActionButton>
+                      )}
+
+                      {/* Đánh giá */}
                       {deck.isPublic && (
                         <ActionButton
                           variant="review"
@@ -687,42 +1258,67 @@ const Decks = () => {
                         </ActionButton>
                       )}
 
-                      {/* Nút Tạo AI */}
-                      <ActionButton
-                        variant="ai"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleGenerateAI(deck);
-                        }}
-                      >
-                        <AutoAwesome sx={{ fontSize: 18 }} /> Tạo thêm
-                      </ActionButton>
+                      {/* AI tạo thêm */}
+                      {activeTab === "my-decks" && (
+                        <ActionButton
+                          variant="ai"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleGenerateAI(deck);
+                          }}
+                        >
+                          <AutoAwesome sx={{ fontSize: 18 }} /> Tạo thêm
+                        </ActionButton>
+                      )}
 
-                      {/* Nút Sửa */}
-                      <ActionButton
-                        variant="edit"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEdit(deck);
-                        }}
-                      >
-                        <Edit sx={{ fontSize: 18 }} /> Sửa
-                      </ActionButton>
+                      {/* Sửa */}
+                      {activeTab === "my-decks" && (
+                        <ActionButton
+                          variant="edit"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEdit(deck);
+                          }}
+                        >
+                          <Edit sx={{ fontSize: 18 }} /> Sửa
+                        </ActionButton>
+                      )}
 
-                      {/* Nút Xóa */}
-                      <ActionButton
-                        variant="delete"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDelete(deck._id);
-                        }}
-                      >
-                        <Delete sx={{ fontSize: 18 }} /> Xóa
-                      </ActionButton>
+                      {/* Xóa */}
+                      {activeTab === "my-decks" && (
+                        <ActionButton
+                          variant="delete"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(deck._id);
+                          }}
+                        >
+                          <Delete sx={{ fontSize: 18 }} /> Xóa
+                        </ActionButton>
+                      )}
                     </TopicActions>
                   </TopicCard>
                 ))}
               </TopicsGrid>
+            )}
+
+            {/* Pagination for public decks */}
+            {activeTab === "public" && totalPages > 1 && (
+              <PaginationContainer>
+                <PaginationButton
+                  disabled={currentPage === 1}
+                  onClick={() => fetchPublicDecks(currentPage - 1)}
+                >
+                  ← Trước
+                </PaginationButton>
+                <span>Trang {currentPage} / {totalPages}</span>
+                <PaginationButton
+                  disabled={currentPage === totalPages}
+                  onClick={() => fetchPublicDecks(currentPage + 1)}
+                >
+                  Sau →
+                </PaginationButton>
+              </PaginationContainer>
             )}
           </MainContent>
         </FormWrapper>
@@ -738,7 +1334,7 @@ const Decks = () => {
             <Form onSubmit={handleSubmit}>
               <Input
                 theme={theme}
-                name="title" // Changed from name to title
+                name="title"
                 value={formData.title}
                 onChange={handleChange}
                 placeholder="Tên bộ thẻ"
@@ -796,6 +1392,23 @@ const Decks = () => {
                 <option value="ADVANCED">Advanced - Nâng cao</option>
               </Select>
 
+              {/* Add isPublic checkbox */}
+              <CheckboxContainer>
+                <Checkbox
+                  type="checkbox"
+                  id="isPublic"
+                  name="isPublic"
+                  checked={formData.isPublic}
+                  onChange={(e) => setFormData((prev) => ({
+                    ...prev,
+                    isPublic: e.target.checked,
+                  }))}
+                />
+                <CheckboxLabel theme={theme} htmlFor="isPublic">
+                  Công khai bộ thẻ (Mọi người có thể xem và học)
+                </CheckboxLabel>
+              </CheckboxContainer>
+
               <ButtonGroup>
                 <AddButton type="button" onClick={handleCloseModal}>
                   Hủy
@@ -833,3 +1446,54 @@ const getTopicIcon = (type) => {
 };
 
 export default Decks;
+
+// Add new styled components for tabs and pagination
+const TabContainer = styled.div`
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  border-bottom: 2px solid #e5e7eb;
+  overflow-x: auto;
+`;
+
+const Tab = styled.button`
+  padding: 0.75rem 1.5rem;
+  border: none;
+  background: none;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  color: ${props => props.active ? '#58CC02' : '#6b7280'};
+  border-bottom: 3px solid ${props => props.active ? '#58CC02' : 'transparent'};
+  transition: all 0.3s ease;
+  white-space: nowrap;
+
+  &:hover {
+    color: #58CC02;
+  }
+`;
+
+const PaginationContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 2rem;
+  margin-top: 3rem;
+  padding: 1.5rem;
+`;
+
+const PaginationButton = styled.button`
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 12px;
+  background: ${props => props.disabled ? '#e5e7eb' : '#58CC02'};
+  color: ${props => props.disabled ? '#9ca3af' : 'white'};
+  font-weight: 600;
+  cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
+  transition: all 0.3s ease;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(88, 204, 2, 0.3);
+  }
+`;

@@ -3,6 +3,7 @@ import styled, { keyframes } from 'styled-components';
 import LeftSidebar from '../components/LeftSidebar';
 import RightSidebar from '../components/RightSidebar';
 import { Search, VolumeUp, Star, StarBorder, BookmarkBorder, Bookmark, FilterList, School } from '@mui/icons-material';
+import { vocabularyService } from '../services/vocabularyService'; // ✅ Thêm import
 
 // ========== ANIMATIONS ==========
 const fadeIn = keyframes`
@@ -323,41 +324,22 @@ const Worldbank = () => {
 
   // Mock data - replace with API call
   useEffect(() => {
-    const mockVocabs = [
-      {
-        id: 1,
-        word: 'Hello',
-        pronunciation: '/həˈloʊ/',
-        meaning: 'Xin chào',
-        example: 'Hello, how are you?',
-        tags: ['Greetings', 'Basic'],
-        isStarred: true,
-        isLearned: true
-      },
-      {
-        id: 2,
-        word: 'Beautiful',
-        pronunciation: '/ˈbjuː.tɪ.fəl/',
-        meaning: 'Đẹp, xinh đẹp',
-        example: 'She has a beautiful smile.',
-        tags: ['Adjective', 'Common'],
-        isStarred: false,
-        isLearned: true
-      },
-      {
-        id: 3,
-        word: 'Challenge',
-        pronunciation: '/ˈtʃæl.ɪndʒ/',
-        meaning: 'Thử thách, thách thức',
-        example: 'Learning English is a fun challenge.',
-        tags: ['Noun', 'Verb'],
-        isStarred: true,
-        isLearned: false
-      },
-    ];
+    const fetchLearnedVocabularies = async () => {
+      try {
+        const response = await vocabularyService.getLearnedVocabularies();
+        const vocabs = response.data || [];
+        
+        setVocabularies(vocabs);
+        updateStats(vocabs);
+      } catch (error) {
+        console.error('Error fetching learned vocabularies:', error);
+        // Fallback to empty array
+        setVocabularies([]);
+        updateStats([]);
+      }
+    };
 
-    setVocabularies(mockVocabs);
-    updateStats(mockVocabs);
+    fetchLearnedVocabularies();
   }, []);
 
   useEffect(() => {
@@ -391,7 +373,9 @@ const Worldbank = () => {
     setFilteredVocabs(filtered);
   };
 
-  const toggleStar = (id) => {
+  const toggleStar = async (id) => {
+    // TODO: Implement starring API later
+    // Hiện tại chỉ update local state
     setVocabularies(prev => {
       const updated = prev.map(v =>
         v.id === id ? { ...v, isStarred: !v.isStarred } : v
@@ -401,7 +385,8 @@ const Worldbank = () => {
     });
   };
 
-  const toggleLearned = (id) => {
+  const toggleLearned = async (id) => {
+    // TODO: Implement API to update mastery/review count
     setVocabularies(prev => {
       const updated = prev.map(v =>
         v.id === id ? { ...v, isLearned: !v.isLearned } : v

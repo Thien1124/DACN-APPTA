@@ -3,6 +3,10 @@ const router = express.Router();
 const vocabularyController = require('../controllers/vocabularyController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
+
+
+router.get('/:id', vocabularyController.getVocabularyById);
+
 // Tất cả routes đều yêu cầu đăng nhập và quyền admin
 router.use(protect);
 router.use(authorize('admin'));
@@ -18,7 +22,6 @@ router
 
 router
   .route('/:id')
-  .get(vocabularyController.getVocabularyById)
   .put(vocabularyController.updateVocabulary)
   .delete(vocabularyController.deleteVocabulary);
 

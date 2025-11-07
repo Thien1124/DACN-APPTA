@@ -4,7 +4,12 @@ const unitController = require('../controllers/unitController');
 const lessonController = require('../controllers/lessonController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
-// Tất cả routes đều yêu cầu đăng nhập và quyền admin
+
+// ========== PUBLIC ROUTES ==========
+// ✅ Lấy lessons của unit (không cần login)
+router.get('/:unitId/lessons', lessonController.getLessonsByUnit);
+
+// ========== ADMIN ROUTES ==========
 router.use(protect);
 router.use(authorize('admin'));
 
@@ -20,9 +25,5 @@ router
   .delete(unitController.deleteUnit);
 
 router.patch('/:id/publish', unitController.togglePublishUnit);
-
-// Lay tat ca bai hoc theo unit
-// GET /api/units/:unitId/lessons
-router.get('/:unitId/lessons', lessonController.getLessonsByUnit);
 
 module.exports = router;

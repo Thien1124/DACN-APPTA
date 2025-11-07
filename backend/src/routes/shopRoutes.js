@@ -6,6 +6,9 @@ const { protect } = require('../middleware/authMiddleware');
 // Lấy danh sách các vật phẩm trong cửa hàng
 router.get('/items', protect, shopController.getShopItems);
 
+// Lấy số gems hiện tại ← NEW
+router.get('/gems', protect, shopController.getUserGems);
+
 // Mua vật phẩm từ cửa hàng
 router.post('/purchase', protect, shopController.purchaseItem);
 

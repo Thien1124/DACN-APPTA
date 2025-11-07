@@ -161,10 +161,10 @@ const AdminVocabularyForm = () => {
   const [lessons, setLessons] = useState([]);
   const [formData, setFormData] = useState({
     word: '',
-    meaning: '',
-    pronunciation: '',
+    translation: '',  
+    phonetic: '',
     partOfSpeech: 'noun',
-    exampleSentence: '',
+    example: '',  
     exampleTranslation: '',
     imageUrl: '',
     audioUrl: '',
@@ -194,8 +194,16 @@ const AdminVocabularyForm = () => {
       setLoading(true);
       const response = await adminService.vocabularies.getById(id);
       setFormData({
-        ...response.data,
-        lesson: response.data.lesson?._id || response.data.lesson
+        word: response.data.word || '',
+        translation: response.data.translation || '',  // Map từ backend
+        phonetic: response.data.phonetic || '',
+        partOfSpeech: response.data.partOfSpeech || 'noun',
+        example: response.data.example || '',  // Map từ backend
+        exampleTranslation: response.data.exampleTranslation || '',
+        imageUrl: response.data.imageUrl || '',
+        audioUrl: response.data.audioUrl || '',
+        lesson: response.data.lesson?._id || response.data.lesson,
+        difficulty: response.data.difficulty || 'medium'
       });
     } catch (error) {
       console.error('Error fetching vocabulary:', error);
@@ -221,8 +229,8 @@ const AdminVocabularyForm = () => {
       newErrors.word = 'Vui lòng nhập từ vựng';
     }
 
-    if (!formData.meaning.trim()) {
-      newErrors.meaning = 'Vui lòng nhập nghĩa';
+    if (!formData.translation.trim()) {  
+      newErrors.translation = 'Vui lòng nhập nghĩa';
     }
 
     if (!formData.lesson) {
@@ -316,34 +324,16 @@ const AdminVocabularyForm = () => {
                 <Input
                   theme={theme}
                   type="text"
-                  name="pronunciation"
-                  value={formData.pronunciation}
+                  name="phonetic"
+                  value={formData.phonetic}
                   onChange={handleChange}
                   placeholder="/əˈkʌmplɪʃ/"
                 />
               </FormGroup>
             </FormRow>
 
-            <FormRow columns="1fr 1fr">
-              <FormGroup>
-                <Label theme={theme}>Từ loại</Label>
-                <Select
-                  theme={theme}
-                  name="partOfSpeech"
-                  value={formData.partOfSpeech}
-                  onChange={handleChange}
-                >
-                  <option value="noun">Noun - Danh từ</option>
-                  <option value="verb">Verb - Động từ</option>
-                  <option value="adjective">Adjective - Tính từ</option>
-                  <option value="adverb">Adverb - Trạng từ</option>
-                  <option value="pronoun">Pronoun - Đại từ</option>
-                  <option value="preposition">Preposition - Giới từ</option>
-                  <option value="conjunction">Conjunction - Liên từ</option>
-                  <option value="interjection">Interjection - Thán từ</option>
-                </Select>
-              </FormGroup>
-
+            <FormRow columns="1fr">
+              
               <FormGroup>
                 <Label theme={theme}>Độ khó</Label>
                 <Select
@@ -363,20 +353,20 @@ const AdminVocabularyForm = () => {
               <Label theme={theme}>Nghĩa *</Label>
               <Textarea
                 theme={theme}
-                name="meaning"
-                value={formData.meaning}
+                name="translation"  // Thay 'meaning'
+                value={formData.translation}  // Thay 'meaning'
                 onChange={handleChange}
                 placeholder="Hoàn thành, đạt được (mục tiêu, nhiệm vụ)"
               />
-              {errors.meaning && <ErrorText>{errors.meaning}</ErrorText>}
+              {errors.translation && <ErrorText>{errors.translation}</ErrorText>}  
             </FormGroup>
 
             <FormGroup>
               <Label theme={theme}>Câu ví dụ</Label>
               <Textarea
                 theme={theme}
-                name="exampleSentence"
-                value={formData.exampleSentence}
+                name="example"  // Thay 'exampleSentence'
+                value={formData.example}  // Thay 'exampleSentence'
                 onChange={handleChange}
                 placeholder="She accomplished all her goals this year."
               />

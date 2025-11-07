@@ -147,6 +147,17 @@ const userSchema = new mongoose.Schema({
     }
   },
 
+  // Thêm fields tracking progress:
+  completedLessons: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Lesson'
+  }],
+  currentLesson: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Lesson',
+    default: null
+  },
+
   createdAt: {
     type: Date,
     default: Date.now

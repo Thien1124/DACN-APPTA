@@ -177,3 +177,49 @@ exports.togglePublishCourse = async (req, res) => {
     });
   }
 };
+
+// @desc    Lấy courses đã enroll của user (hiện tại: tất cả courses published)
+// @route   GET /api/courses/enrolled
+// @access  Private
+exports.getEnrolledCourses = async (req, res) => {
+  try {
+    // Lấy tất cả courses đã publish
+    const courses = await Course.find({ isPublished: true })
+      .sort({ createdAt: -1 });
+    
+    res.status(200).json({
+      success: true,
+      count: courses.length,
+      data: courses
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Không thể lấy danh sách khóa học',
+      error: error.message
+    });
+  }
+};
+
+
+// @desc    Lấy tất cả courses đã publish (public - không cần login)
+// @route   GET /api/courses/published
+// @access  Public
+exports.getPublishedCourses = async (req, res) => {
+  try {
+    const courses = await Course.find({ isPublished: true })
+      .sort({ createdAt: -1 });
+    
+    res.status(200).json({
+      success: true,
+      count: courses.length,
+      data: courses
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Không thể lấy danh sách khóa học',
+      error: error.message
+    });
+  }
+};

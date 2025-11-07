@@ -18,6 +18,13 @@ import successGif from "../assets/success.gif";
 import happyGif from "../assets/happy.gif";
 import sadGif from "../assets/sad.gif";
 import LinhThuTini from "../assets/LinhThuTini.gif";
+import { heartService } from "../services/heartService";
+import { Favorite } from "@mui/icons-material";
+import { lessonService } from "../services/lessonService";
+import { vocabularyService } from "../services/vocabularyService";
+import { exerciseService } from "../services/exerciseService";
+import progressService from "../services/progressService";
+import { VolumeUp } from '@mui/icons-material'; // ✅ Thêm import icon loa
 
 // ========== ANIMATIONS ==========
 const fadeIn = keyframes`
@@ -49,13 +56,13 @@ const slideUp = keyframes`
 
 const checkmark = keyframes`
   0% {
-    transform: scale(0) rotate(-45deg);
+    transform: scale(0) rotate(45deg);
   }
   50% {
-    transform: scale(1.2) rotate(-45deg);
+    transform: scale(1.2) rotate(45deg);
   }
   100% {
-    transform: scale(1) rotate(-45deg);
+    transform: scale(1) rotate(45deg);
   }
 `;
 
@@ -203,7 +210,7 @@ const ProgressBarContainer = styled.div`
 const ProgressBarFill = styled.div`
   height: 100%;
   background: linear-gradient(90deg, #58cc02 0%, #45a302 100%);
-  width: ${(props) => props.progress}%;
+  width: ${(props) => props.$progress}%;
   transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   border-radius: 100px;
 `;
@@ -216,7 +223,7 @@ const HeartsContainer = styled.div`
   font-weight: 700;
   font-size: 1.25rem;
   flex-shrink: 0;
-  animation: ${(props) => (props.isShaking ? shake : "none")} 0.5s ease;
+  animation: ${(props) => (props.$isShaking ? shake : "none")} 0.5s ease;
 
   @media (max-width: 768px) {
     font-size: 1.125rem;
@@ -239,7 +246,7 @@ const Container = styled.div`
 `;
 
 const QuestionBadge = styled.div`
-  background: ${(props) => (props.isReview ? "#FF9600" : "#1CB0F6")};
+  background: ${(props) => (props.$isReview ? "#FF9600" : "#1CB0F6")};
   color: white;
   padding: 0.625rem 1.25rem;
   border-radius: 12px;
@@ -303,9 +310,9 @@ const ChoiceCard = styled.button`
   background: white;
   border: 3px solid
     ${(props) => {
-      if (props.isCorrect && props.isChecked) return "#58CC02";
-      if (props.isWrong && props.isChecked) return "#ef4444";
-      if (props.selected) return "#1CB0F6";
+      if (props.$isCorrect && props.$isChecked) return "#58CC02";
+      if (props.$isWrong && props.$isChecked) return "#ef4444";
+      if (props.$selected) return "#1CB0F6";
       return "#e5e7eb";
     }};
   border-radius: 16px;
@@ -318,19 +325,19 @@ const ChoiceCard = styled.button`
   gap: 1rem;
   position: relative;
   box-shadow: ${(props) => {
-    if (props.isCorrect && props.isChecked)
-      return "0 6px 20px rgba(88, 204, 2, 0.3)";
-    if (props.isWrong && props.isChecked)
-      return "0 6px 20px rgba(239, 68, 68, 0.3)";
+    if (props.$isCorrect && props.$isChecked)
+      return "0 6px 20px rgba(88,204,2,0.3)";
+    if (props.$isWrong && props.$isChecked)
+      return "0 6px 20px rgba(239,68,68,0.3)";
     return "0 2px 8px rgba(0, 0, 0, 0.06)";
   }};
-  animation: ${(props) => (props.isWrong && props.isChecked ? shake : "none")}
+  animation: ${(props) => (props.$isWrong && props.$isChecked ? shake : "none")}
     0.5s ease;
-  opacity: ${(props) => (props.disabled && !props.selected ? 0.5 : 1)};
+  opacity: ${(props) => (props.disabled && !props.$selected ? 0.5 : 1)};
 
   &:hover:not(:disabled) {
     border-color: ${(props) => {
-      if (props.isChecked) return props.isCorrect ? "#58CC02" : "#ef4444";
+      if (props.$isChecked) return props.$isCorrect ? "#58CC02" : "#ef4444";
       return "#1CB0F6";
     }};
     transform: ${(props) => (props.disabled ? "none" : "translateY(-4px)")};
@@ -394,31 +401,32 @@ const ChoiceText = styled.span`
 `;
 
 const SpeakerButton = styled.button`
-  background: #1cb0f6;
+  background: #1CB0F6;
   border: none;
   color: white;
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.3s ease;
   flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(28, 176, 246, 0.3);
 
   &:hover {
     background: #0d9ed8;
-    transform: scale(1.05);
+    transform: scale(1.1);
   }
 
   &:active {
-    transform: scale(0.95);
+    transform: scale(0.9);
   }
 
   @media (max-width: 768px) {
-    width: 32px;
-    height: 32px;
+    width: 36px;
+    height: 36px;
   }
 `;
 
@@ -460,50 +468,72 @@ const FooterContent = styled.div`
   }
 `;
 
-const SkipButton = styled.button`
-  background: white;
-  border: 2px solid #e5e7eb;
-  color: #afafaf;
-  padding: 0.875rem 2rem;
+const CompletionButton = styled.button`
+  background: ${(props) => (props.$primary ? "#58CC02" : "white")};
+  border: 3px solid ${(props) => (props.$primary ? "#58CC02" : "#e5e7eb")};
+  color: ${(props) => (props.$primary ? "white" : "#6b7280")};
+  padding: 1.125rem 2.5rem;
   border-radius: 16px;
-  font-size: 0.9375rem;
+  font-size: 1.125rem;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
+  box-shadow: ${(props) => (props.$primary ? "0 4px 0 #46A302" : "none")};
+  min-width: 200px;
 
   &:hover {
-    border-color: #d1d5db;
-    background: #f9fafb;
-    color: #6b7280;
+    transform: translateY(-3px);
+    box-shadow: ${(props) =>
+      props.$primary ? "0 6px 0 #46A302" : "0 4px 12px rgba(0, 0, 0, 0.1)"};
+  }
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: ${(props) => (props.$primary ? "0 2px 0 #46A302" : "none")};
   }
 
   @media (max-width: 768px) {
     width: 100%;
-    padding: 0.875rem 1.5rem;
+    padding: 1rem 2rem;
+    font-size: 1rem;
+    min-width: unset;
   }
 `;
 
-const CheckButton = styled.button`
-  background: ${(props) => {
-    if (props.disabled) return "#e5e7eb";
-    if (props.isCorrect) return "#58CC02";
-    if (props.isWrong) return "#ef4444";
-    return "#58CC02";
-  }};
-  border: none;
-  color: ${(props) => (props.disabled ? "#afafaf" : "white")};
-  padding: 0.875rem 3rem;
-  border-radius: 16px;
-  font-size: 0.9375rem;
-  font-weight: 700;
-  cursor: ${(props) => (props.disabled ? "not-allowed" : "pointer")};
-  transition: all 0.2s ease;
-  box-shadow: ${(props) => (props.disabled ? "none" : "0 4px 0 #46A302")};
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  min-width: 150px;
+const SkipButton = styled(CompletionButton).attrs({ primary: false })`
+  background: white;
+  border: 3px solid #e5e7eb;
+  color: #6b7280;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  min-width: 160px;
+  padding: 0.875rem 2rem;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 0 rgba(0, 0, 0, 0.06);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: 0 2px 0 rgba(0, 0, 0, 0.06);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+`;
+
+const CheckButton = styled(CompletionButton).attrs((props) => ({
+  primary: true,
+}))`
+  min-width: 160px;
+  padding: 0.875rem 2rem;
+  box-shadow: ${(props) => (props.disabled ? "none" : "0 4px 0")};
 
   &:hover:not(:disabled) {
     transform: translateY(-2px);
@@ -515,9 +545,11 @@ const CheckButton = styled.button`
     box-shadow: 0 2px 0 #46a302;
   }
 
-  @media (max-width: 768px) {
-    width: 100%;
-    padding: 0.875rem 2rem;
+  &:disabled {
+    background: #e5e7eb;
+    color: #afafaf;
+    cursor: not-allowed;
+    box-shadow: none;
   }
 `;
 
@@ -526,14 +558,14 @@ const FeedbackBanner = styled.div`
   bottom: 0;
   left: 0;
   right: 0;
-  background: ${(props) => (props.isCorrect ? "#d7ffb8" : "#ffdfe0")};
+  background: ${(props) => (props.$isCorrect ? "#d7ffb8" : "#ffdfe0")};
   padding: 1.5rem 2.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 101;
   animation: ${slideUp} 0.4s ease-out;
-  border-top: 1px solid ${(props) => (props.isCorrect ? "#58CC02" : "#ef4444")};
+  border-top: 1px solid ${(props) => (props.$isCorrect ? "#58CC02" : "#ef4444")};
 
   @media (max-width: 1024px) {
     padding: 1.25rem 2rem;
@@ -578,7 +610,7 @@ const FeedbackIconWrapper = styled.div`
   width: 70px;
   height: 70px;
   border-radius: 50%;
-  background: ${(props) => (props.isCorrect ? "#58CC02" : "#ef4444")};
+  background: ${(props) => (props.$isCorrect ? "#58CC02" : "#ef4444")};
   display: flex;
   align-items: center;
   justify-content: center;
@@ -591,21 +623,85 @@ const FeedbackIconWrapper = styled.div`
   }
 `;
 
+const drawCheckmark = keyframes`
+  0% {
+    height: 0;
+    width: 0;
+    opacity: 0;
+  }
+  20% {
+    height: 0;
+    width: 8px;
+    opacity: 1;
+  }
+  40% {
+    height: 20px;
+    width: 8px;
+    opacity: 1;
+  }
+  100% {
+    height: 52px;
+    width: 28px;
+    opacity: 1;
+  }
+`;
+
+const checkmarkPop = keyframes`
+  0%, 100% {
+    transform: rotate(45deg) scale(1);
+  }
+  50% {
+    transform: rotate(45deg) scale(1.1);
+  }
+`;
+
 const CheckmarkIcon = styled.div`
+  position: relative;
   width: 28px;
   height: 52px;
-  border-right: 7px solid white;
-  border-bottom: 7px solid white;
   transform: rotate(45deg);
-  animation: ${checkmark} 0.4s cubic-bezier(0.65, 0, 0.35, 1);
+  animation: ${checkmarkPop} 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
   margin-bottom: 10px;
   margin-left: 5px;
+
+  &::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 8px;
+    height: 52px;
+    background: white;
+    border-radius: 4px;
+    animation: ${drawCheckmark} 0.4s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+  }
+
+  &::before {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 28px;
+    height: 8px;
+    background: white;
+    border-radius: 4px;
+    animation: ${drawCheckmark} 0.4s cubic-bezier(0.65, 0, 0.35, 1) 0.2s
+      forwards;
+  }
 
   @media (max-width: 768px) {
     width: 24px;
     height: 48px;
-    border-right-width: 6px;
-    border-bottom-width: 6px;
+
+    &::after {
+      width: 6px;
+      height: 48px;
+    }
+
+    &::before {
+      width: 24px;
+      height: 6px;
+    }
   }
 `;
 
@@ -656,7 +752,7 @@ const FeedbackTextWrapper = styled.div`
 const FeedbackTitle = styled.h3`
   font-size: 2rem;
   font-weight: 700;
-  color: ${(props) => (props.isCorrect ? "#58CC02" : "#ef4444")};
+  color: ${(props) => (props.$isCorrect ? "#58CC02" : "#ef4444")};
   margin: 0;
   line-height: 1.2;
 
@@ -681,7 +777,7 @@ const FeedbackSubtext = styled.p`
 `;
 
 const ContinueButton = styled.button`
-  background: ${(props) => (props.isCorrect ? "#58CC02" : "#ff4b4b")};
+  background: ${(props) => (props.$isCorrect ? "#58CC02" : "#ff4b4b")};
   border: none;
   color: white;
   padding: 1rem 3rem;
@@ -692,18 +788,18 @@ const ContinueButton = styled.button`
   transition: all 0.3s ease;
   text-transform: uppercase;
   letter-spacing: 1px;
-  box-shadow: 0 4px 0 ${(props) => (props.isCorrect ? "#46A302" : "#dc2626")};
+  box-shadow: 0 4px 0 ${(props) => (props.$isCorrect ? "#46A302" : "#dc2626")};
   min-width: 180px;
   flex-shrink: 0;
 
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 0 ${(props) => (props.isCorrect ? "#46A302" : "#dc2626")};
+    box-shadow: 0 6px 0 ${(props) => (props.$isCorrect ? "#46A302" : "#dc2626")};
   }
 
   &:active {
     transform: translateY(2px);
-    box-shadow: 0 2px 0 ${(props) => (props.isCorrect ? "#46A302" : "#dc2626")};
+    box-shadow: 0 2px 0 ${(props) => (props.$isCorrect ? "#46A302" : "#dc2626")};
   }
 
   @media (max-width: 768px) {
@@ -807,7 +903,7 @@ const WordBankContainer = styled.div`
 
 const WordChip = styled.button`
   background: white;
-  border: 3px solid ${(props) => (props.selected ? "#1CB0F6" : "#e5e7eb")};
+  border: 3px solid ${(props) => (props.$selected ? "#1CB0F6" : "#e5e7eb")};
   color: #1f2937;
   padding: 0.75rem 1.5rem;
   border-radius: 12px;
@@ -1337,39 +1433,6 @@ const CompletionButtons = styled.div`
   }
 `;
 
-const CompletionButton = styled.button`
-  background: ${(props) => (props.primary ? "#58CC02" : "white")};
-  border: 3px solid ${(props) => (props.primary ? "#58CC02" : "#e5e7eb")};
-  color: ${(props) => (props.primary ? "white" : "#6b7280")};
-  padding: 1.125rem 2.5rem;
-  border-radius: 16px;
-  font-size: 1.125rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  box-shadow: ${(props) => (props.primary ? "0 4px 0 #46A302" : "none")};
-  min-width: 200px;
-
-  &:hover {
-    transform: translateY(-3px);
-    box-shadow: ${(props) =>
-      props.primary ? "0 6px 0 #46A302" : "0 4px 12px rgba(0, 0, 0, 0.1)"};
-  }
-
-  &:active {
-    transform: translateY(0);
-    box-shadow: ${(props) => (props.primary ? "0 2px 0 #46A302" : "none")};
-  }
-
-  @media (max-width: 768px) {
-    width: 100%;
-    padding: 1rem 2rem;
-    font-size: 1rem;
-    min-width: unset;
-  }
-`;
 const ReviewNoticeBanner = styled.div`
   position: fixed;
   top: 90px; // Tăng lên để không bị Header che
@@ -1538,6 +1601,7 @@ const Lesson = () => {
   const navigate = useNavigate();
   const { lessonId } = useParams();
   const { toast, showToast, hideToast } = useToast();
+
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [showFirstTimeReminder, setShowFirstTimeReminder] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -1549,13 +1613,14 @@ const Lesson = () => {
   const [showReportModal, setShowReportModal] = useState(false);
   const [selectedReportReason, setSelectedReportReason] = useState("");
   const [reportDetails, setReportDetails] = useState("");
-  const [streak, setStreak] = useState(0);
+
+  // Lesson streak - chỉ đếm câu đúng liên tiếp trong bài học này
+  const [consecutiveCorrect, setConsecutiveCorrect] = useState(0);
+
   const [selectedWords, setSelectedWords] = useState([]);
   const [wrongQuestions, setWrongQuestions] = useState([]);
   const [showCompletion, setShowCompletion] = useState(false);
-  const [totalXP, setTotalXP] = useState(0);
   const [correctAnswers, setCorrectAnswers] = useState(0);
-  const [consecutiveCorrect, setConsecutiveCorrect] = useState(0);
   const [showReviewNotice, setShowReviewNotice] = useState(false);
   const [reviewCount, setReviewCount] = useState(0);
 
@@ -1569,6 +1634,12 @@ const Lesson = () => {
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [answeredQuestions, setAnsweredQuestions] = useState([]);
 
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  const [isLoadingLesson, setIsLoadingLesson] = useState(true);
+  const [lessonData, setLessonData] = useState(null);
+
+
   const reportReasons = [
     "Câu hỏi không rõ ràng",
     "Đáp án không chính xác",
@@ -1578,7 +1649,7 @@ const Lesson = () => {
     "Lỗi khác",
   ];
 
-  // Mock questions data với nhiều loại câu hỏi
+  // Mock questions data
   const allQuestions = [
     {
       id: 1,
@@ -1653,13 +1724,14 @@ const Lesson = () => {
 
   const [questions, setQuestions] = useState(allQuestions);
   const progress = ((currentQuestion + 1) / questions.length) * 100;
-  // Sửa lại phần check conditional return
   const question = questions[currentQuestion];
 
   // Set original questions count khi component mount
   useEffect(() => {
     setOriginalQuestionsCount(allQuestions.length);
   }, []);
+/*
+  // Check first time reminder
   useEffect(() => {
     try {
       if (!lessonId) return;
@@ -1671,6 +1743,212 @@ const Lesson = () => {
       // ignore localStorage errors
     }
   }, [lessonId]);
+*/
+ // ========== FETCH LESSON DATA FROM API ==========
+  useEffect(() => {
+    const fetchLessonData = async () => {
+      if (!lessonId) {
+        console.error('❌ No lessonId provided');
+        showToast('error', 'Lỗi', 'Không tìm thấy ID bài học');
+        navigate('/learn');
+        return;
+      }
+
+      try {
+        setIsLoadingLesson(true);
+        console.log('📚 Fetching lesson:', lessonId);
+
+        // 1. Lấy lesson details
+        const lessonResponse = await lessonService.getLessonById(lessonId);
+        console.log('✅ Lesson response:', lessonResponse);
+        const lesson = lessonResponse.data;
+        
+        if (!lesson) {
+          throw new Error('Lesson data is empty');
+        }
+        
+        setLessonData(lesson);
+
+        // 2. Lấy vocabularies
+        const vocabResponse = await vocabularyService.getByLesson(lessonId);
+        console.log('📖 Vocabularies:', vocabResponse.data?.length || 0);
+        const vocabularies = vocabResponse.data || [];
+
+        // 3. Lấy exercises
+        const exerciseResponse = await exerciseService.getByLesson(lessonId);
+        console.log('✏️ Exercises:', exerciseResponse.data?.length || 0);
+        const exercises = exerciseResponse.data || [];
+
+        // ✅ Kiểm tra nếu không có vocab và exercise
+        if (vocabularies.length === 0 && exercises.length === 0) {
+          console.warn('⚠️ No content in this lesson');
+          showToast('warning', 'Thông báo', 'Bài học này chưa có nội dung');
+        }
+
+        // ✅ 4. Transform vocabularies thành vocabulary questions
+        const vocabQuestions = vocabularies.map((vocab) => {
+          // Tạo 2 wrong choices từ vocabularies khác (không trùng lặp)
+          const wrongChoices = vocabularies
+            .filter(v => v._id !== vocab._id) // Loại bỏ vocab hiện tại
+            .sort(() => Math.random() - 0.5) // Shuffle
+            .slice(0, 2); // Lấy 2 cái
+        
+          // ✅ Đảm bảo có đủ 3 choices (1 đúng + 2 sai)
+          const allChoices = [
+            {
+              id: vocab._id,
+              text: vocab.word,
+              image: vocab.imageUrl || coffee, // ✅ Dùng imageUrl từ backend
+              audio: vocab.word
+            },
+            ...wrongChoices.map(v => ({
+              id: v._id,
+              text: v.word,
+              image: v.imageUrl || milk, // ✅ Dùng imageUrl từ backend
+              audio: v.word
+            }))
+          ];
+
+          // ✅ Shuffle để đáp án đúng không luôn ở vị trí đầu
+          const shuffledChoices = allChoices.sort(() => Math.random() - 0.5);
+
+          return {
+            id: `vocab-${vocab._id}`,
+            type: 'vocabulary',
+            question: `Đâu là "${vocab.meaning || vocab.word}"?`, // ✅ Hiển thị nghĩa tiếng Việt
+            choices: shuffledChoices,
+            correctAnswer: vocab._id, // ✅ Dùng _id thay vì word để so sánh chính xác
+            vocab: vocab
+          };
+        });
+
+        // 5. Transform exercises thành câu hỏi
+        const exerciseQuestions = exercises.map((exercise) => {
+          let questionType = 'multiple_choice';
+          
+          // ✅ Map backend type sang frontend type
+          if (exercise.type === 'multiple-choice') questionType = 'multiple_choice';
+          else if (exercise.type === 'fill-in-blank') questionType = 'fill_in_blank'; // ✅ Sửa type
+          else if (exercise.type === 'translation') questionType = 'translation'; // ✅ Sửa type
+          else if (exercise.type === 'listening') questionType = 'listen_write';
+          else if (exercise.type === 'speaking') questionType = 'conversation';
+          else if (exercise.type === 'matching') questionType = 'match_pairs';
+
+          // ✅ Transform options
+          const choices = exercise.options?.map((opt, idx) => ({
+            id: opt._id || String(idx + 1),
+            text: opt.text
+          })) || [];
+
+          // ✅ Tìm correct answer
+          const correctOption = exercise.options?.find(opt => opt.isCorrect);
+          const correctAnswer = correctOption 
+            ? correctOption._id || String(exercise.options.indexOf(correctOption) + 1)
+            : exercise.correctAnswer;
+
+          // ✅ Tạo base question object
+          const questionObj = {
+            id: `exercise-${exercise._id}`,
+            type: questionType,
+            question: exercise.question,
+            prompt: exercise.question,
+            choices: choices,
+            correctAnswer: correctAnswer,
+            explanation: exercise.explanation,
+            exercise: exercise
+          };
+
+          // ✅ Xử lý đặc biệt cho match_pairs
+          if (questionType === 'match_pairs') {
+            // Parse correctAnswer JSON để tạo leftColumn và rightColumn
+            try {
+              const pairs = typeof exercise.correctAnswer === 'string' 
+                ? JSON.parse(exercise.correctAnswer) 
+                : exercise.correctAnswer || {};
+
+              const leftColumn = Object.keys(pairs).map((leftText, index) => ({
+                id: `left-${index}`,
+                text: leftText
+              }));
+
+              const rightColumn = Object.values(pairs).map((rightText, index) => ({
+                id: `right-${index}`,
+                text: rightText,
+                matchWith: `left-${Object.keys(pairs).findIndex(key => pairs[key] === rightText)}`
+              }));
+
+              questionObj.leftColumn = leftColumn;
+              questionObj.rightColumn = rightColumn;
+              questionObj.correctAnswer = 'All pairs matched'; // Placeholder
+            } catch (error) {
+              console.error('Error parsing matching pairs:', error);
+              // Fallback: tạo empty columns
+              questionObj.leftColumn = [];
+              questionObj.rightColumn = [];
+            }
+          }
+
+          // ✅ Xử lý đặc biệt cho translate_build và listen_write
+          if (questionType === 'translate_build' || questionType === 'listen_write') {
+            // Parse correctAnswer để tạo wordBank
+            try {
+              let wordBank = [];
+              
+              if (typeof exercise.correctAnswer === 'string') {
+                // Nếu là string, split thành array
+                wordBank = exercise.correctAnswer.split(',').map(word => word.trim());
+              } else if (Array.isArray(exercise.correctAnswer)) {
+                // Nếu đã là array
+                wordBank = exercise.correctAnswer;
+              } else {
+                // Fallback: tạo wordBank từ question text
+                wordBank = exercise.question.split(' ').slice(0, 10); // Lấy 10 từ đầu
+              }
+
+              questionObj.wordBank = wordBank;
+              questionObj.audioText = exercise.question; // Sử dụng question làm audio text
+            } catch (error) {
+              console.error('Error creating wordBank:', error);
+              // Fallback: tạo wordBank từ question
+              questionObj.wordBank = exercise.question.split(' ').slice(0, 10);
+              questionObj.audioText = exercise.question;
+            }
+          }
+
+          return questionObj;
+        });
+
+        const transformedQuestions = [...vocabQuestions, ...exerciseQuestions];
+        
+        console.log('🎯 Total questions:', transformedQuestions.length);
+        console.log('📋 Sample question:', transformedQuestions[0]);
+        
+        // ✅ Set questions
+        if (transformedQuestions.length > 0) {
+          setQuestions(transformedQuestions);
+          setOriginalQuestionsCount(transformedQuestions.length);
+        } else {
+          console.warn('⚠️ Using mock data as fallback');
+          setQuestions(allQuestions);
+          setOriginalQuestionsCount(allQuestions.length);
+        }
+
+      } catch (error) {
+        console.error('❌ Error fetching lesson data:', error);
+        console.error('Error details:', error.response?.data || error.message);
+        showToast('error', 'Lỗi', error.response?.data?.message || 'Không thể tải dữ liệu bài học');
+        
+        setTimeout(() => {
+          navigate('/learn');
+        }, 2000);
+      } finally {
+        setIsLoadingLesson(false);
+      }
+    };
+
+    fetchLessonData();
+  }, [lessonId, navigate]);
+
   const dismissFirstTimeReminder = () => {
     try {
       if (lessonId) localStorage.setItem(`lesson_seen_${lessonId}`, "1");
@@ -1679,6 +1957,7 @@ const Lesson = () => {
     }
     setShowFirstTimeReminder(false);
   };
+
   // Check if current question is a review question
   const isReviewQuestion = currentQuestion >= originalQuestionsCount;
 
@@ -1689,12 +1968,118 @@ const Lesson = () => {
     } else if (type === "wrong") {
       audioSrc = wrongSound;
     } else {
-      return; // Không có âm thanh cho type khác
+      return;
     }
 
     const audio = new Audio(audioSrc);
-    audio.play().catch((err) => console.log("Không thể phát âm thanh:", err)); // Xử lý lỗi nếu file không tồn tại
+    audio.play().catch((err) => console.log("Không thể phát âm thanh:", err));
   };
+
+  // Sync Hearts when used
+  const syncUseHeart = async () => {
+    try {
+      setIsSyncing(true);
+      const response = await heartService.useHeart();
+
+      console.log("Use heart response:", response);
+
+      // Xử lý nhiều format response
+      let currentHearts = 0;
+
+      if (typeof response === "number") {
+        currentHearts = response;
+      } else if (response?.data?.hearts !== undefined) {
+        currentHearts = response.data.hearts;
+      } else if (response?.hearts !== undefined) {
+        currentHearts = response.hearts;
+      } else if (response?.current !== undefined) {
+        currentHearts = response.current;
+      } else if (response?.remaining !== undefined) {
+        currentHearts = response.remaining;
+      }
+
+      console.log("Hearts after use:", currentHearts);
+      setHearts(currentHearts);
+
+      if (currentHearts === 1) {
+        showToast(
+          "warning",
+          "Cảnh báo! ❤️",
+          "Bạn chỉ còn 1 tim, hãy cẩn thận!"
+        );
+      }
+
+      if (currentHearts <= 0) {
+        setHearts(0);
+        Swal.fire({
+          title: "Hết tim rồi! 💔",
+          text: "Bạn cần nghỉ ngơi hoặc mua thêm tim để tiếp tục",
+          imageUrl: horse,
+          imageWidth: 200,
+          imageHeight: 200,
+          confirmButtonText: "Quay về",
+          confirmButtonColor: "#ef4444",
+          allowOutsideClick: false,
+        }).then(() => {
+          navigate("/learn");
+        });
+      }
+
+      return currentHearts;
+    } catch (error) {
+      console.error("Error using heart:", error);
+      showToast("error", "Lỗi", "Không thể sử dụng tim. Vui lòng thử lại.");
+      return null;
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  useEffect(() => {
+    const loadHearts = async () => {
+      try {
+        setIsSyncing(true);
+        const response = await heartService.refillHearts();
+
+        // LOG để debug - xem response trả về gì
+        console.log("Heart refill response:", response);
+
+        // Xử lý nhiều format response khác nhau
+        let currentHearts = 5; // default
+
+        if (typeof response === "number") {
+          currentHearts = response;
+        } else if (response?.data?.hearts !== undefined) {
+          currentHearts = response.data.hearts;
+        } else if (response?.hearts !== undefined) {
+          currentHearts = response.hearts;
+        } else if (response?.current !== undefined) {
+          currentHearts = response.current;
+        }
+
+        console.log("Setting hearts to:", currentHearts);
+        setHearts(currentHearts);
+      } catch (error) {
+        console.error("Error loading hearts:", error);
+        // Nếu lỗi, thử get hearts hiện tại
+        try {
+          const currentData = await heartService.getHearts();
+          console.log("Get hearts response:", currentData);
+
+          const currentHearts =
+            currentData?.hearts ?? currentData?.current ?? 5;
+          setHearts(currentHearts);
+        } catch (err) {
+          console.error("Error getting hearts:", err);
+          setHearts(5); // fallback
+        }
+      } finally {
+        setIsSyncing(false);
+      }
+    };
+
+    loadHearts();
+  }, []);
 
   const checkMatch = (leftId, rightId) => {
     const rightItem = question.rightColumn.find((item) => item.id === rightId);
@@ -1716,8 +2101,6 @@ const Lesson = () => {
           setIsChecked(true);
           setShowFeedback(true);
           setCorrectAnswers((prev) => prev + 1);
-          setTotalXP((prev) => prev + 10);
-          setStreak((prev) => prev + 1);
           setConsecutiveCorrect((prev) => prev + 1);
         }, 500);
       }
@@ -1731,42 +2114,119 @@ const Lesson = () => {
       }, 500);
     }
   };
+
   const handlePairClick = (id, column) => {
-    if (matchedPairs.includes(id) || isChecked) return;
+  if (matchedPairs.includes(id) || isChecked) return;
 
-    if (column === "left") {
-      setSelectedLeft(id);
-
-      // Auto-check if both selected
-      if (selectedRight) {
-        checkMatch(id, selectedRight);
-      }
-    } else {
-      setSelectedRight(id);
-
-      // Auto-check if both selected
-      if (selectedLeft) {
-        checkMatch(selectedLeft, id);
+  if (column === "left") {
+    setSelectedLeft(id);
+    if (selectedRight) {
+      checkMatch(id, selectedRight);
+    }
+    
+    // ✅ Khi click vào cột trái (tiếng Việt), đọc tiếng Anh tương ứng
+    const leftItem = question.leftColumn.find(item => item.id === id);
+    if (leftItem) {
+      const rightItem = question.rightColumn.find(item => item.matchWith === id);
+      if (rightItem) {
+        speakText(rightItem.text); // Đọc tiếng Anh
       }
     }
+  } else {
+    setSelectedRight(id);
+    if (selectedLeft) {
+      checkMatch(selectedLeft, id);
+    }
+  }
+};
+const speakText = (text) => {
+  if (!text || !text.toString().trim()) {
+    showToast('warning', 'Cảnh báo', 'Không có text để phát âm');
+    return;
+  }
+
+  // cancel any current speech
+  if (window.speechSynthesis.speaking) {
+    window.speechSynthesis.cancel();
+  }
+
+  const utterance = new SpeechSynthesisUtterance(text.toString());
+
+  // ✅ CHỈ ĐỌC TIẾNG ANH - Luôn set lang = 'en-US'
+  utterance.lang = 'en-US';
+
+  // choose best matching voice (ưu tiên giọng tiếng Anh tự nhiên)
+  const pickVoice = (voices, langPrefix) => {
+    if (!voices || voices.length === 0) return null;
+    
+    // ✅ Ưu tiên Google US English (giọng tự nhiên nhất)
+    const googleUS = voices.find(v => 
+      v.name && v.name.includes('Google') && v.lang === 'en-US'
+    );
+    if (googleUS) return googleUS;
+    
+    // Tiếp theo là Microsoft Zira hoặc David (giọng nữ/male rõ ràng)
+    const microsoftUS = voices.find(v => 
+      v.name && v.name.includes('Microsoft') && 
+      (v.name.includes('Zira') || v.name.includes('David')) &&
+      v.lang === 'en-US'
+    );
+    if (microsoftUS) return microsoftUS;
+    
+    // Tiếp theo là giọng US bất kỳ
+    const usVoice = voices.find(v => v.lang === 'en-US');
+    if (usVoice) return usVoice;
+    
+    // Cuối cùng là giọng English bất kỳ
+    const englishVoice = voices.find(v => v.lang && v.lang.startsWith('en'));
+    if (englishVoice) return englishVoice;
+    
+    // Fallback
+    return voices[0];
   };
-  // Text-to-Speech function
-  const speakText = (text) => {
-    if ("speechSynthesis" in window) {
-      window.speechSynthesis.cancel();
 
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = "en-US";
-      utterance.rate = 0.9;
-      utterance.pitch = 1;
+  let voices = window.speechSynthesis.getVoices();
+  let selectedVoice = pickVoice(voices, 'en');
 
+  // If voices not loaded yet, wait for onvoiceschanged once
+  if (!selectedVoice && typeof window.speechSynthesis.onvoiceschanged !== 'undefined') {
+    window.speechSynthesis.onvoiceschanged = () => {
+      voices = window.speechSynthesis.getVoices();
+      const v = pickVoice(voices, 'en');
+      if (v) utterance.voice = v;
       window.speechSynthesis.speak(utterance);
-    }
-  };
+    };
+  } else if (selectedVoice) {
+    utterance.voice = selectedVoice;
+    window.speechSynthesis.speak(utterance);
+  } else {
+    // fallback: still speak with lang set (browser will pick default)
+    window.speechSynthesis.speak(utterance);
+  }
 
-  // Auto play audio when question changes
+  // ✅ Điều chỉnh tốc độ và cao độ cho tiếng Anh tự nhiên
+  utterance.rate = 0.85; // Chậm hơn một chút để rõ ràng
+  utterance.pitch = 1.05; // Cao hơn một chút cho tự nhiên
+  utterance.volume = 1.0; // Volume max cho tiếng Anh
+
+  utterance.onstart = () => console.log(`🎵 Speak English: "${text}" lang=${utterance.lang}, voice=${utterance.voice?.name}`);
+  utterance.onend = () => console.log('✅ Hoàn thành phát âm tiếng Anh');
+  utterance.onerror = (err) => {
+    // ✅ Xử lý lỗi "canceled" riêng biệt, không show toast
+    if (err.error === 'canceled') {
+      console.log('🔇 Speech bị cancel (bình thường)');
+      return;
+    }
+    
+    console.error('❌ Speech error:', err);
+    showToast('error', 'Lỗi', 'Không thể phát âm thanh');
+  };
+};
+
+
+
   useEffect(() => {
-    if (!question) return; // Thêm kiểm tra này
+    if (!question) return;
 
     const timer = setTimeout(() => {
       if (question.type === "conversation" && question.conversation[0].text) {
@@ -1776,15 +2236,15 @@ const Lesson = () => {
       } else if (question.type === "listen_write" && question.audioText) {
         speakText(question.audioText);
       }
-    }, 500); // Delay 500ms để tránh phát ngay lập tức
+    }, 500);
 
     return () => clearTimeout(timer);
   }, [currentQuestion, question]);
 
+  // ✅ Sửa handleChoiceClick để so sánh đúng với _id
   const handleChoiceClick = (choiceId, choiceText) => {
     if (isChecked) return;
-
-    setSelectedAnswer(choiceId);
+    setSelectedAnswer(choiceId); // ✅ Lưu _id thay vì text
     if (choiceText) speakText(choiceText);
   };
 
@@ -1799,14 +2259,14 @@ const Lesson = () => {
     setSelectedWords(newWords);
   };
 
-  const handleCheck = () => {
+  // ✅ Sửa handleCheck để so sánh đúng
+  const handleCheck = async () => {
     if (question.type === "match_pairs") {
       const allMatched =
         matchedPairs.length ===
         question.leftColumn.length + question.rightColumn.length;
 
       if (allMatched) {
-        // Save answered question
         const answeredQ = {
           ...question,
           isCorrect: true,
@@ -1814,7 +2274,6 @@ const Lesson = () => {
           timestamp: Date.now(),
         };
         setAnsweredQuestions((prev) => [...prev, answeredQ]);
-
         setIsChecked(true);
         setShowFeedback(true);
         return;
@@ -1829,13 +2288,12 @@ const Lesson = () => {
     }
 
     let answer;
-
     if (question.type === "translate_build") {
       answer = selectedWords.join(" ");
     } else if (question.type === "listen_write") {
       answer = selectedAnswer;
     } else {
-      answer = selectedAnswer;
+      answer = selectedAnswer; // ✅ Đây là _id
     }
 
     if (!answer) return;
@@ -1845,16 +2303,17 @@ const Lesson = () => {
     setIsSkipped(false);
 
     let isCorrect = false;
-
     if (question.type === "translate_build") {
       isCorrect =
         JSON.stringify(selectedWords) ===
         JSON.stringify(question.correctAnswer);
     } else {
+      // ✅ So sánh _id với _id
       isCorrect = answer === question.correctAnswer;
     }
 
-    // Save answered question
+    console.log('🔍 Check answer:', { answer, correctAnswer: question.correctAnswer, isCorrect });
+
     const answeredQ = {
       ...question,
       isCorrect,
@@ -1866,23 +2325,23 @@ const Lesson = () => {
 
     if (isCorrect) {
       playSound("correct");
-      setStreak((prev) => prev + 1);
       setCorrectAnswers((prev) => prev + 1);
-      setTotalXP((prev) => prev + 10);
       setConsecutiveCorrect((prev) => prev + 1);
 
-      if ((streak + 1) % 5 === 0) {
+      if ((consecutiveCorrect + 1) % 5 === 0) {
         showToast(
           "success",
-          `🔥 Chuỗi ${streak + 1} câu đúng!`,
+          `🔥 Chuỗi ${consecutiveCorrect + 1} câu đúng!`,
           "Bạn đang làm rất tốt!"
         );
       }
     } else {
       playSound("wrong");
-      setStreak(0);
-      setHearts((prev) => Math.max(0, prev - 1));
       setConsecutiveCorrect(0);
+
+      const newHearts = hearts - 1;
+      setHearts(Math.max(0, newHearts));
+      await syncUseHeart();
 
       if (!wrongQuestions.find((q) => q.id === question.id)) {
         setWrongQuestions([...wrongQuestions, question]);
@@ -1890,12 +2349,208 @@ const Lesson = () => {
     }
   };
 
-  const handleOpenReviewModal = () => {
-    setShowReviewModal(true);
+  const handleContinue = () => {
+    if (currentQuestion < questions.length - 1) {
+      setCurrentQuestion((prev) => prev + 1);
+      setSelectedAnswer(null);
+      setSelectedWords([]);
+      setSelectedLeft(null);
+      setSelectedRight(null);
+      setMatchedPairs([]);
+      setIsChecked(false);
+      setShowFeedback(false);
+      setIsSkipped(false);
+    } else {
+      if (wrongQuestions.length > 0) {
+        setReviewCount(wrongQuestions.length);
+        setShowReviewNotice(true);
+        setQuestions((prevQuestions) => [...prevQuestions, ...wrongQuestions]);
+        setWrongQuestions([]);
+
+        setTimeout(() => {
+          setShowReviewNotice(false);
+        }, 3000);
+
+        setTimeout(() => {
+          setCurrentQuestion((prev) => prev + 1);
+          setSelectedAnswer(null);
+          setSelectedWords([]);
+          setSelectedLeft(null);
+          setSelectedRight(null);
+          setMatchedPairs([]);
+          setIsChecked(false);
+          setShowFeedback(false);
+          setIsSkipped(false);
+        }, 500);
+      } else {
+        setShowCompletion(true);
+        const audio = new Audio(successSound);
+        audio
+          .play()
+          .catch((err) => console.log("Không thể phát âm thanh:", err));
+      }
+    }
+  };
+
+  const handleSkip = async () => {
+    if (hearts === 1) {
+      Swal.fire({
+        title: "Cảnh báo!",
+        text: "Bạn chỉ còn 1 tim! Bạn có chắc muốn bỏ qua?",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Bỏ qua",
+        cancelButtonText: "Hủy",
+        confirmButtonColor: "#ef4444",
+        cancelButtonColor: "#6b7280",
+      }).then(async (result) => {
+        if (result.isConfirmed) {
+          setIsChecked(true);
+          setShowFeedback(true);
+          setIsSkipped(true);
+          setConsecutiveCorrect(0);
+
+          const newHearts = Math.max(0, hearts - 1);
+          setHearts(newHearts);
+          await syncUseHeart();
+
+          playSound("wrong");
+        }
+      });
+    } else {
+      setIsChecked(true);
+      setShowFeedback(true);
+      setIsSkipped(true);
+      setConsecutiveCorrect(0);
+
+      const newHearts = Math.max(0, hearts - 1);
+      setHearts(newHearts);
+      await syncUseHeart();
+
+      playSound("wrong");
+    }
+  };
+
+  const calculateAccuracy = () => {
+    const total = answeredQuestions.length;
+    if (total === 0) return 0;
+    return Math.round((correctAnswers / total) * 100);
+  };
+
+  const handleClose = () => {
+    setShowExitConfirm(true);
+  };
+
+  const confirmExit = () => {
+    setShowExitConfirm(false);
+    navigate("/learn");
+  };
+
+  const cancelExit = () => {
+    setShowExitConfirm(false);
   };
 
   const handleCloseReviewModal = () => {
     setShowReviewModal(false);
+  };
+
+  const handleOpenReviewModal = () => {
+    setShowReviewModal(true);
+  };
+
+  const handleRestartLesson = () => {
+    setShowReviewModal(false);
+    setCurrentQuestion(0);
+    setSelectedAnswer(null);
+    setSelectedWords([]);
+    setIsChecked(false);
+    setShowFeedback(false);
+    setIsSkipped(false);
+    setShowCompletion(false);
+    setConsecutiveCorrect(0);
+    setWrongQuestions([]);
+    setCorrectAnswers(0);
+    setAnsweredQuestions([]);
+    setMatchedPairs([]);
+    setSelectedLeft(null);
+    setSelectedRight(null);
+    setQuestions(allQuestions);
+  };
+
+  // Thêm function để update progress khi hoàn thành lesson
+const handleCompleteLessonSuccess = async () => {
+  try {
+    // Update progress: mark lesson as completed
+    await progressService.updateLessonProgress(lessonId, {
+      completed: true,
+      score: calculateAccuracy(),
+      answeredQuestions: answeredQuestions.length,
+      correctAnswers: correctAnswers
+    });
+
+    // Navigate về /learn để thấy lesson tiếp theo unlock
+    navigate('/learn');
+  } catch (error) {
+    console.error('Error updating progress:', error);
+    navigate('/learn');
+  }
+};
+  const handleContinueToLearn = () => {
+    handleCompleteLessonSuccess();
+  };
+
+  const handleOpenReportModal = () => {
+    setShowReportModal(true);
+    setSelectedReportReason("");
+    setReportDetails("");
+  };
+
+  const handleCloseReportModal = () => {
+    setShowReportModal(false);
+    setSelectedReportReason("");
+    setReportDetails("");
+  };
+
+  const handleSubmitReport = () => {
+    if (!selectedReportReason) {
+      showToast("warning", "Thiếu thông tin", "Vui lòng chọn lý do báo cáo");
+      return;
+    }
+    showToast("success", "Đã gửi báo cáo", "Cảm ơn phản hồi của bạn!");
+    handleCloseReportModal();
+  };
+
+  const isCorrectAnswer = () => {
+    if (question.type === "match_pairs") {
+      return (
+        matchedPairs.length ===
+        question.leftColumn.length + question.rightColumn.length
+      );
+    }
+    if (question.type === "translate_build") {
+      return (
+        JSON.stringify(selectedWords) === JSON.stringify(question.correctAnswer)
+      );
+    }
+    return selectedAnswer === question.correctAnswer;
+  };
+
+  const getCorrectAnswerText = () => {
+    if (question.type === "match_pairs") {
+      return "Đã hoàn thành tất cả các cặp";
+    }
+    if (question.type === "translate_build") {
+      return question.correctAnswer.join(" ");
+    }
+    if (
+      question.type === "vocabulary" ||
+      question.type === "conversation" ||
+      question.type === "multiple_choice"
+    ) {
+      return question.choices.find((c) => c.id === question.correctAnswer)
+        ?.text;
+    }
+    return question.correctAnswer;
   };
 
   const getQuestionTypeLabel = (type) => {
@@ -1918,26 +2573,20 @@ const Lesson = () => {
   };
 
   const getQuestionContent = (q) => {
-    if (q.type === "vocabulary") {
-      return q.question;
-    } else if (q.type === "match_pairs") {
-      return "Chọn cặp từ";
-    } else if (q.type === "conversation") {
-      return q.conversation[0].text;
-    } else if (q.type === "translate_build") {
-      return q.audioText;
-    } else if (q.type === "listen_write") {
-      return q.audioText;
-    } else if (q.type === "multiple_choice") {
-      return q.prompt;
-    }
+    if (q.type === "vocabulary") return q.question;
+    if (q.type === "match_pairs") return "Chọn cặp từ";
+    if (q.type === "conversation") return q.conversation[0].text;
+    if (q.type === "translate_build") return q.audioText;
+    if (q.type === "listen_write") return q.audioText;
+    if (q.type === "multiple_choice") return q.prompt;
     return q.question;
   };
 
   const getCorrectAnswerForReview = (q) => {
     if (q.type === "translate_build") {
       return q.correctAnswer.join(" ");
-    } else if (
+    }
+    if (
       q.type === "vocabulary" ||
       q.type === "conversation" ||
       q.type === "multiple_choice"
@@ -1957,203 +2606,12 @@ const Lesson = () => {
   };
 
   const getAudioText = (q) => {
-    if (q.type === "conversation") {
-      return q.conversation[0].text;
-    } else if (q.type === "translate_build" || q.type === "listen_write") {
+    if (q.type === "conversation") return q.conversation[0].text;
+    if (q.type === "translate_build" || q.type === "listen_write")
       return q.audioText;
-    }
     return "";
   };
-  const handleContinue = () => {
-    if (currentQuestion < questions.length - 1) {
-      // Còn câu hỏi tiếp theo
-      setCurrentQuestion((prev) => prev + 1);
-      setSelectedAnswer(null);
-      setSelectedWords([]);
-      setSelectedLeft(null);
-      setSelectedRight(null);
-      setMatchedPairs([]);
-      setIsChecked(false);
-      setShowFeedback(false);
-      setIsSkipped(false);
-    } else {
-      // Đã hết câu hỏi hiện tại
-      if (wrongQuestions.length > 0) {
-        // Có câu sai cần ôn lại - Hiện banner thông báo
-        setReviewCount(wrongQuestions.length);
-        setShowReviewNotice(true);
 
-        // Thêm câu sai vào cuối
-        setQuestions((prevQuestions) => [...prevQuestions, ...wrongQuestions]);
-
-        // Clear wrong questions
-        setWrongQuestions([]);
-
-        // Ẩn banner sau 3 giây
-        setTimeout(() => {
-          setShowReviewNotice(false);
-        }, 3000);
-
-        // Move to next question
-        setTimeout(() => {
-          setCurrentQuestion((prev) => prev + 1);
-          setSelectedAnswer(null);
-          setSelectedWords([]);
-          setSelectedLeft(null);
-          setSelectedRight(null);
-          setMatchedPairs([]);
-          setIsChecked(false);
-          setShowFeedback(false);
-          setIsSkipped(false);
-        }, 500);
-      } else {
-        setShowCompletion(true);
-        // Thay thế tiếng nói bằng âm thanh
-        const audio = new Audio(successSound);
-        audio
-          .play()
-          .catch((err) => console.log("Không thể phát âm thanh:", err)); // Xử lý lỗi nếu file không tồn tại
-      }
-    }
-  };
-
-  const handleReviewLesson = () => {
-    setShowReviewModal(true);
-  };
-
-  const handleRestartLesson = () => {
-    setShowReviewModal(false);
-    setCurrentQuestion(0);
-    setSelectedAnswer(null);
-    setSelectedWords([]);
-    setIsChecked(false);
-    setShowFeedback(false);
-    setIsSkipped(false);
-    setShowCompletion(false);
-    setStreak(0);
-    setWrongQuestions([]);
-    setHearts(5);
-    setCorrectAnswers(0);
-    setTotalXP(0);
-    setAnsweredQuestions([]);
-    setMatchedPairs([]);
-    setSelectedLeft(null);
-    setSelectedRight(null);
-  };
-  const handleContinueToLearn = () => {
-    navigate("/learn");
-  };
-  const calculateAccuracy = () => {
-    const total = questions.length;
-    return Math.round((correctAnswers / total) * 100);
-  };
-  const handleSkip = () => {
-    if (hearts === 1) {
-      // Hiển thị dialog xác nhận khi còn 1 tim
-      Swal.fire({
-        title: "Cảnh báo!",
-        text: "Bạn chỉ còn 1 tim! Bạn có chắc muốn bỏ qua?",
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonText: "Bỏ qua",
-        cancelButtonText: "Hủy",
-        confirmButtonColor: "#ef4444",
-        cancelButtonColor: "#6b7280",
-      }).then((result) => {
-        if (result.isConfirmed) {
-          setIsChecked(true);
-          setShowFeedback(true);
-          setIsSkipped(true);
-          setStreak(0);
-          setHearts((prev) => Math.max(0, prev - 1)); // Trừ 1 tim
-          playSound("wrong");
-        }
-      });
-    } else {
-      setIsChecked(true);
-      setShowFeedback(true);
-      setIsSkipped(true);
-      setStreak(0);
-      setHearts((prev) => Math.max(0, prev - 1)); // Trừ 1 tim
-      playSound("wrong");
-    }
-  };
-
-  const handleClose = () => {
-    // show custom exit confirm modal
-    setShowExitConfirm(true);
-  };
-
-  const confirmExit = () => {
-    setShowExitConfirm(false);
-    navigate("/learn");
-  };
-
-  const cancelExit = () => {
-    setShowExitConfirm(false);
-  };
-
-  const handleOpenReportModal = () => {
-    setShowReportModal(true);
-    setSelectedReportReason("");
-    setReportDetails("");
-  };
-
-  const handleCloseReportModal = () => {
-    setShowReportModal(false);
-    setSelectedReportReason("");
-    setReportDetails("");
-  };
-
-  const handleSubmitReport = () => {
-    if (!selectedReportReason) {
-      showToast("warning", "Thiếu thông tin", "Vui lòng chọn lý do báo cáo");
-      return;
-    }
-
-    showToast("success", "Đã gửi báo cáo", "Cảm ơn phản hồi của bạn!");
-    handleCloseReportModal();
-  };
-
-  useEffect(() => {
-    if (hearts === 1) {
-      // Hiển thị toast cảnh báo khi còn 1 tim
-      showToast("warning", "Cảnh báo! ❤️", "Bạn chỉ còn 1 tim, hãy cẩn thận!");
-    }
-
-    if (hearts === 0) {
-      // Hiển thị modal khi hết tim
-      Swal.fire({
-        title: "Hết tim rồi! 💔",
-        text: "Bạn cần nghỉ ngơi hoặc mua thêm tim để tiếp tục",
-        imageUrl: horse, // Sử dụng hình horse
-        imageWidth: 200,
-        imageHeight: 200,
-        confirmButtonText: "Quay về",
-        confirmButtonColor: "#ef4444",
-        allowOutsideClick: false,
-      }).then(() => {
-        navigate("/learn");
-      });
-    }
-  }, [hearts, navigate, showToast]);
-
-  const isCorrectAnswer = () => {
-    if (question.type === "match_pairs") {
-      return (
-        matchedPairs.length ===
-        question.leftColumn.length + question.rightColumn.length
-      );
-    }
-    if (question.type === "translate_build") {
-      return (
-        JSON.stringify(selectedWords) === JSON.stringify(question.correctAnswer)
-      );
-    }
-    return selectedAnswer === question.correctAnswer;
-  };
-
-  // Thêm kiểm tra an toàn ngay sau khi lấy question
   const renderQuestion = () => {
     const renderQuestionContent = () => {
       switch (question.type) {
@@ -2164,12 +2622,12 @@ const Lesson = () => {
                 {question.leftColumn.map((item, index) => (
                   <PairCard
                     key={item.id}
-                    selected={selectedLeft === item.id}
-                    matched={matchedPairs.includes(item.id)}
-                    onClick={() => handlePairClick(item.id, "left")}
+                    $selected={selectedLeft === item.id}
+                    $matched={matchedPairs.includes(item.id)}
                     disabled={matchedPairs.includes(item.id)}
+                    onClick={() => handlePairClick(item.id, "left")}
                   >
-                    <PairNumber matched={matchedPairs.includes(item.id)}>
+                    <PairNumber $matched={matchedPairs.includes(item.id)}>
                       {index + 1}
                     </PairNumber>
                     {item.text}
@@ -2177,17 +2635,16 @@ const Lesson = () => {
                   </PairCard>
                 ))}
               </PairColumn>
-
               <PairColumn>
                 {question.rightColumn.map((item, index) => (
                   <PairCard
                     key={item.id}
-                    selected={selectedRight === item.id}
-                    matched={matchedPairs.includes(item.id)}
-                    onClick={() => handlePairClick(item.id, "right")}
+                    $selected={selectedRight === item.id}
+                    $matched={matchedPairs.includes(item.id)}
                     disabled={matchedPairs.includes(item.id)}
+                    onClick={() => handlePairClick(item.id, "right")}
                   >
-                    <PairNumber matched={matchedPairs.includes(item.id)}>
+                    <PairNumber $matched={matchedPairs.includes(item.id)}>
                       {index + 6}
                     </PairNumber>
                     {item.text}
@@ -2197,24 +2654,31 @@ const Lesson = () => {
               </PairColumn>
             </MatchPairsContainer>
           );
+
         case "vocabulary":
           return (
             <ChoicesGrid>
               {question.choices.map((choice, index) => (
                 <ChoiceCard
                   key={choice.id}
-                  selected={selectedAnswer === choice.id}
-                  isCorrect={isChecked && choice.id === question.correctAnswer}
-                  isWrong={
+                  $selected={selectedAnswer === choice.id}
+                  $isCorrect={isChecked && choice.id === question.correctAnswer}
+                  $isWrong={
                     isChecked &&
                     selectedAnswer === choice.id &&
                     choice.id !== question.correctAnswer
                   }
-                  isChecked={isChecked}
+                  $isChecked={isChecked}
                   disabled={isChecked}
                   onClick={() => handleChoiceClick(choice.id, choice.text)}
                 >
-                  <ChoiceImage src={choice.image} alt={choice.text} />
+                  <ChoiceImage 
+                    src={choice.image || coffee} 
+                    alt={choice.text}
+                    onError={(e) => {
+                      e.target.src = coffee;
+                    }}
+                  />
                   <ChoiceTextContainer>
                     <ChoiceNumber>{index + 1}</ChoiceNumber>
                     <ChoiceText>{choice.text}</ChoiceText>
@@ -2235,32 +2699,32 @@ const Lesson = () => {
         case "conversation":
           return (
             <>
-              <div style={{ marginBottom: "1.25rem" }}>
-                <ConversationBubble>
-                  <SpeakerIcon onClick={() => speakText(question.conversation[0].text)}>
-                    🔊
-                  </SpeakerIcon>
-                  {question.conversation[0].text}
-                </ConversationBubble>
-              </div>
-
-              {/* render choices for "Hoàn thành hội thoại" */}
               <ChoicesGrid>
-               {question.choices && question.choices.map((choice, index) => (
-                  <ChoiceCard
-                    key={choice.id}
-                    selected={selectedAnswer === choice.id}
-                    isCorrect={isChecked && choice.id === question.correctAnswer}
-                    isWrong={isChecked && selectedAnswer === choice.id && choice.id !== question.correctAnswer}
-                    isChecked={isChecked}
-                    disabled={isChecked}
-                    onClick={() => handleChoiceClick(choice.id, choice.text)}
-                    style={{ flexDirection: "row", justifyContent: "flex-start" }}
-                  >
-                    <ChoiceNumber>{index + 1}</ChoiceNumber>
-                    <ChoiceText>{choice.text}</ChoiceText>
-                  </ChoiceCard>
-                ))}
+                {question.choices &&
+                  question.choices.map((choice, index) => (
+                    <ChoiceCard
+                      key={choice.id}
+                      $selected={selectedAnswer === choice.id}
+                      $isCorrect={
+                        isChecked && choice.id === question.correctAnswer
+                      }
+                      $isWrong={
+                        isChecked &&
+                        selectedAnswer === choice.id &&
+                        choice.id !== question.correctAnswer
+                      }
+                      $isChecked={isChecked}
+                      disabled={isChecked}
+                      onClick={() => handleChoiceClick(choice.id, choice.text)}
+                      style={{
+                        flexDirection: "row",
+                        justifyContent: "flex-start",
+                      }}
+                    >
+                      <ChoiceNumber>{index + 1}</ChoiceNumber>
+                      <ChoiceText>{choice.text}</ChoiceText>
+                    </ChoiceCard>
+                  ))}
               </ChoicesGrid>
             </>
           );
@@ -2268,15 +2732,6 @@ const Lesson = () => {
         case "translate_build":
           return (
             <>
-              <div style={{ marginBottom: "1.25rem" }}>
-                <SpeechBubble onClick={() => speakText(question.audioText)}>
-                  <span style={{ marginRight: "0.5rem", cursor: "pointer" }}>
-                    🔊
-                  </span>
-                  {question.audioText}
-                </SpeechBubble>
-              </div>
-
               <AnswerDisplay hasAnswer={selectedWords.length > 0}>
                 {selectedWords.length === 0 ? (
                   <span style={{ color: "#9ca3af" }}>
@@ -2293,12 +2748,11 @@ const Lesson = () => {
                   ))
                 )}
               </AnswerDisplay>
-
               <WordBankContainer>
                 {question.wordBank.map((word, index) => (
                   <WordChip
                     key={index}
-                    selected={selectedWords.includes(word)}
+                    $selected={selectedWords.includes(word)}
                     disabled={
                       isChecked ||
                       selectedWords.filter((w) => w === word).length >=
@@ -2316,44 +2770,55 @@ const Lesson = () => {
         case "listen_write":
           return (
             <>
-              <AudioButton onClick={() => speakText(question.audioText)}>
-                🔊
+              <AudioButton 
+                onClick={() => {
+                  // ✅ Clear input và focus khi ấn nút loa
+                  setSelectedAnswer("");
+                  setTimeout(() => {
+                    // Focus vào input sau khi clear
+                    const input = document.querySelector('input[type="text"]');
+                    if (input) input.focus();
+                  }, 50);
+                  // Phát âm text cần nghe
+                  speakText(question.audioText || question.correctAnswer);
+                }}
+                title="Phát âm để nghe"
+              >
+                <VolumeUp sx={{ fontSize: 28 }} />
               </AudioButton>
-              <WordBankContainer>
-                {question.wordBank.map((word, index) => (
-                  <WordChip
-                    key={index}
-                    selected={selectedAnswer === word}
-                    disabled={isChecked}
-                    onClick={() => handleChoiceClick(word, word)}
-                  >
-                    {word}
-                  </WordChip>
-                ))}
-              </WordBankContainer>
+
+              {/* Input để người dùng gõ đáp án nghe được */}
+              <InputContainer style={{ maxWidth: 700, margin: "2rem auto" }}>
+                <InputLabel>Nghe và nhập đáp án</InputLabel>
+                <InputField
+                  theme="light"
+                  type="text"
+                  value={selectedAnswer || ""}
+                  onChange={(e) => setSelectedAnswer(e.target.value)}
+                  placeholder="Nhập đáp án..."
+                  disabled={isChecked}
+                />
+              </InputContainer>
             </>
           );
 
         case "multiple_choice":
           return (
             <>
-              <div style={{ marginBottom: "1.25rem" }}>
-                <SpeechBubble>{question.prompt}</SpeechBubble>
-              </div>
               <ChoicesGrid>
                 {question.choices.map((choice, index) => (
                   <ChoiceCard
                     key={choice.id}
-                    selected={selectedAnswer === choice.id}
-                    isCorrect={
+                    $selected={selectedAnswer === choice.id}
+                    $isCorrect={
                       isChecked && choice.id === question.correctAnswer
                     }
-                    isWrong={
+                    $isWrong={
                       isChecked &&
                       selectedAnswer === choice.id &&
                       choice.id !== question.correctAnswer
                     }
-                    isChecked={isChecked}
+                    $isChecked={isChecked}
                     disabled={isChecked}
                     onClick={() => handleChoiceClick(choice.id, choice.text)}
                     style={{
@@ -2369,44 +2834,50 @@ const Lesson = () => {
             </>
           );
 
+        case "fill_in_blank":
+        case "translation":
+          return (
+            <InputContainer>
+              <InputLabel>
+                {question.type === 'fill_in_blank' 
+                  ? 'Điền vào chỗ trống:' 
+                  : 'Dịch câu sau:'}
+              </InputLabel>
+              <InputField
+                theme="light"
+                type="text"
+                value={selectedAnswer || ''}
+                onChange={(e) => setSelectedAnswer(e.target.value)}
+                placeholder="Nhập câu trả lời..."
+                disabled={isChecked}
+              />
+            </InputContainer>
+          );
+
         default:
           return null;
       }
     };
+
     const linhImgSrc =
       isChecked && !isSkipped
-        ? (isCorrectAnswer() ? happyGif : sadGif)
+        ? isCorrectAnswer()
+          ? happyGif
+          : sadGif
         : LinhThuTini;
 
-    // phần nội dung trả lời sẽ hiển thị phía dưới (không chèn LinhThuTini vào phần đáp án).
     return (
       <>
+        {/* ✅ BỎ nút loa bên cạnh câu hỏi - chỉ giữ QuestionWithCharacterContainer */}
         <QuestionWithCharacterContainer>
           <LinhThuTiniImage src={linhImgSrc} alt="LinhThuTini" />
           <QuestionText>{question.question}</QuestionText>
         </QuestionWithCharacterContainer>
-
         {renderQuestionContent()}
       </>
     );
   };
-  const getCorrectAnswerText = () => {
-    if (question.type === "match_pairs") {
-      return "Đã hoàn thành tất cả các cặp";
-    }
-    if (question.type === "translate_build") {
-      return question.correctAnswer.join(" ");
-    }
-    if (
-      question.type === "vocabulary" ||
-      question.type === "conversation" ||
-      question.type === "multiple_choice"
-    ) {
-      return question.choices.find((c) => c.id === question.correctAnswer)
-        ?.text;
-    }
-    return question.correctAnswer;
-  };
+
   if (!question) {
     return (
       <PageWrapper>
@@ -2416,9 +2887,55 @@ const Lesson = () => {
       </PageWrapper>
     );
   }
+   // ========== RENDER ==========
+  if (isLoadingLesson) {
+    return (
+      <PageWrapper>
+        <Container style={{ textAlign: 'center', padding: '4rem 2rem' }}>
+          <LoadingSpinner />
+          <LoadingText>Đang tải bài học...</LoadingText>
+        </Container>
+      </PageWrapper>
+    );
+  }
+
+  if (!question || questions.length === 0) {
+    return (
+      <PageWrapper>
+        <Container style={{ textAlign: 'center', padding: '4rem 2rem' }}>
+          <h2>Bài học này chưa có câu hỏi</h2>
+          <CompletionButton onClick={() => navigate('/learn')}>
+            Quay về
+          </CompletionButton>
+        </Container>
+      </PageWrapper>
+    );
+  }
+
   return (
     <PageWrapper>
       <Toast toast={toast} onClose={hideToast} />
+
+      {isSyncing && (
+        <div
+          style={{
+            position: "fixed",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            background: "rgba(0,0,0,0.8)",
+            color: "white",
+            padding: "1rem 2rem",
+            borderRadius: "12px",
+            zIndex: 9999,
+            fontSize: "1rem",
+            fontWeight: "bold",
+          }}
+        >
+          ⏳ Đang đồng bộ...
+        </div>
+      )}
+
       {showReviewNotice && (
         <ReviewNoticeBanner>
           <ReviewNoticeIcon>🔄</ReviewNoticeIcon>
@@ -2431,6 +2948,7 @@ const Lesson = () => {
           </ReviewNoticeText>
         </ReviewNoticeBanner>
       )}
+
       {showCompletion ? (
         <CompletionOverlay>
           <CelebrationIcon>✨</CelebrationIcon>
@@ -2447,14 +2965,16 @@ const Lesson = () => {
           <CompletionTitle>Hoàn thành bài học!</CompletionTitle>
 
           <StatsContainer>
-            <StatCard color="#fbbf24">
-              <StatLabel color="#fbbf24">TỔNG ĐIỂM XP</StatLabel>
-              <StatValue color="#fbbf24">⚡ {totalXP}</StatValue>
+            <StatCard color="#58CC02">
+              <StatLabel color="#58CC02">ĐỘ CHÍNH XÁC</StatLabel>
+              <StatValue color="#58CC02">🎯 {calculateAccuracy()}%</StatValue>
             </StatCard>
 
-            <StatCard color="#58CC02">
-              <StatLabel color="#58CC02">TUYỆT VỜI</StatLabel>
-              <StatValue color="#58CC02">🎯 {calculateAccuracy()}%</StatValue>
+            <StatCard color="#fbbf24">
+              <StatLabel color="#fbbf24">CÂU ĐÚNG</StatLabel>
+              <StatValue color="#fbbf24">
+                ✓ {correctAnswers}/{answeredQuestions.length}
+              </StatValue>
             </StatCard>
           </StatsContainer>
 
@@ -2462,29 +2982,32 @@ const Lesson = () => {
             <CompletionButton onClick={handleOpenReviewModal}>
               Xem lại bài học
             </CompletionButton>
-            <CompletionButton primary onClick={handleContinueToLearn}>
+            <CompletionButton $primary={true} onClick={handleContinueToLearn}>
               Tiếp tục
             </CompletionButton>
           </CompletionButtons>
         </CompletionOverlay>
       ) : (
         <>
-          {streak >= 3 && <StreakBadge>🔥 {streak} câu đúng</StreakBadge>}
+          {consecutiveCorrect >= 3 && (
+            <StreakBadge>🔥 {consecutiveCorrect} câu đúng</StreakBadge>
+          )}
 
           <Header>
             <HeaderContent>
               <CloseButton onClick={handleClose}>✕</CloseButton>
               <ProgressBarContainer>
-                <ProgressBarFill progress={progress} />
+                <ProgressBarFill $progress={progress} />
               </ProgressBarContainer>
-              <HeartsContainer isShaking={hearts <= 1}>
-                ❤️ {hearts}
+              <HeartsContainer $isShaking={hearts <= 1}>
+                <Favorite sx={{ fontSize: 24, color: "#ef4444" }} />{" "}
+                {typeof hearts === "number" ? hearts : 5}
               </HeartsContainer>
             </HeaderContent>
           </Header>
 
           <Container>
-            <QuestionBadge isReview={isReviewQuestion}>
+            <QuestionBadge $isReview={isReviewQuestion}>
               <BadgeIcon
                 src={isReviewQuestion ? loopIcon : newIcon}
                 alt={isReviewQuestion ? "Review" : "New"}
@@ -2492,7 +3015,7 @@ const Lesson = () => {
               {isReviewQuestion ? "LỖI SAI TRƯỚC ĐÂY" : "TỪ VỰNG MỚI"}
             </QuestionBadge>
 
-            {question && renderQuestion()}
+            {renderQuestion()}
           </Container>
 
           {!showFeedback && (
@@ -2519,11 +3042,11 @@ const Lesson = () => {
           )}
 
           {showFeedback && (
-            <FeedbackBanner isCorrect={!isSkipped && isCorrectAnswer()}>
+            <FeedbackBanner $isCorrect={!isSkipped && isCorrectAnswer()}>
               <FeedbackWrapper>
                 <FeedbackContent>
                   <FeedbackIconWrapper
-                    isCorrect={!isSkipped && isCorrectAnswer()}
+                    $isCorrect={!isSkipped && isCorrectAnswer()}
                   >
                     {!isSkipped && isCorrectAnswer() ? (
                       <CheckmarkIcon />
@@ -2532,7 +3055,7 @@ const Lesson = () => {
                     )}
                   </FeedbackIconWrapper>
                   <FeedbackTextWrapper>
-                    <FeedbackTitle isCorrect={!isSkipped && isCorrectAnswer()}>
+                    <FeedbackTitle $isCorrect={!isSkipped && isCorrectAnswer()}>
                       {!isSkipped && isCorrectAnswer()
                         ? "Tuyệt vời!"
                         : "Đáp án đúng:"}
@@ -2549,7 +3072,7 @@ const Lesson = () => {
                   </FeedbackTextWrapper>
                 </FeedbackContent>
                 <ContinueButton
-                  isCorrect={!isSkipped && isCorrectAnswer()}
+                  $isCorrect={!isSkipped && isCorrectAnswer()}
                   onClick={handleContinue}
                 >
                   Tiếp tục
@@ -2570,12 +3093,10 @@ const Lesson = () => {
                     ✕
                   </ModalCloseButton>
                 </ModalHeader>
-
                 <ModalDescription>
                   Vui lòng cho chúng tôi biết vấn đề bạn gặp phải với câu hỏi
                   này.
                 </ModalDescription>
-
                 <ReportOptions>
                   {reportReasons.map((reason) => (
                     <ReportOption
@@ -2587,7 +3108,6 @@ const Lesson = () => {
                     </ReportOption>
                   ))}
                 </ReportOptions>
-
                 <TextAreaWrapper>
                   <TextAreaLabel>Chi tiết (tùy chọn)</TextAreaLabel>
                   <TextArea
@@ -2596,13 +3116,12 @@ const Lesson = () => {
                     onChange={(e) => setReportDetails(e.target.value)}
                   />
                 </TextAreaWrapper>
-
                 <ModalActions>
                   <ModalButton onClick={handleCloseReportModal}>
                     Hủy
                   </ModalButton>
                   <ModalButton
-                    primary
+                    $primary={true}
                     onClick={handleSubmitReport}
                     disabled={!selectedReportReason}
                   >
@@ -2614,6 +3133,7 @@ const Lesson = () => {
           )}
         </>
       )}
+
       {showExitConfirm && (
         <ExitConfirmOverlay onClick={cancelExit}>
           <ExitConfirmBox onClick={(e) => e.stopPropagation()}>
@@ -2623,16 +3143,17 @@ const Lesson = () => {
               Bạn sẽ mất hết tiến trình của bài học này nếu thoát bây giờ
             </ExitText>
             <ExitButtons>
-              <ExitBtn success onClick={cancelExit}>
+              <ExitBtn $success={true} onClick={cancelExit}>
                 TIẾP TỤC HỌC
               </ExitBtn>
-              <ExitBtn onClick={confirmExit} primary>
+              <ExitBtn $primary={true} onClick={confirmExit}>
                 THOÁT
               </ExitBtn>
             </ExitButtons>
           </ExitConfirmBox>
         </ExitConfirmOverlay>
       )}
+
       {showFirstTimeReminder && (
         <FirstTimeOverlay onClick={() => dismissFirstTimeReminder()}>
           <FirstTimeBox onClick={(e) => e.stopPropagation()}>
@@ -2642,14 +3163,14 @@ const Lesson = () => {
               Học chăm chỉ và tập trung để bảo toàn các trái tim nhé!
             </ExitText>
             <ExitButtons style={{ marginTop: 16 }}>
-              <ExitBtn success onClick={dismissFirstTimeReminder}>
+              <ExitBtn $primary={true} onClick={dismissFirstTimeReminder}>
                 TIẾP TỤC HỌC
               </ExitBtn>
             </ExitButtons>
           </FirstTimeBox>
         </FirstTimeOverlay>
       )}
-      {/* Review Modal */}
+
       {showReviewModal && (
         <ReviewModalOverlay onClick={handleCloseReviewModal}>
           <ReviewModalContent onClick={(e) => e.stopPropagation()}>
@@ -2659,11 +3180,9 @@ const Lesson = () => {
                 ✕
               </ReviewCloseButton>
             </ReviewHeader>
-
             <ReviewSubtitle>
               Nhấp vào ô bên dưới để hiển thị đáp án
             </ReviewSubtitle>
-
             <ReviewGrid>
               {answeredQuestions.map((q, index) => (
                 <ReviewCard key={index} isCorrect={q.isCorrect}>
@@ -2673,15 +3192,12 @@ const Lesson = () => {
                     </ReviewCardType>
                     <ReviewCardIcon>{q.isCorrect ? "✓" : "✗"}</ReviewCardIcon>
                   </ReviewCardHeader>
-
                   <ReviewCardContent>{getQuestionContent(q)}</ReviewCardContent>
-
                   {!q.isCorrect && (
                     <ReviewCardAnswer>
                       Đáp án: {getCorrectAnswerForReview(q)}
                     </ReviewCardAnswer>
                   )}
-
                   {hasAudio(q) && (
                     <SpeakerIconSmall
                       onClick={() => speakText(getAudioText(q))}
@@ -2692,12 +3208,11 @@ const Lesson = () => {
                 </ReviewCard>
               ))}
             </ReviewGrid>
-
             <CompletionButtons>
               <CompletionButton onClick={handleRestartLesson}>
                 Làm lại
               </CompletionButton>
-              <CompletionButton primary onClick={handleContinueToLearn}>
+              <CompletionButton $primary={true} onClick={handleContinueToLearn}>
                 Tiếp tục
               </CompletionButton>
             </CompletionButtons>
@@ -2736,8 +3251,8 @@ const PairCard = styled.button`
   background: white;
   border: 3px solid
     ${(props) => {
-      if (props.matched) return "#58CC02";
-      if (props.selected) return "#1CB0F6";
+      if (props.$matched) return "#58CC02";
+      if (props.$selected) return "#1CB0F6";
       return "#e5e7eb";
     }};
   border-radius: 16px;
@@ -2752,15 +3267,15 @@ const PairCard = styled.button`
   gap: 1rem;
   position: relative;
   box-shadow: ${(props) => {
-    if (props.matched) return "0 6px 20px rgba(88, 204, 2, 0.3)";
-    if (props.selected && !props.matched)
-      return "0 6px 20px rgba(239, 68, 68, 0.3)"; // Thêm box-shadow đỏ cho sai
+    if (props.$matched) return "0 6px 20px rgba(88,204,2,0.3)";
+    if (props.$selected && !props.$matched)
+      return "0 6px 20px rgba(239,68,68,0.3)";
     return "0 2px 8px rgba(0, 0, 0, 0.06)";
   }};
-  opacity: ${(props) => (props.matched ? 0.7 : 1)};
+  opacity: ${(props) => (props.$matched ? 0.7 : 1)};
 
   &:hover:not(:disabled) {
-    border-color: ${(props) => (props.matched ? "#58CC02" : "#1CB0F6")};
+    border-color: ${(props) => (props.$matched ? "#58CC02" : "#1CB0F6")};
     transform: ${(props) => (props.disabled ? "none" : "translateY(-2px)")};
   }
 
@@ -2774,8 +3289,8 @@ const PairNumber = styled.div`
   width: 32px;
   height: 32px;
   border-radius: 8px;
-  background: ${(props) => (props.matched ? "#58CC02" : "#f3f4f6")};
-  color: ${(props) => (props.matched ? "white" : "#6b7280")};
+  background: ${(props) => (props.$matched ? "#58CC02" : "#f3f4f6")};
+  color: ${(props) => (props.$matched ? "white" : "#6b7280")};
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2839,6 +3354,26 @@ const ReportIcon = styled.img`
   }
 `;
 
+
+const LoadingSpinner = styled.div`
+  width: 60px;
+  height: 60px;
+  border: 4px solid #e5e7eb;
+  border-top-color: #58CC02;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 1rem;
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+`;
+
+const LoadingText = styled.div`
+  font-size: 1rem;
+  font-weight: 600;
+  color: #6b7280;
+`;
 const ModalOverlay = styled.div`
   position: fixed;
   top: 0;
@@ -3043,9 +3578,9 @@ const LinhThuTiniImage = styled.img`
 `;
 
 const ModalButton = styled.button`
-  background: ${(props) => (props.primary ? "#1CB0F6" : "white")};
-  border: 2px solid ${(props) => (props.primary ? "#1CB0F6" : "#e5e7eb")};
-  color: ${(props) => (props.primary ? "white" : "#6b7280")};
+  background: ${(props) => (props.$primary ? "#1CB0F6" : "white")};
+  border: 2px solid ${(props) => (props.$primary ? "#1CB0F6" : "#e5e7eb")};
+  color: ${(props) => (props.$primary ? "white" : "#6b7280")};
   padding: 0.875rem 2rem;
   border-radius: 12px;
   font-size: 1rem;
@@ -3058,14 +3593,20 @@ const ModalButton = styled.button`
 
   &:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px
-      ${(props) =>
-        props.primary ? "rgba(28, 176, 246, 0.3)" : "rgba(0, 0, 0, 0.1)"};
+    box-shadow: ${(props) =>
+      props.$primary ? "0 4px 0 #46A302" : "0 2px 6px rgba(0,0,0,0.06)"};
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: ${(props) => (props.$primary ? "0 2px 0 #46A302" : "none")};
   }
 
   @media (max-width: 768px) {
     width: 100%;
     padding: 0.875rem 1.5rem;
+    font-size: 0.9375rem;
+    min-width: unset;
   }
 `;
 
@@ -3081,8 +3622,7 @@ const QuestionWithCharacterContainer = styled.div`
   @media (max-width: 768px) {
     flex-direction: column;
     gap: 1rem;
-    margin-bottom: 1rem;
-    align-items: center;
+    margin-bottom: 2rem;
   }
 `;
 const ExitConfirmOverlay = styled.div`
@@ -3124,12 +3664,12 @@ const ExitBtn = styled.button`
   cursor: pointer;
   border: none;
   background: ${(p) =>
-    p.primary ? "#1CB0F6" : p.success ? "#58CC02" : "white"};
-  color: ${(p) => (p.primary || p.success ? "white" : "#6b7280")};
+    p.$primary ? "#1CB0F6" : p.$success ? "#58CC02" : "white"};
+  color: ${(p) => (p.$primary || p.$success ? "white" : "#6b7280")};
   box-shadow: ${(p) =>
-    p.primary
+    p.$primary
       ? "0 6px 0 #0fa0d6"
-      : p.success
+      : p.$success
       ? "0 6px 0 #3f8e1f"
       : "0 2px 6px rgba(0,0,0,0.06)"};
 `;
@@ -3163,5 +3703,51 @@ const SadImage = styled.img`
   object-fit: contain;
   display: block;
   margin: 0 auto 0.75rem;
+`;
+const InputContainer = styled.div`
+  margin-bottom: 2rem;
+`;
+
+const InputLabel = styled.div`
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 0.75rem;
+
+  @media (max-width: 768px) {
+    font-size: 0.9375rem;
+  }
+`;
+
+const InputField = styled.input`
+  width: 100%;
+  padding: 1rem 1.5rem;
+  border: 3px solid ${props => props.disabled ? '#e5e7eb' : '#1CB0F6'};
+  border-radius: 12px;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1f2937;
+  transition: all 0.3s ease;
+  background: white;
+
+  &:focus {
+    outline: none;
+    border-color: #1CB0F6;
+    box-shadow: 0 0 0 3px rgba(28, 176, 246, 0.1);
+  }
+
+  &:disabled {
+    background: #f3f4f6;
+    cursor: not-allowed;
+  }
+
+  &::placeholder {
+    color: #9ca3af;
+  }
+
+  @media (max-width: 768px) {
+    font-size: 0.9375rem;
+    padding: 0.875rem 1.25rem;
+  }
 `;
 export default Lesson;

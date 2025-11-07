@@ -36,7 +36,7 @@ const heartRoutes = require('./src/routes/heartRoutes');
 const xpRoutes = require('./src/routes/xpRoutes');
 const missionRoutes = require('./src/routes/missionRoutes');
 const shopRoutes = require('./src/routes/shopRoutes');
-
+const progressRoutes = require('./src/routes/progressRoutes');
 
 
 const app = express();
@@ -75,6 +75,8 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(passport.initialize());
 passportConfig();
 
+
+
 // Routes của Thiện
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
@@ -85,6 +87,7 @@ app.use('/api/tests', testRoutes);
 app.use('/api/goals', goalRoutes);
 
 
+app.use('/api/progress', progressRoutes);
 
 // Sử dụng các routes mới
 app.use('/api/courses', courseRoutes);
@@ -100,7 +103,7 @@ app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/study', studyRoutes);
 app.use('/api/reviews', reviewRoutes); // Task 17: Review actions
 app.use('/api/ai', aiRoutes); // Task 21: AI Gemini integration
-=======
+
 app.use('/api/streaks', streakRoutes);
 app.use('/api/hearts', heartRoutes);
 app.use('/api/xp', xpRoutes);

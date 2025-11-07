@@ -331,7 +331,7 @@ const QuestReward = styled.div`
 // ========== DATA ==========
 
 const monthlyQuestData = {
-  title: 'Ngôi nhà ma ám của Lily',
+  title: 'Ngôi nhà của Bob',
   timeLeft: '14 NGÀY',
   current: 12,
   target: 35,
