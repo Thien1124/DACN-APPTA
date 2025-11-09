@@ -368,6 +368,223 @@ function checkAnswer(userAnswer, correctAnswer) {
 }
 
 /**
+ * Ôn tập thông minh với AI - Task 23
+ * Tự động phân tích các bài tập có strength thấp nhất và lâu được ôn nhất
+ * 
+ * API Test:
+ * GET /api/practice/smart-review
+ * Headers: Authorization: Bearer {token}
+ * 
+ * Response:
+ * {
+ *   "success": true,
+ *   "data": {
+ *     "sessionId": "smart-review-123",
+ *     "questions": [
+ *       {
+ *         "_id": "...",
+ *         "category": "collocation",
+ *         "targetWord": "make",
+ *         "question": "Choose the correct collocation",
+ *         "contextSentence": "I need to ___ a decision",
+ *         "questionType": "multiple-choice",
+ *         "options": [...],
+ *         "difficulty": "medium",
+ *         "strength": 0.3, // Độ mạnh của kiến thức (0-1)
+ *         "daysSinceLastReview": 15, // Số ngày từ lần ôn cuối
+ *         "lastReviewDate": "2025-01-01T00:00:00.000Z"
+ *       }
+ *     ],
+ *     "totalQuestions": 10,
+ *     "estimatedTime": 15, // phút
+ *     "difficultyDistribution": {
+ *       "easy": 3,
+ *       "medium": 5,
+ *       "hard": 2
+ *     }
+ *   }
+ * }
+ */
+exports.getSmartReview = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    // Lấy lịch sử làm bài của user để phân tích
+    const practiceHistory = await PracticeResult.find({ user: userId })
+      .populate('practiceExercise')
+      .sort({ completedAt: -1 })
+      .limit(100); // Lấy 100 bài gần nhất
+
+    // Phân tích độ mạnh của từng bài tập
+    const exerciseAnalysis = await analyzeExerciseStrength(userId, practiceHistory);
+    
+    // Chọn 10 bài tập yếu nhất và lâu ôn nhất
+    const weakExercises = selectWeakExercises(exerciseAnalysis, 10);
+    
+    // Tạo session ôn tập thông minh
+    const smartReviewSession = {
+      sessionId: `smart-review-${Date.now()}-${userId}`,
+      questions: weakExercises,
+      totalQuestions: weakExercises.length,
+      estimatedTime: Math.round(weakExercises.length * 1.5), // 1.5 phút mỗi câu
+      difficultyDistribution: calculateDifficultyDistribution(weakExercises),
+      createdAt: new Date()
+    };
+
+    // Lưu session vào cache hoặc database (tùy implement)
+    // TODO: Có thể lưu vào Redis hoặc collection riêng
+
+    return res.status(200).json({
+      success: true,
+      data: smartReviewSession
+    });
+
+  } catch (error) {
+    console.error('Lỗi khi tạo ôn tập thông minh:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Lỗi server khi tạo phiên ôn tập thông minh'
+    });
+  }
+};
+
+/**
+ * Phân tích độ mạnh của bài tập dựa trên lịch sử
+ */
+async function analyzeExerciseStrength(userId, practiceHistory) {
+  const exerciseMap = new Map();
+  
+  // Nhóm theo từng bài tập
+  practiceHistory.forEach(result => {
+    const exerciseId = result.practiceExercise._id.toString();
+    
+    if (!exerciseMap.has(exerciseId)) {
+      exerciseMap.set(exerciseId, {
+        exercise: result.practiceExercise,
+        attempts: [],
+        lastReviewDate: null
+      });
+    }
+    
+    const exerciseData = exerciseMap.get(exerciseId);
+    exerciseData.attempts.push({
+      isCorrect: result.isCorrect,
+      completedAt: result.completedAt,
+      timeSpent: result.timeSpent
+    });
+    
+    // Cập nhật ngày review gần nhất
+    if (!exerciseData.lastReviewDate || result.completedAt > exerciseData.lastReviewDate) {
+      exerciseData.lastReviewDate = result.completedAt;
+    }
+  });
+  
+  // Tính toán độ mạnh cho từng bài tập
+  const analysisResults = [];
+  
+  for (const [exerciseId, data] of exerciseMap) {
+    const { exercise, attempts, lastReviewDate } = data;
+    
+    // Tính accuracy
+    const correctAttempts = attempts.filter(a => a.isCorrect).length;
+    const accuracy = correctAttempts / attempts.length;
+    
+    // Tính consistency (độ ổn định)
+    const recentAttempts = attempts.slice(-5); // 5 lần gần nhất
+    const recentAccuracy = recentAttempts.filter(a => a.isCorrect).length / recentAttempts.length;
+    
+    // Tính response time factor
+    const avgResponseTime = attempts.reduce((sum, a) => sum + (a.timeSpent || 30), 0) / attempts.length;
+    const timeFactor = Math.min(1, 30 / avgResponseTime); // Ưu tiên trả lời nhanh
+    
+    // Tính strength tổng hợp (0-1)
+    const strength = (accuracy * 0.5 + recentAccuracy * 0.3 + timeFactor * 0.2);
+    
+    // Tính số ngày từ lần ôn cuối
+    const daysSinceLastReview = lastReviewDate ? 
+      Math.floor((Date.now() - lastReviewDate.getTime()) / (1000 * 60 * 60 * 24)) : 999;
+    
+    analysisResults.push({
+      exercise,
+      strength: Math.max(0, Math.min(1, strength)),
+      accuracy,
+      recentAccuracy,
+      attemptsCount: attempts.length,
+      daysSinceLastReview,
+      lastReviewDate,
+      priorityScore: calculatePriorityScore(strength, daysSinceLastReview, accuracy)
+    });
+  }
+  
+  return analysisResults;
+}
+
+/**
+ * Tính điểm ưu tiên cho bài tập (càng yếu, càng lâu ôn thì ưu tiên cao)
+ */
+function calculatePriorityScore(strength, daysSinceLastReview, accuracy) {
+  // Công thức: (1 - strength) * weight1 + daysSinceLastReview * weight2 + (1 - accuracy) * weight3
+  const strengthWeight = 0.4;
+  const recencyWeight = 0.3;
+  const accuracyWeight = 0.3;
+  
+  return (1 - strength) * strengthWeight + 
+         Math.min(30, daysSinceLastReview) * recencyWeight / 30 + 
+         (1 - accuracy) * accuracyWeight;
+}
+
+/**
+ * Chọn bài tập yếu nhất dựa trên phân tích
+ */
+function selectWeakExercises(analysisResults, limit = 10) {
+  // Sắp xếp theo điểm ưu tiên (cao -> thấp)
+  const sortedResults = analysisResults
+    .filter(result => result.strength < 0.8) // Chỉ lấy bài tập chưa mastered
+    .sort((a, b) => b.priorityScore - a.priorityScore)
+    .slice(0, limit * 2); // Lấy gấp đôi để đảm bảo đủ
+  
+  // Trộn lại để tránh quá tập trung vào một chủ đề
+  const shuffled = sortedResults.sort(() => 0.5 - Math.random());
+  
+  // Chọn top limit và format dữ liệu
+  return shuffled.slice(0, limit).map(result => {
+    const exercise = result.exercise;
+    
+    // Ẩn đáp án
+    const exerciseData = exercise.toObject();
+    delete exerciseData.correctAnswer;
+    delete exerciseData.explanation;
+    
+    if (exerciseData.options) {
+      exerciseData.options = exerciseData.options.map(opt => ({
+        text: opt.text
+      }));
+    }
+    
+    return {
+      ...exerciseData,
+      strength: Math.round(result.strength * 100) / 100,
+      daysSinceLastReview: result.daysSinceLastReview,
+      lastReviewDate: result.lastReviewDate,
+      accuracy: Math.round(result.accuracy * 100) / 100
+    };
+  });
+}
+
+/**
+ * Tính phân bố độ khó
+ */
+function calculateDifficultyDistribution(exercises) {
+  const distribution = { easy: 0, medium: 0, hard: 0 };
+  
+  exercises.forEach(exercise => {
+    distribution[exercise.difficulty]++;
+  });
+  
+  return distribution;
+}
+
+/**
  * Lấy lịch sử làm bài
  * 
  * API Test:

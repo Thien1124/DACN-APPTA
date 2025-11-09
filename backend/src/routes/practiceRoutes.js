@@ -20,5 +20,8 @@ router.post('/exercises/:id/submit', protect, practiceController.submitAnswer);
 // Lấy lịch sử làm bài
 router.get('/history', protect, practiceController.getHistory);
 
+// Ôn tập thông minh với AI - Task 23
+router.get('/smart-review', protect, practiceController.getSmartReview);
+
 module.exports = router;
 
