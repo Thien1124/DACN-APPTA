@@ -31,6 +31,16 @@ const leaderboardRoutes = require('./src/routes/leaderboardRoutes');
 const studyRoutes = require('./src/routes/studyRoutes');
 const reviewRoutes = require('./src/routes/reviewRoutes');
 const aiRoutes = require('./src/routes/aiRoutes'); // Task 21: AI integration
+const bulkFlashcardRoutes = require('./src/routes/bulkFlashcardRoutes'); // Task 23: Bulk operations
+const leechRoutes = require('./src/routes/leechRoutes'); // Task 24: Leech, Suspend, Bury
+const importRoutes = require('./src/routes/importRoutes'); // Task 25: Import CSV/TSV/Google Sheets
+const exportRoutes = require('./src/routes/exportRoutes'); // Task 26: Export/Backup/Restore
+const dictationRoutes = require('./src/routes/dictationRoutes'); // Task 27: Dictation
+const speechRoutes = require('./src/routes/speechRoutes'); // Task 27: Speech Recognition
+const interactiveLearningRoutes = require('./src/routes/interactiveLearningRoutes'); // Task 28: Interactive Learning
+const shadowingRoutes = require('./src/routes/shadowingRoutes'); // Task 29: Shadowing Audio
+const wordbankRoutes = require('./src/routes/wordbankRoutes'); // Task 30: Wordbank
+const aiExplanationRoutes = require('./src/routes/aiExplanationRoutes'); // Task 31: AI Explanation
 
 const app = express();
 const PORT = process.env.PORT || 1124;
@@ -93,6 +103,16 @@ app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/study', studyRoutes);
 app.use('/api/reviews', reviewRoutes); // Task 17: Review actions
 app.use('/api/ai', aiRoutes); // Task 21: AI Gemini integration
+app.use('/api/flashcards-bulk', bulkFlashcardRoutes); // Task 23: Bulk operations
+app.use('/api/leeches', leechRoutes); // Task 24: Leech, Suspend, Bury
+app.use('/api/import', importRoutes); // Task 25: Import CSV/TSV/Google Sheets
+app.use('/api/export', exportRoutes); // Task 26: Export/Backup/Restore
+app.use('/api/dictation', dictationRoutes); // Task 27: Dictation exercises
+app.use('/api/speech', speechRoutes); // Task 27: Speech recognition & pronunciation
+app.use('/api/interactive', interactiveLearningRoutes); // Task 28: Interactive learning games
+app.use('/api/shadowing', shadowingRoutes); // Task 29: Shadowing audio practice
+app.use('/api/wordbank', wordbankRoutes); // Task 30: Worldbank vocabulary notebook
+app.use('/api/ai-explain', aiExplanationRoutes); // Task 31: AI word explanation & synonym comparison
 
 // Health root route
 app.get('/', (req, res) => {

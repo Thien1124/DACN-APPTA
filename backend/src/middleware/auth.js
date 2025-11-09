@@ -142,6 +142,7 @@ const requireEmailVerified = (req, res, next) => {
 
 module.exports = {
   authenticate,
+  protect: authenticate, // Alias for backward compatibility
   authorize,
   requireEmailVerified
 };

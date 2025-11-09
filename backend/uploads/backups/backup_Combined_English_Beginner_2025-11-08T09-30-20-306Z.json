@@ -1,0 +1,86 @@
+{
+  "version": "1.0",
+  "createdAt": "2025-11-08T09:30:20.303Z",
+  "deck": {
+    "description": "Hợp nhất từ 2 deck",
+    "difficulty": "BEGINNER",
+    "isPublic": true,
+    "category": "GENERAL"
+  },
+  "flashcards": [
+    {
+      "front": "please",
+      "back": "làm ơn",
+      "example": "Please help me.",
+      "createdAt": "2025-11-01T13:56:22.009Z"
+    },
+    {
+      "front": "thank you",
+      "back": "cảm ơn",
+      "example": "Thank you for your help.",
+      "createdAt": "2025-11-01T13:56:22.009Z"
+    },
+    {
+      "front": "goodbye",
+      "back": "tạm biệt",
+      "example": "Goodbye! See you later.",
+      "createdAt": "2025-11-01T13:56:22.009Z"
+    },
+    {
+      "front": "hello",
+      "back": "xin chào",
+      "example": "Hello! How are you?",
+      "createdAt": "2025-11-01T13:56:22.008Z"
+    },
+    {
+      "front": "sorry",
+      "back": "xin lỗi",
+      "example": "I am sorry for being late.",
+      "createdAt": "2025-11-01T13:56:22.009Z"
+    },
+    {
+      "front": "break down",
+      "back": "hỏng hóc, suy sụp",
+      "pronunciation": "/breɪk daʊn/",
+      "example": "My car broke down on the highway.",
+      "createdAt": "2025-11-01T14:35:52.795Z"
+    },
+    {
+      "front": "How have you been lately?",
+      "back": "Dạo này bạn thế nào rồi?",
+      "example": "Casual greeting between friends",
+      "audioUrl": "https://example.com/sentence.mp3",
+      "createdAt": "2025-11-01T14:36:53.557Z"
+    },
+    {
+      "front": "I {{c1::went}} to the store and {{c2::bought}} some milk.",
+      "back": "went, bought",
+      "example": "Past tense practice",
+      "createdAt": "2025-11-01T14:37:51.062Z"
+    },
+    {
+      "front": "give up",
+      "back": "từ bỏ",
+      "example": "Never give up on your dreams.",
+      "createdAt": "2025-11-01T14:40:30.585Z"
+    },
+    {
+      "front": "She {{c1::is}} a teacher.",
+      "back": "is",
+      "createdAt": "2025-11-01T14:40:30.586Z"
+    },
+    {
+      "front": "amazing",
+      "back": "tuyệt vời",
+      "pronunciation": "/əˈmeɪzɪŋ/",
+      "example": "That's amazing!",
+      "createdAt": "2025-11-01T14:40:30.585Z"
+    }
+  ],
+  "progress": [],
+  "stats": {
+    "totalCards": 11,
+    "activeCards": 0,
+    "totalReviews": 0
+  }
+}

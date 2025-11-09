@@ -179,6 +179,7 @@ studyProgressSchema.methods.updateResponseTime = function(timeInSeconds) {
 };
 
 // Static method: Get cards due for review
+// TASK 24: Filter out suspended and buried cards
 studyProgressSchema.statics.getDueCards = async function(userId, deckId = null) {
   const query = {
     user: userId,
@@ -189,14 +190,21 @@ studyProgressSchema.statics.getDueCards = async function(userId, deckId = null) 
     query.deck = deckId;
   }
   
-  return this.find(query)
-    .populate('flashcard')
+  const dueCards = await this.find(query)
+    .populate({
+      path: 'flashcard',
+      match: { status: 'active' } // Only active cards
+    })
     .populate('deck', 'title')
     .sort({ nextReviewDate: 1 })
     .limit(20); // Limit to 20 cards per session
+  
+  // Filter out nulls (where flashcard was suspended/buried)
+  return dueCards.filter(card => card.flashcard !== null);
 };
 
 // Static method: Get new cards
+// TASK 24: Filter out suspended and buried cards
 studyProgressSchema.statics.getNewCards = async function(userId, deckId, limit = 10) {
   // Get flashcards that user hasn't studied yet
   const studiedFlashcardIds = await this.distinct('flashcard', { 
@@ -207,7 +215,8 @@ studyProgressSchema.statics.getNewCards = async function(userId, deckId, limit =
   const Flashcard = mongoose.model('Flashcard');
   return Flashcard.find({
     deck: deckId,
-    _id: { $nin: studiedFlashcardIds }
+    _id: { $nin: studiedFlashcardIds },
+    status: 'active' // Only active cards
   }).limit(limit);
 };
 

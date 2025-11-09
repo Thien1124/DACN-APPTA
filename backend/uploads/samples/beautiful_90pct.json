@@ -1,0 +1,161 @@
+{
+  "word": "beautiful",
+  "targetAccuracy": 90,
+  "expectedTranscription": "beautiful",
+  "ipa": "/ˈbjuːtɪfl/",
+  "mockAnalysisResult": {
+    "transcription": "beautiful",
+    "expectedText": "beautiful",
+    "expectedIPA": "/ˈbjuːtɪfl/",
+    "pronunciationScore": 90,
+    "fluencyScore": 88,
+    "accuracyScore": 92,
+    "completenessScore": 95,
+    "confidenceScore": 0.94,
+    "passed": true,
+    "overallFeedback": "Great job! Your pronunciation is very good.",
+    "detailedFeedback": [
+      "✅ Excellent stress on first syllable: BEAU-ti-ful",
+      "✅ Clear vowel sounds",
+      "💡 Try to make the final 'l' sound slightly stronger"
+    ],
+    "wordAnalysis": [
+      {
+        "word": "beautiful",
+        "phonemes": [
+          {
+            "phoneme": "/b/",
+            "score": 95,
+            "status": "correct"
+          },
+          {
+            "phoneme": "/juː/",
+            "score": 92,
+            "status": "correct"
+          },
+          {
+            "phoneme": "/t/",
+            "score": 88,
+            "status": "minor_issue"
+          },
+          {
+            "phoneme": "/ɪ/",
+            "score": 90,
+            "status": "correct"
+          },
+          {
+            "phoneme": "/f/",
+            "score": 93,
+            "status": "correct"
+          },
+          {
+            "phoneme": "/l/",
+            "score": 85,
+            "status": "minor_issue"
+          }
+        ],
+        "issues": [
+          {
+            "phoneme": "/t/",
+            "severity": "minor",
+            "description": "The 't' sound could be crisper",
+            "suggestion": "Place your tongue firmly against the roof of your mouth"
+          },
+          {
+            "phoneme": "/l/",
+            "severity": "minor",
+            "description": "Final 'l' sound is slightly weak",
+            "suggestion": "Touch the tip of your tongue to the ridge behind your upper teeth"
+          }
+        ]
+      }
+    ],
+    "intonation": {
+      "pattern": "falling",
+      "correctness": 90,
+      "pitchVariation": "appropriate",
+      "stressPattern": {
+        "correct": true,
+        "primaryStress": 0,
+        "feedback": "Correct stress on first syllable"
+      }
+    },
+    "timing": {
+      "duration": 0.85,
+      "pace": "natural",
+      "pauseQuality": "good"
+    }
+  },
+  "testScenarios": [
+    {
+      "name": "Perfect pronunciation",
+      "expectedScore": 100,
+      "transcription": "beautiful",
+      "feedback": "Perfect! Native-like pronunciation."
+    },
+    {
+      "name": "Good pronunciation (90%)",
+      "expectedScore": 90,
+      "transcription": "beautiful",
+      "feedback": "Great job! Minor improvements possible."
+    },
+    {
+      "name": "Moderate pronunciation (70%)",
+      "expectedScore": 70,
+      "transcription": "byootiful",
+      "feedback": "Good attempt. Focus on vowel sounds."
+    },
+    {
+      "name": "Poor pronunciation (50%)",
+      "expectedScore": 50,
+      "transcription": "bootiful",
+      "feedback": "Keep practicing. Review the IPA pronunciation."
+    }
+  ],
+  "usageInstructions": {
+    "howToTest": [
+      "1. Use text-to-speech to generate actual audio",
+      "2. Or record yourself saying 'beautiful'",
+      "3. Upload to POST /api/speech/analyze/:flashcardId",
+      "4. Compare result with mockAnalysisResult"
+    ],
+    "postmanExample": {
+      "method": "POST",
+      "url": "http://localhost:1124/api/speech/analyze/:flashcardId",
+      "headers": {
+        "Authorization": "Bearer YOUR_TOKEN"
+      },
+      "body": {
+        "type": "form-data",
+        "fields": {
+          "audio": "@beautiful_sample.webm",
+          "language": "en-US"
+        }
+      }
+    },
+    "expectedResponse": {
+      "success": true,
+      "data": {
+        "attempt": {
+          "pronunciationScore": 90,
+          "fluencyScore": 88,
+          "accuracyScore": 92,
+          "completenessScore": 95,
+          "passed": true,
+          "transcription": "beautiful",
+          "confidence": 0.94,
+          "overallFeedback": "Great job! Your pronunciation is very good.",
+          "detailedFeedback": ["..."],
+          "wordAnalysis": ["..."],
+          "intonation": {}
+        }
+      }
+    }
+  },
+  "notes": [
+    "This is mock data for testing the speech recognition system",
+    "Actual results will vary based on real audio input",
+    "Use this as reference for expected data structure",
+    "To generate real audio, use: node scripts/generateSampleAudio.js"
+  ]
+}
