@@ -3,7 +3,10 @@ import styled, { keyframes } from 'styled-components';
 import LeftSidebar from '../components/LeftSidebar';
 import RightSidebar from '../components/RightSidebar';
 import { Search, VolumeUp, Star, StarBorder, BookmarkBorder, Bookmark, FilterList, School } from '@mui/icons-material';
-import { vocabularyService } from '../services/vocabularyService'; // ✅ Thêm import
+import { vocabularyService } from '../services/vocabularyService'; 
+import useToast from '../hooks/useToast';
+import { vocabularyBankService } from '../services/vocabularyBankService';
+
 
 // ========== ANIMATIONS ==========
 const fadeIn = keyframes`
@@ -312,6 +315,8 @@ const EmptyText = styled.p`
 
 // ========== COMPONENT ==========
 const Worldbank = () => {
+  const { showToast } = useToast(); 
+  
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('all'); // all, starred, learned
   const [vocabularies, setVocabularies] = useState([]);
@@ -321,6 +326,7 @@ const Worldbank = () => {
     learned: 0,
     starred: 0
   });
+  const [loading, setLoading] = useState(false);
 
   // Mock data - replace with API call
   useEffect(() => {
@@ -340,6 +346,137 @@ const Worldbank = () => {
     };
 
     fetchLearnedVocabularies();
+  }, []);
+
+  useEffect(() => {
+    const fetchVocabularyBank = async () => {
+      try {
+        setLoading(true);
+        
+        // ✅ Call API để lấy vocabulary bank
+        const response = await vocabularyBankService.getAll();
+        
+        console.log('✅ Vocabulary bank response:', response);
+        
+        if (response.success) {
+          const vocabs = response.data || [];
+          
+          // ✅ Transform backend data sang frontend format
+          const transformedVocabs = vocabs.map(vocab => ({
+            id: vocab._id,
+            word: vocab.word,
+            pronunciation: vocab.pronunciation || '',
+            meaning: vocab.meaning,
+            example: vocab.example || '',
+            tags: vocab.tags || [],
+            isStarred: vocab.isStarred || false,
+            isLearned: vocab.isLearned || false,
+            partOfSpeech: vocab.partOfSpeech || '',
+            synonyms: vocab.synonyms || [],
+            antonyms: vocab.antonyms || [],
+            imageUrl: vocab.imageUrl || '',
+            source: vocab.source || 'manual',
+            createdAt: vocab.createdAt
+          }));
+          
+          setVocabularies(transformedVocabs);
+          updateStats(transformedVocabs);
+        }
+      } catch (error) {
+        console.error('❌ Error fetching vocabulary bank:', error);
+        showToast('error', 'Lỗi', 'Không thể tải sổ tay từ vựng');
+        // Fallback to empty array
+        setVocabularies([]);
+        updateStats([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchVocabularyBank();
+  }, []);
+
+  useEffect(() => {
+    const fetchAllVocabularies = async () => {
+      try {
+        setLoading(true);
+        
+        // ✅ Gọi cả 2 API
+        const [vocabularyResponse, bankResponse] = await Promise.all([
+          vocabularyService.getLearnedVocabularies().catch(() => ({ data: [] })),
+          vocabularyBankService.getAll().catch(() => ({ success: false, data: [] }))
+        ]);
+        
+        console.log('✅ Vocabulary service response:', vocabularyResponse);
+        console.log('✅ Vocabulary bank response:', bankResponse);
+        
+        // ✅ Merge data từ cả 2 nguồn
+        const vocabulariesFromService = vocabularyResponse.data || [];
+        const vocabulariesFromBank = bankResponse.success ? bankResponse.data || [] : [];
+        
+        // ✅ Transform và merge
+        const transformedVocabs = [
+          ...vocabulariesFromService.map(vocab => ({
+            id: vocab._id,
+            word: vocab.word,
+            pronunciation: vocab.pronunciation || '',
+            meaning: vocab.meaning,
+            example: vocab.example || '',
+            tags: vocab.tags || [],
+            isStarred: vocab.isStarred || false,
+            isLearned: vocab.isLearned || false,
+            partOfSpeech: vocab.partOfSpeech || '',
+            synonyms: vocab.synonyms || [],
+            antonyms: vocab.antonyms || [],
+            imageUrl: vocab.imageUrl || '',
+            source: vocab.source || 'manual',
+            createdAt: vocab.createdAt,
+            // ✅ Flag để biết từ nguồn nào
+            fromService: true,
+            fromBank: false
+          })),
+          ...vocabulariesFromBank.map(vocab => ({
+            id: vocab._id,
+            word: vocab.word,
+            pronunciation: vocab.pronunciation || '',
+            meaning: vocab.meaning,
+            example: vocab.example || '',
+            tags: vocab.tags || [],
+            isStarred: vocab.isStarred || false,
+            isLearned: vocab.isLearned || false,
+            partOfSpeech: vocab.partOfSpeech || '',
+            synonyms: vocab.synonyms || [],
+            antonyms: vocab.antonyms || [],
+            imageUrl: vocab.imageUrl || '',
+            source: vocab.source || 'manual',
+            createdAt: vocab.createdAt,
+            // ✅ Flag để biết từ nguồn nào
+            fromService: false,
+            fromBank: true
+          }))
+        ];
+        
+        // ✅ Remove duplicates (same word)
+        const uniqueVocabs = transformedVocabs.filter((vocab, index, self) => 
+          index === self.findIndex(v => v.word.toLowerCase() === vocab.word.toLowerCase())
+        );
+        
+        console.log(`✅ Merged ${uniqueVocabs.length} vocabularies (${vocabulariesFromService.length} from service, ${vocabulariesFromBank.length} from bank)`);
+        
+        setVocabularies(uniqueVocabs);
+        updateStats(uniqueVocabs);
+        
+      } catch (error) {
+        console.error('❌ Error fetching vocabularies:', error);
+        showToast('error', 'Lỗi', 'Không thể tải sổ tay từ vựng');
+        setVocabularies([]);
+        updateStats([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAllVocabularies();
   }, []);
 
   useEffect(() => {
@@ -374,16 +511,27 @@ const Worldbank = () => {
   };
 
   const toggleStar = async (id) => {
-    // TODO: Implement starring API later
-    // Hiện tại chỉ update local state
-    setVocabularies(prev => {
-      const updated = prev.map(v =>
-        v.id === id ? { ...v, isStarred: !v.isStarred } : v
-      );
-      updateStats(updated);
-      return updated;
-    });
+    try {
+      const vocab = vocabularies.find(v => v.id === id);
+      const newStarredStatus = !vocab.isStarred;
+      
+      // ✅ Gọi API để update star status
+      await vocabularyService.toggleStar(id, newStarredStatus);
+      
+      // Update local state
+      setVocabularies(prev => {
+        const updated = prev.map(v =>
+          v.id === id ? { ...v, isStarred: newStarredStatus } : v
+        );
+        updateStats(updated);
+        return updated;
+      });
+    } catch (error) {
+      console.error('Error toggling star:', error);
+      showToast('error', 'Lỗi', 'Không thể cập nhật trạng thái đánh dấu');
+    }
   };
+  
 
   const toggleLearned = async (id) => {
     // TODO: Implement API to update mastery/review count
@@ -396,14 +544,140 @@ const Worldbank = () => {
     });
   };
 
-  const speakWord = (word) => {
-    if ('speechSynthesis' in window) {
-      const utterance = new SpeechSynthesisUtterance(word);
-      utterance.lang = 'en-US';
-      utterance.rate = 0.9;
-      window.speechSynthesis.speak(utterance);
+  const speakWord = (text) => {
+  if (!text || !text.toString().trim()) {
+    console.warn('⚠️ Không có text để phát âm');
+    return;
+  }
+
+  // ✅ Cancel bất kỳ speech nào đang chạy
+  if (window.speechSynthesis.speaking) {
+    window.speechSynthesis.cancel();
+  }
+
+  // ✅ Hàm chọn giọng ENGLISH tốt nhất
+  const getEnglishVoice = (voices) => {
+    console.log('📋 Available voices:', voices.map(v => `${v.name} (${v.lang})`));
+
+    // ✅ 1. Ưu tiên Google US English
+    let voice = voices.find(v => 
+      v.lang === 'en-US' && 
+      v.name.toLowerCase().includes('google')
+    );
+    if (voice) {
+      console.log('✅ Chọn Google US:', voice.name);
+      return voice;
     }
+
+    // ✅ 2. Microsoft David/Zira (Windows)
+    voice = voices.find(v => 
+      v.lang === 'en-US' && 
+      (v.name.includes('David') || v.name.includes('Zira'))
+    );
+    if (voice) {
+      console.log('✅ Chọn Microsoft:', voice.name);
+      return voice;
+    }
+
+    // ✅ 3. Samantha (macOS)
+    voice = voices.find(v => 
+      v.lang === 'en-US' && 
+      v.name.includes('Samantha')
+    );
+    if (voice) {
+      console.log('✅ Chọn Samantha:', voice.name);
+      return voice;
+    }
+
+    // ✅ 4. BẤT KỲ giọng en-US nào (KHÔNG phải en-GB)
+    voice = voices.find(v => v.lang === 'en-US');
+    if (voice) {
+      console.log('✅ Chọn en-US:', voice.name);
+      return voice;
+    }
+
+    // ✅ 5. Bất kỳ giọng English nào (en-GB, en-AU...)
+    voice = voices.find(v => v.lang && v.lang.startsWith('en-'));
+    if (voice) {
+      console.log('✅ Chọn English:', voice.name);
+      return voice;
+    }
+
+    // ✅ 6. LOẠI BỎ tất cả giọng Vietnamese
+    voice = voices.find(v => 
+      v.lang && 
+      !v.lang.startsWith('vi') && 
+      !v.name.toLowerCase().includes('vietnam')
+    );
+    if (voice) {
+      console.log('⚠️ Fallback voice:', voice.name);
+      return voice;
+    }
+
+    console.error('❌ Không tìm thấy giọng English!');
+    return null;
   };
+
+  // ✅ Hàm thực hiện speak
+  const doSpeak = (selectedVoice) => {
+    const utterance = new SpeechSynthesisUtterance(text.toString());
+    
+    // ✅ QUAN TRỌNG: Set voice TRƯỚC khi set lang
+    if (selectedVoice) {
+      utterance.voice = selectedVoice;
+    }
+    
+    // ✅ Luôn set lang = en-US
+    utterance.lang = 'en-US';
+    
+    // ✅ Điều chỉnh giọng nói
+    utterance.rate = 0.9;   // Tốc độ (0.1 - 10)
+    utterance.pitch = 1.0;  // Cao độ (0 - 2)
+    utterance.volume = 1.0; // Âm lượng (0 - 1)
+
+    utterance.onstart = () => {
+      console.log(`🔊 Đang đọc: "${text}"`);
+      console.log(`   Voice: ${utterance.voice?.name || 'default'}`);
+      console.log(`   Lang: ${utterance.lang}`);
+    };
+
+    utterance.onend = () => {
+      console.log('✅ Hoàn thành');
+    };
+
+    utterance.onerror = (err) => {
+      if (err.error !== 'canceled') {
+        console.error('❌ Lỗi:', err.error);
+      }
+    };
+
+    window.speechSynthesis.speak(utterance);
+  };
+
+  // ✅ Lấy danh sách voices
+  let voices = window.speechSynthesis.getVoices();
+
+  if (voices.length > 0) {
+    // ✅ Đã có voices, chọn ngay
+    const englishVoice = getEnglishVoice(voices);
+    doSpeak(englishVoice);
+  } else {
+    // ✅ Chưa load xong, đợi event
+    console.log('⏳ Đang chờ voices load...');
+    
+    // ✅ Chỉ set event 1 lần
+    window.speechSynthesis.onvoiceschanged = () => {
+      voices = window.speechSynthesis.getVoices();
+      console.log(`✅ Loaded ${voices.length} voices`);
+      
+      const englishVoice = getEnglishVoice(voices);
+      doSpeak(englishVoice);
+      
+      // ✅ Clear event sau khi dùng xong
+      window.speechSynthesis.onvoiceschanged = null;
+    };
+  }
+};
 
   return (
     <PageWrapper>

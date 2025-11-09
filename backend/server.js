@@ -68,8 +68,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Serve static files (Task 9: Avatar images)
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Serve static files from uploads directory
+app.use('/uploads', express.static(path.join(__dirname, 'src/uploads')));
 
 // Initialize Passport
 app.use(passport.initialize());
@@ -109,6 +109,9 @@ app.use('/api/hearts', heartRoutes);
 app.use('/api/xp', xpRoutes);
 app.use('/api/missions', missionRoutes);
 app.use('/api/shop', shopRoutes);
+
+// ✅ Vocabulary Bank routes
+app.use('/api/vocabulary-bank', require('./src/routes/vocabularyBankRoutes'));
 
 
 // Health root route

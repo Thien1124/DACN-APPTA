@@ -1,7 +1,15 @@
 const geminiService = require('../services/geminiService');
 const Flashcard = require('../models/Flashcard');
 const Deck = require('../models/Deck');
+const fs = require('fs');
+const path = require('path');
+const axios = require('axios');
+const OpenAI = require('openai');
 
+// Khởi tạo OpenAI client
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 /**
  * @desc    Analyze word with AI and create flashcard
  * @route   POST /api/ai/analyze-and-create
@@ -364,45 +372,103 @@ exports.batchCreateFlashcards = async (req, res) => {
       });
     }
 
+    console.log(`🤖 Batch creating ${words.length} flashcards for deck: ${deck.title}`);
+
     // Analyze all words with AI
     const aiResults = await geminiService.batchAnalyze(words);
 
+    // ✅ Helper function to clean and validate enum values
+    const cleanPartOfSpeech = (pos) => {
+      if (!pos) return 'other';
+      const cleaned = pos.toLowerCase().split('/')[0].split(',')[0].trim();
+      const validValues = ['noun', 'verb', 'adjective', 'adverb', 'preposition', 'conjunction', 'pronoun', 'interjection', 'phrase', 'idiom', 'other'];
+      return validValues.includes(cleaned) ? cleaned : 'other';
+    };
+
+    const cleanCEFRLevel = (level) => {
+      if (!level) return null;
+      const cleaned = level.toUpperCase().split('/')[0].split('-')[0].trim();
+      const validLevels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+      return validLevels.includes(cleaned) ? cleaned : null;
+    };
+
     // Create flashcards
     const flashcards = [];
-    for (const aiData of aiResults) {
-      const front = `${aiData.word}${aiData.pronunciation ? ` [${aiData.pronunciation}]` : ''}${aiData.partOfSpeech ? ` (${aiData.partOfSpeech})` : ''}`;
-      const back = aiData.meanings && aiData.meanings.length > 0
-        ? `${aiData.meanings[0].definition} - ${aiData.meanings[0].translation}`
-        : aiData.word;
+    const errors = [];
 
-      const flashcard = await Flashcard.create({
-        deck: deckId,
-        noteType: 'WORD',
-        front,
-        back,
-        pronunciation: aiData.pronunciation,
-        partOfSpeech: aiData.partOfSpeech,
-        meanings: aiData.meanings,
-        synonyms: aiData.synonyms,
-        antonyms: aiData.antonyms,
-        collocations: aiData.collocations,
-        usageNotes: aiData.usageNotes,
-        grammarNotes: aiData.grammarNotes,
-        tags: aiData.tags,
-        difficulty: aiData.difficulty,
-        cefrLevel: aiData.cefrLevel
-      });
+    for (let i = 0; i < aiResults.length; i++) {
+      try {
+        const aiData = aiResults[i];
+        
+        if (!aiData || !aiData.word) {
+          console.warn(`⚠️ Skipping invalid AI data at index ${i}`);
+          errors.push({ word: words[i], error: 'Invalid AI data' });
+          continue;
+        }
 
-      flashcards.push(flashcard);
+        // ✅ Clean and validate data
+        const cleanedPartOfSpeech = cleanPartOfSpeech(aiData.partOfSpeech);
+        const cleanedCEFRLevel = cleanCEFRLevel(aiData.cefrLevel);
+
+        // Create front text
+        const front = `${aiData.word}${aiData.pronunciation ? ` [${aiData.pronunciation}]` : ''}${cleanedPartOfSpeech ? ` (${cleanedPartOfSpeech})` : ''}`;
+
+        // Create back text
+        const back = aiData.meanings && aiData.meanings.length > 0
+          ? `${aiData.meanings[0].definition} - ${aiData.meanings[0].translation}`
+          : aiData.word;
+
+        // ✅ Create flashcard with cleaned data
+        const flashcard = await Flashcard.create({
+          deck: deckId,
+          noteType: 'WORD',
+          front,
+          back,
+          pronunciation: aiData.pronunciation || '',
+          partOfSpeech: cleanedPartOfSpeech, // ✅ Cleaned
+          meanings: aiData.meanings || [],
+          synonyms: aiData.synonyms || [],
+          antonyms: aiData.antonyms || [],
+          collocations: aiData.collocations || [],
+          usageNotes: aiData.usageNotes || '',
+          grammarNotes: aiData.grammarNotes || '',
+          tags: aiData.tags || [],
+          difficulty: aiData.difficulty || 'INTERMEDIATE',
+          cefrLevel: cleanedCEFRLevel // ✅ Cleaned
+        });
+
+        flashcards.push(flashcard);
+        console.log(`✅ Created flashcard ${i + 1}/${aiResults.length}: ${aiData.word}`);
+      } catch (createError) {
+        console.error(`❌ Error creating flashcard ${i + 1}:`, createError.message);
+        errors.push({ word: words[i], error: createError.message });
+      }
     }
 
-    res.status(201).json({
+    // Update deck totalCards
+    if (flashcards.length > 0) {
+      await Deck.findByIdAndUpdate(deckId, {
+        $inc: { totalCards: flashcards.length }
+      });
+    }
+
+    // Response
+    const response = {
       success: true,
-      message: `Tạo ${flashcards.length} flashcard với AI thành công`,
+      message: `Tạo ${flashcards.length} flashcard với AI thành công${errors.length > 0 ? ` (${errors.length} từ bị lỗi)` : ''}`,
       data: flashcards
-    });
+    };
+
+    if (errors.length > 0) {
+      response.errors = errors;
+    }
+
+    console.log(`✅ Batch create completed: ${flashcards.length} successful, ${errors.length} errors`);
+
+    res.status(201).json(response);
+
   } catch (error) {
-    console.error('Batch Create Error:', error);
+    console.error('❌ Batch Create Error:', error);
     res.status(500).json({
       success: false,
       message: 'Lỗi khi tạo flashcards hàng loạt',
@@ -410,6 +476,204 @@ exports.batchCreateFlashcards = async (req, res) => {
     });
   }
 };
+
+/**
+ * @desc    Generate vocabulary words based on topic/category
+ * @route   POST /api/ai/generate-vocabulary
+ * @access  Private (Admin/Teacher)
+ */
+exports.generateVocabulary = async (req, res) => {
+  try {
+    const { topic, category, level, count = 10 } = req.body;
+
+    if (!topic && !category) {
+      return res.status(400).json({
+        success: false,
+        message: 'Vui lòng cung cấp topic hoặc category'
+      });
+    }
+
+    console.log(`🤖 Generating ${count} vocabulary words for topic: ${topic || category}`);
+
+    // ✅ Call Gemini to generate vocabulary list
+    const vocabularyList = await geminiService.generateVocabularyList(
+      topic || category,
+      level || 'INTERMEDIATE',
+      count
+    );
+
+    res.status(200).json({
+      success: true,
+      message: `Đã tạo ${vocabularyList.length} từ vựng`,
+      data: vocabularyList
+    });
+
+  } catch (error) {
+    console.error('❌ Generate Vocabulary Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi khi tạo từ vựng',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * @desc    Generate flashcard with image
+ * @route   POST /api/ai/batch-create-with-images
+ * @access  Private (Admin/Teacher)
+ */
+exports.batchCreateWithImages = async (req, res) => {
+  try {
+    const { deckId, words } = req.body;
+
+    console.log('🖼️ BATCH CREATE WITH DALL-E IMAGES called with:', { deckId, wordsCount: words?.length });
+
+    if (!deckId || !words || words.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Vui lòng cung cấp deckId và danh sách words'
+      });
+    }
+
+    const deck = await Deck.findById(deckId);
+    if (!deck) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy deck'
+      });
+    }
+
+    console.log(`🤖 Batch creating ${words.length} flashcards with DALL-E images...`);
+
+    const flashcards = [];
+    const errors = [];
+
+    for (let i = 0; i < words.length; i++) {
+      try {
+        const word = words[i];
+        
+        console.log(`🔄 Processing word ${i + 1}/${words.length}: ${word}`);
+        
+        // Step 1: Analyze word with AI
+        const aiData = await geminiService.analyzeWord(word);
+        console.log(`✅ AI analyzed ${word}:`, {
+          word: aiData.word,
+          hasMeaning: !!aiData.meanings?.[0],
+          hasPronunciation: !!aiData.pronunciation
+        });
+        
+        // Step 2: Generate image with DALL-E (THAY THẾ Unsplash)
+        let localImageUrl = '';
+        try {
+          console.log(`🎨 Generating DALL-E image for ${word}...`);
+          
+          const dalleUrl = await generateDalleImage(word, aiData.meanings?.[0]?.definition);
+          console.log(`🔗 DALL-E URL for ${word}:`, dalleUrl);
+          
+          if (dalleUrl) {
+            const filename = `flashcard_${word.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}.png`; // DALL-E tạo PNG
+            localImageUrl = await downloadAndSaveImage(dalleUrl, filename);
+            console.log(`✅ Local image URL for ${word}:`, localImageUrl);
+          } else {
+            console.warn(`⚠️ No DALL-E image generated for ${word}`);
+          }
+        } catch (imageError) {
+          console.error(`❌ Error generating DALL-E image for ${word}:`, imageError.message);
+        }
+
+        // Step 3: Create flashcard
+        const front = aiData.word;
+        const back = aiData.meanings?.[0]?.translation || aiData.word;
+
+        const flashcard = await Flashcard.create({
+          deck: deckId,
+          noteType: 'WORD',
+          front,
+          back,
+          pronunciation: aiData.pronunciation,
+          partOfSpeech: aiData.partOfSpeech,
+          meanings: aiData.meanings,
+          synonyms: aiData.synonyms,
+          antonyms: aiData.antonyms,
+          collocations: aiData.collocations,
+          imageUrl: localImageUrl || '', // ✅ Lưu local path
+          tags: aiData.tags,
+          difficulty: aiData.difficulty,
+          cefrLevel: aiData.cefrLevel
+        });
+
+        flashcards.push(flashcard);
+        console.log(`✅ Created flashcard ${i + 1}/${words.length}: ${word} (image: ${!!localImageUrl})`);
+
+      } catch (error) {
+        console.error(`❌ Error creating flashcard ${i + 1}:`, error.message);
+        errors.push({ word: words[i], error: error.message });
+      }
+    }
+
+    // Update deck
+    if (flashcards.length > 0) {
+      await Deck.findByIdAndUpdate(deckId, {
+        $inc: { totalCards: flashcards.length }
+      });
+    }
+
+    // Response
+    const response = {
+      success: true,
+      message: `Tạo ${flashcards.length} flashcard với hình ảnh DALL-E thành công${errors.length > 0 ? ` (${errors.length} từ bị lỗi)` : ''}`,
+      data: flashcards
+    };
+
+    if (errors.length > 0) {
+      response.errors = errors;
+    }
+
+    console.log(`✅ Batch create with DALL-E images completed: ${flashcards.length} successful, ${errors.length} errors`);
+
+    res.status(201).json(response);
+
+  } catch (error) {
+    console.error('❌ Batch Create with DALL-E Images Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi khi tạo flashcards với hình ảnh DALL-E',
+      error: error.message
+    });
+  }
+};
+
+// Helper: Generate image with DALL-E
+async function generateDalleImage(word, context = '') {
+  try {
+    console.log(`🎨 Generating DALL-E image for "${word}"...`);
+    
+    const prompt = `Create a clean, educational illustration for the English word "${word}". 
+    The image should be suitable for language learning flashcards. 
+    Simple, clear, and visually appealing. 
+    White background preferred. 
+    No text or words in the image.`;
+    
+    const response = await openai.images.generate({
+      model: "dall-e-2", // Rẻ hơn
+      prompt: prompt,
+      size: "512x512", // Nhỏ hơn để tiết kiệm
+      n: 1,
+    });
+
+    const imageUrl = response.data[0].url;
+    console.log(`✅ DALL-E generated image for "${word}":`, imageUrl);
+    
+    return imageUrl;
+    
+  } catch (error) {
+    console.error('❌ DALL-E generation error:', error.message);
+    return null;
+  }
+}
+
+
 
 /**
  * @desc    Suggest collocations for a word

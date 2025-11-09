@@ -1142,7 +1142,7 @@ const Decks = () => {
                       {deck.description || "Không có mô tả"}
                     </TopicDescription>
                     <TopicStats theme={theme}>
-                      <span>{deck.flashcards?.length || 0} thẻ</span>
+                      <span>{deck.totalCards || 0} thẻ</span>  
                       <span>•</span>
                       <span>{deck.category}</span>
                       {activeTab !== "my-decks" && (

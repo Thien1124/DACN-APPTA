@@ -2082,148 +2082,205 @@ const Lesson = () => {
   }, []);
 
   const checkMatch = (leftId, rightId) => {
-    const rightItem = question.rightColumn.find((item) => item.id === rightId);
+  const rightItem = question.rightColumn.find((item) => item.id === rightId);
 
-    if (rightItem && rightItem.matchWith === leftId) {
-      playSound("correct");
-      const newMatchedPairs = [...matchedPairs, leftId, rightId];
-      setMatchedPairs(newMatchedPairs);
-      setSelectedLeft(null);
-      setSelectedRight(null);
+  if (rightItem && rightItem.matchWith === leftId) {
+    // ✅ Ghép đúng
+    playSound("correct");
+    const newMatchedPairs = [...matchedPairs, leftId, rightId];
+    setMatchedPairs(newMatchedPairs);
+    setSelectedLeft(null);
+    setSelectedRight(null);
 
-      speakText(rightItem.text);
+    // ✅ ĐỌC lại tiếng Anh khi ghép đúng (để confirm)
+    speakText(rightItem.text);
 
-      if (
-        newMatchedPairs.length ===
-        question.leftColumn.length + question.rightColumn.length
-      ) {
-        setTimeout(() => {
-          setIsChecked(true);
-          setShowFeedback(true);
-          setCorrectAnswers((prev) => prev + 1);
-          setConsecutiveCorrect((prev) => prev + 1);
-        }, 500);
-      }
-    } else {
-      playSound("wrong");
-      setHearts((prev) => Math.max(0, prev - 1));
-
+    // Check xem đã hoàn thành hết chưa
+    if (
+      newMatchedPairs.length ===
+      question.leftColumn.length + question.rightColumn.length
+    ) {
       setTimeout(() => {
-        setSelectedLeft(null);
-        setSelectedRight(null);
+        setIsChecked(true);
+        setShowFeedback(true);
+        setCorrectAnswers((prev) => prev + 1);
+        setConsecutiveCorrect((prev) => prev + 1);
       }, 500);
     }
-  };
+  } else {
+    // ✅ Ghép sai
+    playSound("wrong");
+    setHearts((prev) => Math.max(0, prev - 1));
+
+    setTimeout(() => {
+      setSelectedLeft(null);
+      setSelectedRight(null);
+    }, 500);
+  }
+};
 
   const handlePairClick = (id, column) => {
   if (matchedPairs.includes(id) || isChecked) return;
 
   if (column === "left") {
+    // ✅ Click vào cột TRÁI (Tiếng Việt)
     setSelectedLeft(id);
+    
+    // ✅ TÌM và ĐỌC tiếng Anh tương ứng
+    const rightItem = question.rightColumn.find(item => item.matchWith === id);
+    if (rightItem) {
+      speakText(rightItem.text); // Đọc tiếng Anh
+      console.log(`🔊 Click tiếng Việt → Đọc tiếng Anh: "${rightItem.text}"`);
+    }
+    
+    // Kiểm tra match nếu đã chọn cột phải
     if (selectedRight) {
       checkMatch(id, selectedRight);
     }
-    
-    // ✅ Khi click vào cột trái (tiếng Việt), đọc tiếng Anh tương ứng
-    const leftItem = question.leftColumn.find(item => item.id === id);
-    if (leftItem) {
-      const rightItem = question.rightColumn.find(item => item.matchWith === id);
-      if (rightItem) {
-        speakText(rightItem.text); // Đọc tiếng Anh
-      }
-    }
   } else {
+    // ✅ Click vào cột PHẢI (Tiếng Anh) - KHÔNG ĐỌC
     setSelectedRight(id);
+    
+    // Chỉ check match, KHÔNG phát âm
     if (selectedLeft) {
       checkMatch(selectedLeft, id);
     }
   }
 };
+
+
 const speakText = (text) => {
   if (!text || !text.toString().trim()) {
-    showToast('warning', 'Cảnh báo', 'Không có text để phát âm');
+    console.warn('⚠️ Không có text để phát âm');
     return;
   }
 
-  // cancel any current speech
+  // ✅ Cancel bất kỳ speech nào đang chạy
   if (window.speechSynthesis.speaking) {
     window.speechSynthesis.cancel();
   }
 
-  const utterance = new SpeechSynthesisUtterance(text.toString());
+  // ✅ Hàm chọn giọng ENGLISH tốt nhất
+  const getEnglishVoice = (voices) => {
+    console.log('📋 Available voices:', voices.map(v => `${v.name} (${v.lang})`));
 
-  // ✅ CHỈ ĐỌC TIẾNG ANH - Luôn set lang = 'en-US'
-  utterance.lang = 'en-US';
+    // ✅ 1. Ưu tiên Google US English
+    let voice = voices.find(v => 
+      v.lang === 'en-US' && 
+      v.name.toLowerCase().includes('google')
+    );
+    if (voice) {
+      console.log('✅ Chọn Google US:', voice.name);
+      return voice;
+    }
 
-  // choose best matching voice (ưu tiên giọng tiếng Anh tự nhiên)
-  const pickVoice = (voices, langPrefix) => {
-    if (!voices || voices.length === 0) return null;
-    
-    // ✅ Ưu tiên Google US English (giọng tự nhiên nhất)
-    const googleUS = voices.find(v => 
-      v.name && v.name.includes('Google') && v.lang === 'en-US'
+    // ✅ 2. Microsoft David/Zira (Windows)
+    voice = voices.find(v => 
+      v.lang === 'en-US' && 
+      (v.name.includes('David') || v.name.includes('Zira'))
     );
-    if (googleUS) return googleUS;
-    
-    // Tiếp theo là Microsoft Zira hoặc David (giọng nữ/male rõ ràng)
-    const microsoftUS = voices.find(v => 
-      v.name && v.name.includes('Microsoft') && 
-      (v.name.includes('Zira') || v.name.includes('David')) &&
-      v.lang === 'en-US'
+    if (voice) {
+      console.log('✅ Chọn Microsoft:', voice.name);
+      return voice;
+    }
+
+    // ✅ 3. Samantha (macOS)
+    voice = voices.find(v => 
+      v.lang === 'en-US' && 
+      v.name.includes('Samantha')
     );
-    if (microsoftUS) return microsoftUS;
-    
-    // Tiếp theo là giọng US bất kỳ
-    const usVoice = voices.find(v => v.lang === 'en-US');
-    if (usVoice) return usVoice;
-    
-    // Cuối cùng là giọng English bất kỳ
-    const englishVoice = voices.find(v => v.lang && v.lang.startsWith('en'));
-    if (englishVoice) return englishVoice;
-    
-    // Fallback
-    return voices[0];
+    if (voice) {
+      console.log('✅ Chọn Samantha:', voice.name);
+      return voice;
+    }
+
+    // ✅ 4. BẤT KỲ giọng en-US nào (KHÔNG phải en-GB)
+    voice = voices.find(v => v.lang === 'en-US');
+    if (voice) {
+      console.log('✅ Chọn en-US:', voice.name);
+      return voice;
+    }
+
+    // ✅ 5. Bất kỳ giọng English nào (en-GB, en-AU...)
+    voice = voices.find(v => v.lang && v.lang.startsWith('en-'));
+    if (voice) {
+      console.log('✅ Chọn English:', voice.name);
+      return voice;
+    }
+
+    // ✅ 6. LOẠI BỎ tất cả giọng Vietnamese
+    voice = voices.find(v => 
+      v.lang && 
+      !v.lang.startsWith('vi') && 
+      !v.name.toLowerCase().includes('vietnam')
+    );
+    if (voice) {
+      console.log('⚠️ Fallback voice:', voice.name);
+      return voice;
+    }
+
+    console.error('❌ Không tìm thấy giọng English!');
+    return null;
   };
 
-  let voices = window.speechSynthesis.getVoices();
-  let selectedVoice = pickVoice(voices, 'en');
-
-  // If voices not loaded yet, wait for onvoiceschanged once
-  if (!selectedVoice && typeof window.speechSynthesis.onvoiceschanged !== 'undefined') {
-    window.speechSynthesis.onvoiceschanged = () => {
-      voices = window.speechSynthesis.getVoices();
-      const v = pickVoice(voices, 'en');
-      if (v) utterance.voice = v;
-      window.speechSynthesis.speak(utterance);
-    };
-  } else if (selectedVoice) {
-    utterance.voice = selectedVoice;
-    window.speechSynthesis.speak(utterance);
-  } else {
-    // fallback: still speak with lang set (browser will pick default)
-    window.speechSynthesis.speak(utterance);
-  }
-
-  // ✅ Điều chỉnh tốc độ và cao độ cho tiếng Anh tự nhiên
-  utterance.rate = 0.85; // Chậm hơn một chút để rõ ràng
-  utterance.pitch = 1.05; // Cao hơn một chút cho tự nhiên
-  utterance.volume = 1.0; // Volume max cho tiếng Anh
-
-  utterance.onstart = () => console.log(`🎵 Speak English: "${text}" lang=${utterance.lang}, voice=${utterance.voice?.name}`);
-  utterance.onend = () => console.log('✅ Hoàn thành phát âm tiếng Anh');
-  utterance.onerror = (err) => {
-    // ✅ Xử lý lỗi "canceled" riêng biệt, không show toast
-    if (err.error === 'canceled') {
-      console.log('🔇 Speech bị cancel (bình thường)');
-      return;
+  // ✅ Hàm thực hiện speak
+  const doSpeak = (selectedVoice) => {
+    const utterance = new SpeechSynthesisUtterance(text.toString());
+    
+    // ✅ QUAN TRỌNG: Set voice TRƯỚC khi set lang
+    if (selectedVoice) {
+      utterance.voice = selectedVoice;
     }
     
-    console.error('❌ Speech error:', err);
-    showToast('error', 'Lỗi', 'Không thể phát âm thanh');
+    // ✅ Luôn set lang = en-US
+    utterance.lang = 'en-US';
+    
+    // ✅ Điều chỉnh giọng nói
+    utterance.rate = 0.9;   // Tốc độ (0.1 - 10)
+    utterance.pitch = 1.0;  // Cao độ (0 - 2)
+    utterance.volume = 1.0; // Âm lượng (0 - 1)
+
+    utterance.onstart = () => {
+      console.log(`🔊 Đang đọc: "${text}"`);
+      console.log(`   Voice: ${utterance.voice?.name || 'default'}`);
+      console.log(`   Lang: ${utterance.lang}`);
+    };
+
+    utterance.onend = () => {
+      console.log('✅ Hoàn thành');
+    };
+
+    utterance.onerror = (err) => {
+      if (err.error !== 'canceled') {
+        console.error('❌ Lỗi:', err.error);
+      }
+    };
+
+    window.speechSynthesis.speak(utterance);
   };
+
+  // ✅ Lấy danh sách voices
+  let voices = window.speechSynthesis.getVoices();
+
+  if (voices.length > 0) {
+    // ✅ Đã có voices, chọn ngay
+    const englishVoice = getEnglishVoice(voices);
+    doSpeak(englishVoice);
+  } else {
+    
+    // ✅ Chỉ set event 1 lần
+    window.speechSynthesis.onvoiceschanged = () => {
+      voices = window.speechSynthesis.getVoices();
+      console.log(`✅ Loaded ${voices.length} voices`);
+      
+      const englishVoice = getEnglishVoice(voices);
+      doSpeak(englishVoice);
+      
+      // ✅ Clear event sau khi dùng xong
+      window.speechSynthesis.onvoiceschanged = null;
+    };
+  }
 };
-
-
 
   useEffect(() => {
     if (!question) return;
@@ -2478,23 +2535,49 @@ const speakText = (text) => {
   };
 
   // Thêm function để update progress khi hoàn thành lesson
-const handleCompleteLessonSuccess = async () => {
-  try {
-    // Update progress: mark lesson as completed
-    await progressService.updateLessonProgress(lessonId, {
-      completed: true,
-      score: calculateAccuracy(),
-      answeredQuestions: answeredQuestions.length,
-      correctAnswers: correctAnswers
-    });
+  const handleCompleteLessonSuccess = async () => {
+    try {
+      console.log('🎉 Completing lesson:', lessonId);
+      
+      const progressData = {
+        completed: true,
+        score: calculateAccuracy(),
+        timeSpent: Math.floor((Date.now() - lessonStartTime) / 1000) // seconds
+      };
+      
+      console.log('📊 Progress data:', progressData);
+      
+      // ✅ Update progress: mark lesson as completed
+      const response = await progressService.updateLessonProgress(lessonId, progressData);
+      
+      console.log('✅ Progress updated:', response);
+      
+      // Show success toast
+      showToast('success', 'Thành công', 'Đã lưu tiến độ học tập!');
+      
+      // Wait a bit for toast to show
+      setTimeout(() => {
+        // Navigate về /learn để thấy lesson tiếp theo unlock
+        navigate('/learn');
+      }, 1500);
+      
+    } catch (error) {
+      console.error('❌ Error updating progress:', error);
+      console.error('Error details:', error.response?.data);
+      
+      // ✅ Hiển thị lỗi cụ thể
+      const errorMessage = error.response?.data?.message || 'Không thể lưu tiến độ học tập';
+      showToast('error', 'Lỗi', errorMessage);
+      
+      // Still navigate even if error
+      setTimeout(() => {
+        navigate('/learn');
+      }, 1500);
+    }
+  };
 
-    // Navigate về /learn để thấy lesson tiếp theo unlock
-    navigate('/learn');
-  } catch (error) {
-    console.error('Error updating progress:', error);
-    navigate('/learn');
-  }
-};
+  const [lessonStartTime] = useState(Date.now());
+
   const handleContinueToLearn = () => {
     handleCompleteLessonSuccess();
   };

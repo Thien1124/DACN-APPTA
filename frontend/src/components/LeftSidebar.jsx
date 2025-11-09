@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom'; // ✅ add portal import
 import { useNavigate, useLocation } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
 import logo from '../assets/logo.png';
@@ -205,22 +206,6 @@ const SocialLinks = styled.div`
   margin-top: 1rem;
 `;
 
-const NavIconImage = styled.img`
-  width: 28px;
-  height: 28px;
-  object-fit: contain;
-  transition: all 0.3s ease;
-  filter: ${props => props.active ? 'none' : 'grayscale(50%) opacity(0.7)'};
-
-  ${NavItem}:hover & {
-    filter: none;
-    transform: scale(1.1);
-  }
-
-  ${props => props.active && `
-    filter: brightness(1.1);
-  `}
-`;
 const SocialIcon = styled.a`
   width: 36px;
   height: 36px;
@@ -244,13 +229,12 @@ const SocialIcon = styled.a`
 // New styled components for "Xem thêm" dropdown
 const MoreDropdown = styled.div`
   position: fixed;
-  z-index: 110;
+  z-index: 1300; /* tăng z-index để luôn nổi trên các layer khác */
   width: 300px;
   background: white;
   border-radius: 12px;
   box-shadow: 0 20px 40px rgba(0,0,0,0.2);
   padding: 0.5rem;
-  /* allow scroll and ensure it fits in viewport */
   max-height: calc(100vh - 32px);
   overflow: auto;
   animation: ${fadeIn} 0.18s ease;
@@ -379,22 +363,27 @@ const LeftSidebar = () => {
     },
   ];
 
+  // compute position when opening
+  const openMoreMenu = () => {
+    const rect = moreAnchorRef.current?.getBoundingClientRect();
+    if (rect) {
+      const left = Math.round(rect.right + 12);
+      const top = Math.round(rect.top);
+      setMoreStyle({ top, left });
+    } else {
+      setMoreStyle({ top: 120, left: 300 });
+    }
+    setMoreOpen(true);
+  };
+
   const handleNavClick = (item) => {
     if (item.id === 'settings') {
       // toggle local dropdown instead of navigating to Settings page
-      setMoreOpen(open => {
-        const newOpen = !open;
-        if (!newOpen) return false;
-        // compute position for dropdown anchored to sidebar + item
-        const rect = moreAnchorRef.current?.getBoundingClientRect();
-        if (rect) {
-          // align dropdown top with the nav item top (not below it)
-          setMoreStyle({ top: rect.top, left: rect.right + 12 });
-        } else {
-          setMoreStyle({ top: 120, left: 300 });
-        }
-        return true;
-      });
+      if (moreOpen) {
+        setMoreOpen(false);
+        return;
+      }
+      openMoreMenu();
       return;
     }
     navigate(item.path);
@@ -421,17 +410,15 @@ const LeftSidebar = () => {
     };
   }, [moreOpen]);
 
-  // Adjust dropdown so it never gets cut off at bottom (measure after render)
+  // adjust position after render (menu height known)
   useEffect(() => {
     if (!moreOpen) return;
     let mounted = true;
-
     const adjustPosition = () => {
       const anchorRect = moreAnchorRef.current?.getBoundingClientRect();
       const menu = moreMenuRef.current;
       if (!menu) return;
       const menuRect = menu.getBoundingClientRect();
-      // default top anchored to item top
       let topCalc = anchorRect ? Math.round(anchorRect.top) : moreStyle.top;
       const margin = 12;
       const maxTop = window.innerHeight - menuRect.height - margin;
@@ -440,21 +427,20 @@ const LeftSidebar = () => {
       if (mounted) setMoreStyle(s => ({ ...s, top: topCalc }));
     };
 
-    // run after paint so menu has measured height
     const t = setTimeout(adjustPosition, 0);
     window.addEventListener('resize', adjustPosition);
-
     return () => {
       mounted = false;
       clearTimeout(t);
       window.removeEventListener('resize', adjustPosition);
     };
-  }, [moreOpen]);
+  }, [moreOpen, moreStyle.top]);
 
   const isActive = (path) => {
     return location.pathname === path || location.pathname.startsWith(path + '/');
   };
 
+  // ========== RENDER ==========
   return (
     <SidebarContainer>
       <Logo onClick={() => navigate('/learn')}>
@@ -480,72 +466,10 @@ const LeftSidebar = () => {
                 </NavBadge>
               )}
             </NavItem>
-            {item.id === 'settings' && moreOpen && (
-              <MoreDropdown
-                ref={moreMenuRef}
-                style={{ top: moreStyle.top, left: moreStyle.left }}
-              >
-                <MoreItem onClick={() => { navigate('/settings/profile'); setMoreOpen(false); }}>
-                  <div>👤</div>
-                  <div>
-                    Hồ sơ
-                    <MoreItemSub>Thay đổi tên, email, ảnh đại diện và mật khẩu.</MoreItemSub>
-                  </div>
-                </MoreItem>
-
-                <MoreItem onClick={() => { navigate('/notifications'); setMoreOpen(false); }}>
-                  <div><BiBell /></div>
-                  <div>
-                    Thông báo 
-                    <MoreItemSub>Quản lý thông báo hệ thống.</MoreItemSub>
-                  </div>
-                </MoreItem>
-
-                <MoreItem onClick={() => { navigate('/settings/social'); setMoreOpen(false); }}>
-                  <div>🔗</div>
-                  <div>
-                    Tài khoản mạng xã hội
-                    <MoreItemSub>Kết nối / ngắt kết nối Google, Facebook.</MoreItemSub>
-                  </div>
-                </MoreItem>
-
-                <MoreItem onClick={() => { navigate('/settings/privacy'); setMoreOpen(false); }}>
-                  <div>🔒</div>
-                  <div>
-                    Quyền riêng tư
-                    <MoreItemSub>Tùy chọn hiển thị hồ sơ và thông báo.</MoreItemSub>
-                  </div>
-                </MoreItem>
-
-                <MoreItem onClick={() => { navigate('/settings/audit-log'); setMoreOpen(false); }}>
-                  <div>🕘</div>
-                  <div>
-                    Lịch sử hoạt động
-                    <MoreItemSub>Xem và quản lý hoạt động tài khoản của bạn.</MoreItemSub>
-                  </div>
-                </MoreItem>
-
-                <MoreItem onClick={() => { navigate('/settings/notifications'); setMoreOpen(false); }}>
-                  <div>🔔</div>
-                  <div>
-                    Cài đặt Thông báo
-                    <MoreItemSub>Quản lý email và thông báo nhắc nhở.</MoreItemSub>
-                  </div>
-                </MoreItem>
-
-                <MoreItem onClick={() => { navigate('/settings/account'); setMoreOpen(false); }}>
-                  <div>⚙️</div>
-                  <div>
-                    Cài đặt tài khoản
-                    <MoreItemSub>Các tuỳ chọn giao diện và trải nghiệm học tập.</MoreItemSub>
-                  </div>
-                </MoreItem>
-              </MoreDropdown>
-            )}
-             {index === 9 && <Divider />}
-           </React.Fragment>
-         ))}
-       </NavMenu>
+            {index === 9 && <Divider />}
+          </React.Fragment>
+        ))}
+      </NavMenu>
 
       <SidebarFooter>
         <FooterText>
@@ -565,6 +489,60 @@ const LeftSidebar = () => {
           </SocialIcon>
         </SocialLinks>
       </SidebarFooter>
+
+      {/* Render dropdown with portal so it's not clipped by any container */}
+      {moreOpen && createPortal(
+        <MoreDropdown
+          ref={moreMenuRef}
+          style={{ top: moreStyle.top, left: moreStyle.left }}
+          role="menu"
+          aria-label="Xem thêm"
+        >
+          <MoreItem onClick={() => { navigate('/settings/profile'); setMoreOpen(false); }}>
+            <div>👤</div>
+            <div>
+              Hồ sơ
+              <MoreItemSub>Thay đổi tên, email, ảnh đại diện và mật khẩu.</MoreItemSub>
+            </div>
+          </MoreItem>
+          <MoreItem onClick={() => { navigate('/notifications'); setMoreOpen(false); }}>
+            <div><BiBell /></div>
+            <div>
+              Thông báo
+              <MoreItemSub>Quản lý thông báo hệ thống.</MoreItemSub>
+            </div>
+          </MoreItem>
+          <MoreItem onClick={() => { navigate('/settings/social'); setMoreOpen(false); }}>
+            <div>🔗</div>
+            <div>
+              Tài khoản mạng xã hội
+              <MoreItemSub>Kết nối / ngắt kết nối Google, Facebook.</MoreItemSub>
+            </div>
+          </MoreItem>
+          <MoreItem onClick={() => { navigate('/settings/privacy'); setMoreOpen(false); }}>
+            <div>🔒</div>
+            <div>
+              Quyền riêng tư
+              <MoreItemSub>Tùy chọn hiển thị hồ sơ và thông báo.</MoreItemSub>
+            </div>
+          </MoreItem>
+          <MoreItem onClick={() => { navigate('/settings/audit-log'); setMoreOpen(false); }}>
+            <div>🕘</div>
+            <div>
+              Lịch sử hoạt động
+              <MoreItemSub>Xem và quản lý hoạt động tài khoản của bạn.</MoreItemSub>
+            </div>
+          </MoreItem>
+          <MoreItem onClick={() => { navigate('/settings/account'); setMoreOpen(false); }}>
+            <div>⚙️</div>
+            <div>
+              Cài đặt tài khoản
+              <MoreItemSub>Các tuỳ chọn giao diện và trải nghiệm học tập.</MoreItemSub>
+            </div>
+          </MoreItem>
+        </MoreDropdown>,
+        document.body
+      )}
     </SidebarContainer>
   );
 };

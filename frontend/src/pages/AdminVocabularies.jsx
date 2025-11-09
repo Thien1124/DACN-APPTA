@@ -347,31 +347,28 @@ const AdminVocabularies = () => {
 
       <PageHeader>
         <Title theme={theme}>
-  <Translate sx={{ mr: 1 }} /> Từ vựng ({vocabularies.length})
-</Title>
-<ButtonGroup>
-  <CreateButton onClick={handleCreate}>
-    <Add />
-    Thêm từ mới
-  </CreateButton>
-  <CreateButton variant="bulk" onClick={handleBulkCreate}>
-    <FileCopy />
-    Thêm hàng loạt
-  </CreateButton>
-</ButtonGroup>
+          <Translate sx={{ mr: 1 }} /> Từ vựng ({vocabularies.length})
+        </Title>
+        <ButtonGroup>
+          <CreateButton onClick={handleCreate}>
+            <Add />
+            Thêm từ mới
+          </CreateButton>
+          <CreateButton variant="bulk" onClick={handleBulkCreate}>
+            <FileCopy />
+            Thêm hàng loạt
+          </CreateButton>
+        </ButtonGroup>
       </PageHeader>
 
       <FilterBar>
-       <SearchInput
-  theme={theme}
-  type="text"
-  placeholder="Tìm kiếm từ vựng hoặc nghĩa..."
-  value={searchTerm}
-  onChange={(e) => setSearchTerm(e.target.value)}
-  startAdornment={
-    <Search sx={{ color: 'action.active', mr: 1 }} />
-  }
-/>
+        <SearchInput
+          theme={theme}
+          type="text"
+          placeholder="Tìm kiếm từ vựng hoặc nghĩa..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
         <FilterSelect
           theme={theme}
           value={lessonFilter}
@@ -416,8 +413,7 @@ const AdminVocabularies = () => {
                     <VocabPronunciation>{vocab.pronunciation}</VocabPronunciation>
                     <VocabMeaning theme={theme}>{vocab.meaning}</VocabMeaning>
                   </Td>
-                  <Td theme={theme}>{vocab.partOfSpeech || 'N/A'}</Td>
-                  <Td theme={theme}>{vocab.lesson?.title || 'N/A'}</Td>
+                  <Td theme={theme}>{vocab.lesson?.title || '-'}</Td>
                   <Td theme={theme}>
                     <div style={{ maxWidth: '300px', fontSize: '0.75rem' }}>
                       {vocab.exampleSentence || '-'}
@@ -425,31 +421,30 @@ const AdminVocabularies = () => {
                   </Td>
                   <Td theme={theme}>
                     <ActionButtons>
-  {vocab.audioUrl && (
-    <ActionButton 
-      variant="audio" 
-      onClick={() => handlePlayAudio(vocab.audioUrl)}
-      title="Phát audio"
-    >
-      <VolumeUp sx={{ fontSize: 18 }} />
-    </ActionButton>
-  )}
-  <ActionButton 
-    variant="edit" 
-    onClick={() => handleEdit(vocab._id)}
-    title="Sửa"
-  >
-    <Edit sx={{ fontSize: 18 }} />
-  </ActionButton>
-  <ActionButton 
-    variant="delete" 
-    onClick={() => handleDelete(vocab)}
-    title="Xóa"
-  >
-    <Delete sx={{ fontSize: 18 }} />
-  </ActionButton>
-</ActionButtons>
-
+                      {vocab.audioUrl && (
+                        <ActionButton 
+                          variant="audio" 
+                          onClick={() => handlePlayAudio(vocab.audioUrl)}
+                          title="Phát audio"
+                        >
+                          <VolumeUp sx={{ fontSize: 18 }} />
+                        </ActionButton>
+                      )}
+                      <ActionButton 
+                        variant="edit" 
+                        onClick={() => handleEdit(vocab._id)}
+                        title="Sửa"
+                      >
+                        <Edit sx={{ fontSize: 18 }} />
+                      </ActionButton>
+                      <ActionButton 
+                        variant="delete" 
+                        onClick={() => handleDelete(vocab)}
+                        title="Xóa"
+                      >
+                        <Delete sx={{ fontSize: 18 }} />
+                      </ActionButton>
+                    </ActionButtons>
                   </Td>
                 </tr>
               ))}
@@ -459,11 +454,11 @@ const AdminVocabularies = () => {
           {totalPages > 1 && (
             <Pagination>
               <PageButton
-  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-  disabled={currentPage === 1}
->
-  <NavigateBefore /> Trước
-</PageButton>
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+              >
+                <NavigateBefore /> Trước
+              </PageButton>
               {[...Array(totalPages)].map((_, index) => (
                 <PageButton
                   key={index + 1}
@@ -474,11 +469,11 @@ const AdminVocabularies = () => {
                 </PageButton>
               ))}
               <PageButton
-  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-  disabled={currentPage === totalPages}
->
-  Sau <NavigateNext />
-</PageButton>
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+              >
+                Sau <NavigateNext />
+              </PageButton>
             </Pagination>
           )}
         </TableContainer>

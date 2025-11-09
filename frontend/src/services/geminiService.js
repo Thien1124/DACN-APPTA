@@ -17,9 +17,9 @@ axiosInstance.interceptors.request.use((config) => {
   return config;
 });
 
-export const geminiService = {
-  // ==================== AI ENDPOINTS (TASK 21) ====================
+// ==================== AI ENDPOINTS (TASK 21) ====================
 
+export const geminiService = {
   // POST /api/ai/analyze - Phân tích từ
   analyze: async (word, context = '') => {
     try {
@@ -152,6 +152,40 @@ export const geminiService = {
         response: error.response?.data,
         status: error.response?.status
       });
+      throw error;
+    }
+  },
+
+  // POST /api/ai/generate-vocabulary - Tạo danh sách từ vựng
+  generateVocabulary: async (topic, category, level, count = 10) => {
+    try {
+      const response = await axiosInstance.post('/ai/generate-vocabulary', {
+        topic,
+        category,
+        level,
+        count
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Generate vocabulary error:', error);
+      throw error;
+    }
+  },
+
+  // POST /api/ai/batch-create-with-images - Tạo flashcards với hình ảnh
+  batchCreateWithImages: async (deckId, words) => {
+    try {
+      console.log('🖼️ Calling batchCreateWithImages API with:', words.length, 'words');
+      
+      const response = await axiosInstance.post('/ai/batch-create-with-images', {
+        deckId,
+        words
+      });
+      
+      console.log('🖼️ batchCreateWithImages response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Batch create with images error:', error);
       throw error;
     }
   },

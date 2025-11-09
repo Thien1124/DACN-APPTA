@@ -339,150 +339,294 @@ const AdminDecks = () => {
     }
   };
 
-  // ✅ FIX: Sửa handleCreateDeckWithAI để khớp với backend API
+  // ✅ Sửa handleCreateDeckWithAI với form đẹp hơn
   const handleCreateDeckWithAI = async () => {
     const { value: formValues } = await Swal.fire({
-      title: '🤖 Tạo Deck với AI',
+      title: '<span style="color: #667eea;">Tạo Deck với AI</span>',
       html: `
-        <div style="text-align: left;">
-          <div style="margin-bottom: 1rem;">
-            <label style="display: block; margin-bottom: 0.5rem; color: #374151; font-weight: 600;">
-              Tên Deck: *
+        <div style="text-align: left; max-height: 70vh; overflow-y: auto; padding: 0.5rem;">
+          <!-- Tên Deck -->
+          <div style="margin-bottom: 1.5rem;">
+            <label style="display: block; margin-bottom: 0.5rem; color: #1e293b; font-weight: 700; font-size: 0.9rem;">
+              Tên Deck <span style="color: #ef4444;">*</span>
             </label>
             <input 
               id="swal-deck-name" 
               class="swal2-input"
               placeholder="VD: Common English Verbs"
-              style="width: 100%; margin: 0;"
+              style="width: 100%; margin: 0; padding: 0.875rem; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 0.95rem; transition: all 0.3s;"
+              onfocus="this.style.borderColor='#667eea'; this.style.boxShadow='0 0 0 3px rgba(102,126,234,0.1)';"
+              onblur="this.style.borderColor='#e2e8f0'; this.style.boxShadow='none';"
             />
           </div>
           
-          <div style="margin-bottom: 1rem;">
-            <label style="display: block; margin-bottom: 0.5rem; color: #374151; font-weight: 600;">
-              Mô tả: *
+          <!-- Mô tả -->
+          <div style="margin-bottom: 1.5rem;">
+            <label style="display: block; margin-bottom: 0.5rem; color: #1e293b; font-weight: 700; font-size: 0.9rem;">
+              Mô tả <span style="color: #ef4444;">*</span>
             </label>
             <textarea 
               id="swal-deck-description" 
               class="swal2-textarea"
               placeholder="VD: Các động từ thông dụng trong tiếng Anh..."
-              rows="2"
-              style="width: 100%; margin: 0;"
+              rows="3"
+              style="width: 100%; margin: 0; padding: 0.875rem; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 0.95rem; resize: vertical; transition: all 0.3s;"
+              onfocus="this.style.borderColor='#667eea'; this.style.boxShadow='0 0 0 3px rgba(102,126,234,0.1)';"
+              onblur="this.style.borderColor='#e2e8f0'; this.style.boxShadow='none';"
             ></textarea>
           </div>
 
-          <div style="margin-bottom: 1rem;">
-            <label style="display: block; margin-bottom: 0.5rem; color: #374151; font-weight: 600;">
-              Category:
-            </label>
-            <select id="swal-deck-category" class="swal2-select" style="width: 100%; margin: 0;">
-              <option value="GENERAL">General - Tổng hợp</option>
-              <option value="ACADEMIC">Academic - Học thuật</option>
-              <option value="BUSINESS">Business - Kinh doanh</option>
-              <option value="TRAVEL">Travel - Du lịch</option>
-              <option value="FOOD">Food - Ẩm thực</option>
-              <option value="HEALTH">Health - Y tế</option>
-            </select>
-          </div>
-
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+          <!-- Category & Tags Row -->
+          <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
             <div>
-              <label style="display: block; margin-bottom: 0.5rem; color: #374151; font-weight: 600;">
-                Level:
+              <label style="display: block; margin-bottom: 0.5rem; color: #1e293b; font-weight: 700; font-size: 0.9rem;">
+                Category
               </label>
-              <select id="swal-deck-level" class="swal2-select" style="width: 100%; margin: 0;">
-                <option value="A1">A1 - Beginner</option>
-                <option value="A2">A2 - Elementary</option>
-                <option value="B1">B1 - Intermediate</option>
-                <option value="B2">B2 - Upper Intermediate</option>
-                <option value="C1">C1 - Advanced</option>
-                <option value="C2">C2 - Mastery</option>
+              <select id="swal-deck-category" class="swal2-select" style="width: 100%; margin: 0; padding: 0.875rem; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 0.95rem; background: white; cursor: pointer;">
+                <option value="GENERAL">General - Tổng hợp</option>
+                <option value="ACADEMIC">Academic - Học thuật</option>
+                <option value="BUSINESS">Business - Kinh doanh</option>
+                <option value="TRAVEL">Travel - Du lịch</option>
+                <option value="FOOD">Food - Ẩm thực</option>
+                <option value="HEALTH">Health - Y tế</option>
+                <option value="TECHNOLOGY">Technology - Công nghệ</option>
+                <option value="DAILY_LIFE">Daily Life - Cuộc sống</option>
               </select>
             </div>
 
             <div>
-              <label style="display: block; margin-bottom: 0.5rem; color: #374151; font-weight: 600;">
-                Difficulty:
+              <label style="display: block; margin-bottom: 0.5rem; color: #1e293b; font-weight: 700; font-size: 0.9rem;">
+                Level
               </label>
-              <select id="swal-deck-difficulty" class="swal2-select" style="width: 100%; margin: 0;">
+              <select id="swal-deck-level" class="swal2-select" style="width: 100%; margin: 0; padding: 0.875rem; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 0.95rem; background: white; cursor: pointer;">
+                <option value="A1">A1</option>
+                <option value="A2">A2</option>
+                <option value="B1" selected>B1</option>
+                <option value="B2">B2</option>
+                <option value="C1">C1</option>
+                <option value="C2">C2</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Difficulty & Card Count -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+            <div>
+              <label style="display: block; margin-bottom: 0.5rem; color: #1e293b; font-weight: 700; font-size: 0.9rem;">
+                Difficulty
+              </label>
+              <select id="swal-deck-difficulty" class="swal2-select" style="width: 100%; margin: 0; padding: 0.875rem; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 0.95rem; background: white; cursor: pointer;">
                 <option value="BEGINNER">Beginner</option>
-                <option value="INTERMEDIATE">Intermediate</option>
+                <option value="INTERMEDIATE" selected>Intermediate</option>
                 <option value="ADVANCED">Advanced</option>
               </select>
             </div>
+
+            <div>
+              <label style="display: block; margin-bottom: 0.5rem; color: #1e293b; font-weight: 700; font-size: 0.9rem;">
+                Số thẻ tạo
+              </label>
+              <input 
+                type="number" 
+                id="swal-card-count" 
+                class="swal2-input"
+                value="10"
+                min="5"
+                max="20"
+                style="width: 100%; margin: 0; padding: 0.875rem; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 0.95rem;"
+              />
+            </div>
           </div>
 
-          <div style="margin-bottom: 1rem; padding: 1rem; background: #f3f4f6; border-radius: 8px;">
-            <label style="display: flex; align-items: center; margin-bottom: 0.5rem; color: #374151; font-weight: 600;">
-              <input type="checkbox" id="swal-auto-generate" style="margin-right: 0.5rem;" checked />
-              Tự động tạo flashcards với AI
+          <!-- AI Generation Mode -->
+          <div style="margin-bottom: 1.5rem; padding: 1.25rem; background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%); border: 2px solid #667eea40; border-radius: 12px;">
+            <label style="display: flex; align-items: center; margin-bottom: 0.75rem; cursor: pointer;">
+              <input type="checkbox" id="swal-auto-generate" style="width: 20px; height: 20px; margin-right: 0.75rem; cursor: pointer; accent-color: #667eea;" checked />
+              <span style="color: #1e293b; font-weight: 700; font-size: 1rem;">
+                Tự động tạo flashcards với AI
+              </span>
             </label>
-            <p style="margin: 0.5rem 0 0 1.5rem; font-size: 0.875rem; color: #6b7280;">
-              ✨ AI sẽ tự động tạo 10 flashcards phù hợp với chủ đề
+            <p style="margin: 0 0 0 2rem; font-size: 0.875rem; color: #475569; line-height: 1.6;">
+              AI sẽ tự động phân tích và tạo flashcards dựa trên tên và mô tả deck của bạn
             </p>
           </div>
 
+          <!-- Manual Input Section -->
           <div id="manual-words-section" style="display: none; margin-bottom: 1rem;">
-            <label style="display: block; margin-bottom: 0.5rem; color: #374151; font-weight: 600;">
-              Danh sách từ vựng (mỗi từ một dòng):
+            <label style="display: block; margin-bottom: 0.5rem; color: #1e293b; font-weight: 700; font-size: 0.9rem;">
+              Danh sách từ vựng
             </label>
             <textarea 
               id="swal-words-input" 
               class="swal2-textarea"
-              placeholder="beautiful&#10;amazing&#10;wonderful&#10;fantastic&#10;excellent"
-              rows="6"
-              style="width: 100%; font-family: monospace; resize: vertical; margin: 0;"
+              placeholder="Nhập mỗi từ trên một dòng:&#10;beautiful&#10;amazing&#10;wonderful&#10;fantastic&#10;excellent"
+              rows="8"
+              style="width: 100%; margin: 0; padding: 0.875rem; border: 2px solid #e2e8f0; border-radius: 10px; font-family: 'Courier New', monospace; font-size: 0.9rem; resize: vertical;"
             ></textarea>
-            <p style="margin-top: 0.5rem; font-size: 0.875rem; color: #9ca3af;">
-              💡 Tối đa 10 từ mỗi lần
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.75rem; padding: 0.75rem; background: #fef3c7; border-radius: 8px;">
+              <span style="font-size: 1.25rem;">💡</span>
+              <p style="margin: 0; font-size: 0.875rem; color: #92400e; font-weight: 600;">
+                Tối đa 20 từ mỗi lần. Mỗi từ một dòng.
+              </p>
+            </div>
+          </div>
+
+          <!-- Tags (Optional) -->
+          <div style="margin-bottom: 1.5rem;">
+            <label style="display: block; margin-bottom: 0.5rem; color: #1e293b; font-weight: 700; font-size: 0.9rem;">
+              Tags (tùy chọn)
+            </label>
+            <input 
+              id="swal-deck-tags" 
+              class="swal2-input"
+              placeholder="VD: vocabulary, beginner, daily"
+              style="width: 100%; margin: 0; padding: 0.875rem; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 0.95rem;"
+            />
+            <p style="margin: 0.5rem 0 0 0; font-size: 0.8rem; color: #64748b;">
+              Phân cách bằng dấu phẩy
+            </p>
+          </div>
+
+          <!-- Image Option -->
+          <div style="margin-bottom: 1.5rem; padding: 1.25rem; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 2px solid #f59e0b; border-radius: 12px;">
+            <label style="display: flex; align-items: center; cursor: pointer;">
+              <input type="checkbox" id="swal-use-images" style="width: 18px; height: 18px; margin-right: 0.75rem; cursor: pointer; accent-color: #10b981;" checked />
+              <span style="color: #166534; font-weight: 600; font-size: 0.875rem;">
+                Tự động tạo hình ảnh minh họa bằng AI (DALL-E)
+              </span>
+            </label>
+            <p style="margin: 0.5rem 0 0 2rem; font-size: 0.75rem; color: #15803d;">
+              Sử dụng AI để tạo hình ảnh độc quyền cho flashcards (tốn phí)
             </p>
           </div>
 
           <script>
-            document.getElementById('swal-auto-generate').addEventListener('change', function(e) {
-              const manualSection = document.getElementById('manual-words-section');
+            const autoCheckbox = document.getElementById('swal-auto-generate');
+            const manualSection = document.getElementById('manual-words-section');
+            
+            autoCheckbox.addEventListener('change', function(e) {
               manualSection.style.display = e.target.checked ? 'none' : 'block';
+              
+              // Animation
+              if (!e.target.checked) {
+                manualSection.style.animation = 'slideIn 0.3s ease';
+              }
             });
+
+            // Add animation keyframes
+            const style = document.createElement('style');
+            style.textContent = \`
+              @keyframes slideIn {
+                from {
+                  opacity: 0;
+                  transform: translateY(-10px);
+                }
+                to {
+                  opacity: 1;
+                  transform: translateY(0);
+                }
+              }
+            \`;
+            document.head.appendChild(style);
           </script>
         </div>
       `,
-      width: '600px',
+      width: '680px',
+      padding: '2rem',
+      background: '#ffffff',
+      backdrop: 'rgba(0,0,0,0.4)',
       focusConfirm: false,
       showCancelButton: true,
-      confirmButtonText: '✨ Tạo với AI',
+      confirmButtonText: '<span style="font-size: 1.1rem;">✨ Tạo Deck với AI</span>',
       cancelButtonText: 'Hủy',
       confirmButtonColor: '#667eea',
+      cancelButtonColor: '#94a3b8',
+      buttonsStyling: true,
+      customClass: {
+        confirmButton: 'swal2-confirm-custom',
+        cancelButton: 'swal2-cancel-custom'
+      },
+      didOpen: () => {
+        // Add custom button styles
+        const style = document.createElement('style');
+        style.textContent = `
+          .swal2-confirm-custom {
+            padding: 0.875rem 2rem !important;
+            font-weight: 700 !important;
+            border-radius: 10px !important;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4) !important;
+            transition: all 0.3s !important;
+          }
+          .swal2-confirm-custom:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 6px 16px rgba(102, 126, 234, 0.5) !important;
+          }
+          .swal2-cancel-custom {
+            padding: 0.875rem 2rem !important;
+            font-weight: 600 !important;
+            border-radius: 10px !important;
+          }
+        `;
+        document.head.appendChild(style);
+      },
       preConfirm: () => {
-        const deckName = document.getElementById('swal-deck-name').value;
-        const deckDescription = document.getElementById('swal-deck-description').value;
+        const deckName = document.getElementById('swal-deck-name').value.trim();
+        const deckDescription = document.getElementById('swal-deck-description').value.trim();
         const deckCategory = document.getElementById('swal-deck-category').value;
-        const deckLevel = document.getElementById('swal-deck-level').value;
+        const deckLevelSelect = document.getElementById('swal-deck-level');
+        const deckLevel = deckLevelSelect ? deckLevelSelect.value : 'INTERMEDIATE';
         const deckDifficulty = document.getElementById('swal-deck-difficulty').value;
+        const cardCount = parseInt(document.getElementById('swal-card-count').value) || 10;
         const autoGenerate = document.getElementById('swal-auto-generate').checked;
         const wordsInput = document.getElementById('swal-words-input')?.value || '';
+        const tagsInput = document.getElementById('swal-deck-tags').value.trim();
         
-        if (!deckName.trim()) {
-          Swal.showValidationMessage('⚠️ Vui lòng nhập tên deck');
+        // Validation
+        if (!deckName) {
+          Swal.showValidationMessage('Vui lòng nhập tên deck');
           return false;
         }
 
-        if (!deckDescription.trim()) {
-          Swal.showValidationMessage('⚠️ Vui lòng nhập mô tả deck');
+        if (deckName.length < 3) {
+          Swal.showValidationMessage('Tên deck phải có ít nhất 3 ký tự');
+          return false;
+        }
+
+        if (!deckDescription) {
+          Swal.showValidationMessage('Vui lòng nhập mô tả deck');
+          return false;
+        }
+
+        if (deckDescription.length < 10) {
+          Swal.showValidationMessage('Mô tả phải có ít nhất 10 ký tự');
           return false;
         }
 
         if (!autoGenerate && !wordsInput.trim()) {
-          Swal.showValidationMessage('⚠️ Vui lòng nhập danh sách từ hoặc chọn tự động tạo');
+          Swal.showValidationMessage('Vui lòng nhập danh sách từ hoặc chọn tự động tạo');
           return false;
         }
+
+        if (cardCount < 5 || cardCount > 20) {
+          Swal.showValidationMessage('Số thẻ phải từ 5 đến 20');
+          return false;
+        }
+
+        // Parse tags
+        const tags = tagsInput
+          ? tagsInput.split(',').map(tag => tag.trim()).filter(tag => tag)
+          : [];
         
         return { 
           deckName, 
           deckDescription,
           deckCategory, 
           deckLevel, 
-          deckDifficulty, 
+          deckDifficulty,
+          cardCount,
           autoGenerate,
-          wordsInput 
+          wordsInput,
+          tags
         };
       }
     });
@@ -493,195 +637,436 @@ const AdminDecks = () => {
         deckDescription,
         deckCategory, 
         deckLevel, 
-        deckDifficulty, 
+        deckDifficulty,
+        cardCount,
         autoGenerate,
-        wordsInput 
+        wordsInput,
+        tags
       } = formValues;
 
       try {
         setLoading(true);
         showToast('info', 'Đang xử lý', '🤖 Đang tạo deck...');
 
-        // ✅ Step 1: Tạo deck mới - Khớp với backend POST /api/decks
+        // ✅ Step 1: Tạo deck - Khớp với POST /api/decks
         const deckData = {
           title: deckName,
           description: deckDescription,
           category: deckCategory,
           level: deckLevel,
           difficulty: deckDifficulty,
+          tags: tags,
           isPublic: false
         };
 
         const deckResponse = await adminService.decks.create(deckData);
-        console.log('Create deck response:', deckResponse);
+        console.log('✅ Create deck response:', deckResponse);
         
-        // ✅ Validate response
         if (!deckResponse?.success || !deckResponse?.data?._id) {
-          throw new Error('Không thể tạo deck - response không hợp lệ');
+          throw new Error('Không thể tạo deck');
         }
 
         const newDeckId = deckResponse.data._id;
 
-        // ✅ Step 2: Tạo flashcards với AI
+        // ✅ Step 2: Tạo flashcards với AI - Khớp với POST /api/ai/batch-create
         let words = [];
         
         if (autoGenerate) {
-          words = generateWordsFromDeckInfo(deckName, deckDescription, deckCategory, 10);
+          try {
+            // ✅ Truyền level vào generate function
+            words = await generateWordsFromDeckInfo(
+              deckName, 
+              deckDescription, 
+              deckCategory, 
+              deckLevel, // ✅ Truyền level từ form
+              cardCount
+            );
+            
+            console.log(`✅ Auto generated ${words.length} words (level: ${deckLevel}) for ${cardCount} cards`);
+          } catch (aiError) {
+            console.error('❌ AI generation failed:', aiError);
+            
+            // ✅ Hiển thị lỗi chi tiết cho user
+            await Swal.fire({
+              icon: 'error',
+              title: 'Không thể tạo từ vựng tự động',
+              html: `
+                <div style="text-align: left;">
+                  <p><strong>Lỗi:</strong> ${aiError.message}</p>
+                  <p style="margin-top: 1rem;">Vui lòng:</p>
+                  <ul style="margin-top: 0.5rem;">
+                    <li>Kiểm tra API key Gemini có hợp lệ không</li>
+                    <li>Thử lại với tên/mô tả deck rõ ràng hơn</li>
+                    <li>Hoặc bỏ check "Tự động tạo" và nhập từ thủ công</li>
+                  </ul>
+                </div>
+              `,
+              confirmButtonColor: '#ef4444',
+              confirmButtonText: 'Đã hiểu',
+              width: '600px'
+            });
+            
+            setLoading(false);
+            return; // ✅ Dừng tạo deck nếu AI fail
+          }
         } else {
+          // Parse manual input
           words = wordsInput
             .split('\n')
             .map(word => word.trim())
             .filter(word => word.length > 0)
-            .slice(0, 10); // Limit to 10 words
+            .slice(0, 20);
         }
 
+        // ✅ Validate số lượng words
         if (words.length === 0) {
+          // Cleanup empty deck
           try {
             await adminService.decks.delete(newDeckId);
           } catch (err) {
-            console.error('Failed to cleanup empty deck:', err);
+            console.error('Failed to cleanup deck:', err);
           }
           showToast('warning', 'Cảnh báo', 'Không có từ nào để tạo flashcard');
           setLoading(false);
           return;
         }
 
+        // ✅ Log để debug
+        console.log(`📊 Final words to create (${words.length}):`, words);
+
         showToast('info', 'Đang xử lý', `🤖 AI đang phân tích ${words.length} từ...`);
 
-        // ✅ Call backend API: POST /api/ai/batch-create
-        const createResult = await geminiService.batchCreate(newDeckId, words);
-        console.log('Batch create result:', createResult);
+        // ✅ Option trong form để chọn có muốn thêm hình ảnh không
+        const useImagesCheckbox = document.getElementById('swal-use-images');
 
-        // ✅ Validate kết quả theo backend response format
+console.log('🎯 Checkbox element:', useImagesCheckbox);
+console.log('🎯 Checkbox checked:', useImages);
+const useImages = useImagesCheckbox ? useImagesCheckbox.checked : true;
+        // ✅ Dùng API khác nhau tùy vào có hình ảnh hay không
+        let createResult;
+        if (useImages) {
+  console.log('🖼️ Calling batchCreateWithImages...');
+  createResult = await geminiService.batchCreateWithImages(newDeckId, words);
+} else {
+  console.log('📝 Calling batchCreate (no images)...');
+  createResult = await geminiService.batchCreate(newDeckId, words);
+}
+
+        console.log('✅ Batch create result:', createResult);
+
         if (!createResult?.success) {
           throw new Error(createResult?.message || 'Không thể tạo flashcards với AI');
         }
-
-        // ✅ Backend trả về: { success: true, message: "...", data: [flashcards] }
-        const createdCount = Array.isArray(createResult.data) 
-          ? createResult.data.length 
+        
+        const createdCount = Array.isArray(createResult.data)
+          ? createResult.data.length
           : (createResult.data?.count || 0);
-        
-        showToast(
-          'success',
-          'Thành công',
-          `✅ Đã tạo deck "${deckName}" với ${createdCount} flashcards`
-        );
-        
-        await fetchDecks();
-        
-        setTimeout(() => {
-          navigate(`/admin/decks/${newDeckId}`);
-        }, 1500);
+
+        // ✅ Kiểm tra có lỗi không
+        const hasErrors = createResult.errors && createResult.errors.length > 0;
+        const errorCount = hasErrors ? createResult.errors.length : 0;
+
+        // ✅ Success modal with error details
+        await Swal.fire({
+          icon: hasErrors ? 'warning' : 'success',
+          title: `<span style="color: ${hasErrors ? '#f59e0b' : '#10b981'};">${hasErrors ? '⚠️ Hoàn thành với lỗi' : '🎉 Thành công!'}</span>`,
+          html: `
+            <div style="text-align: center;">
+              <p style="font-size: 1.1rem; margin-bottom: 1rem; color: #1e293b;">
+                Đã tạo deck <strong>"${deckName}"</strong> với ${createdCount} flashcards
+              </p>
+              <div style="padding: 1.5rem; background: #f0fdf4; border-radius: 12px; border: 2px solid #10b981; margin-bottom: 1rem;">
+                <p style="font-size: 2.5rem; margin: 0; color: #166534;">${createdCount}</p>
+                <p style="margin: 0.5rem 0 0 0; color: #16a34a; font-weight: 600; font-size: 1.1rem;">flashcards thành công</p>
+              </div>
+              
+              ${hasErrors ? `
+                <div style="padding: 1rem; background: #fef3c7; border-radius: 8px; border: 1px solid #f59e0b; margin-bottom: 1rem;">
+                  <p style="color: #92400e; font-weight: 600; margin-bottom: 0.5rem;">
+                    ⚠️ ${errorCount} từ bị lỗi
+                  </p>
+                  <details style="text-align: left; margin-top: 0.5rem;">
+                    <summary style="cursor: pointer; font-weight: 600; color: #92400e;">Xem chi tiết lỗi</summary>
+                    <ul style="margin-top: 0.5rem; font-size: 0.875rem; color: #78350f;">
+                      ${createResult.errors.map(err => `<li><strong>${err.word}</strong>: ${err.error}</li>`).join('')}
+                    </ul>
+                  </details>
+                </div>
+              ` : ''}
+              
+              <div style="padding: 1rem; background: #eff6ff; border-radius: 8px; border: 1px solid #bfdbfe;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; text-align: left; font-size: 0.9rem; color: #1e40af;">
+                  <div>✅ Phiên âm đầy đủ</div>
+                  <div>✅ Nghĩa tiếng Việt</div>
+                  <div>✅ Ví dụ thực tế</div>
+                  <div>✅ Từ đồng nghĩa</div>
+                </div>
+              </div>
+            </div>
+          `,
+          confirmButtonColor: hasErrors ? '#f59e0b' : '#10b981',
+          confirmButtonText: '👀 Xem deck',
+          showCancelButton: true,
+          cancelButtonText: 'Đóng',
+          cancelButtonColor: '#94a3b8',
+          width: '600px'
+        }).then((result) => {
+          if (result.isConfirmed) {
+            navigate(`/admin/decks/${newDeckId}`);
+          } else {
+            fetchDecks();
+          }
+        });
 
       } catch (error) {
-        console.error('Create deck with AI error:', error);
-        showToast(
-          'error',
-          'Lỗi',
-          error.response?.data?.message || error.message || 'Không thể tạo deck với AI'
-        );
+        console.error('❌ Create deck with AI error:', error);
+        
+        // ✅ Extract detailed error message
+        let errorMessage = 'Không thể tạo deck với AI';
+        
+        if (error.response?.data?.message) {
+          errorMessage = error.response.data.message;
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+        
+        // ✅ Show detailed error
+        await Swal.fire({
+          icon: 'error',
+          title: 'Lỗi',
+          html: `
+            <div style="text-align: left;">
+              <p style="color: #ef4444; font-weight: 600; margin-bottom: 1rem;">
+                ${errorMessage}
+              </p>
+              <details style="margin-top: 1rem; padding: 0.75rem; background: #f3f4f6; border-radius: 8px;">
+                <summary style="cursor: pointer; font-weight: 600;">Chi tiết kỹ thuật</summary>
+                <pre style="margin-top: 0.5rem; font-size: 0.75rem; overflow-x: auto;">
+${JSON.stringify(error.response?.data || error, null, 2)}
+                </pre>
+              </details>
+              <p style="color: #6b7280; font-size: 0.875rem; margin-top: 1rem;">
+                Vui lòng kiểm tra:
+                <ul style="margin-top: 0.5rem;">
+                  <li>API key Gemini có hợp lệ không</li>
+                  <li>Từ vựng nhập vào có hợp lệ không</li>
+                  <li>Backend logs để xem lỗi chi tiết</li>
+                </ul>
+              </p>
+            </div>
+          `,
+          confirmButtonColor: '#ef4444',
+          width: '600px'
+        });
       } finally {
         setLoading(false);
       }
     }
   };
 
-  // Helper function: Generate words từ deck info
-  const generateWordsFromDeckInfo = (name, description, category, count = 10) => {
-    // Tạo từ khóa dựa vào category và tên deck
-    const categoryKeywords = {
-      'GENERAL': ['hello', 'goodbye', 'please', 'thank', 'sorry', 'help', 'yes', 'no', 'maybe', 'okay'],
-      'ACADEMIC': ['study', 'learn', 'research', 'analyze', 'conclude', 'hypothesis', 'theory', 'experiment', 'data', 'evidence'],
-      'BUSINESS': ['negotiate', 'contract', 'proposal', 'deadline', 'revenue', 'profit', 'strategy', 'marketing', 'sales', 'budget'],
-      'TRAVEL': ['airport', 'hotel', 'reservation', 'passport', 'luggage', 'destination', 'ticket', 'boarding', 'departure', 'arrival'],
-      'FOOD': ['restaurant', 'menu', 'order', 'delicious', 'recipe', 'ingredients', 'cooking', 'breakfast', 'lunch', 'dinner'],
-      'HEALTH': ['doctor', 'hospital', 'medicine', 'treatment', 'symptom', 'diagnosis', 'patient', 'healthy', 'exercise', 'nutrition']
-    };
+  // ✅ FIX: Helper function - Generate đúng số lượng từ với AI
+  const generateWordsFromDeckInfo = async (name, description, category, level, count = 10) => {
+    try {
+      console.log(`🤖 Generating ${count} words for topic: ${name}, category: ${category}, level: ${level}`);
+      
+      // ✅ Truyền level từ form vào AI
+      const result = await geminiService.generateVocabulary(
+        `${name} - ${description}`, // topic (kết hợp tên và mô tả)
+        category,
+        level, // ✅ Sử dụng level từ deck thay vì fix INTERMEDIATE
+        count
+      );
 
-    // Lấy từ khóa từ category
-    let words = categoryKeywords[category] || categoryKeywords['GENERAL'];
+      console.log('✅ AI vocabulary result:', result);
 
-    // Nếu tên deck có từ đặc biệt, ưu tiên từ đó
-    const nameWords = name.toLowerCase().split(/\s+/);
-    const descWords = description.toLowerCase().split(/\s+/);
-    
-    // Lọc các từ tiếng Anh hợp lệ
-    const relevantWords = [...nameWords, ...descWords].filter(w => 
-      w.length > 3 && /^[a-z]+$/.test(w)
-    );
+      if (result.success && result.data && Array.isArray(result.data)) {
+        console.log(`✅ AI generated ${result.data.length} words:`, result.data);
+        return result.data;
+      }
+      
+      throw new Error('AI không thể tạo từ vựng. Vui lòng thử lại hoặc nhập thủ công.');
 
-    // Kết hợp và lấy unique
-    words = [...new Set([...relevantWords, ...words])];
-
-    return words.slice(0, count);
+    } catch (error) {
+      console.error('❌ AI generation error:', error);
+      throw error;
+    }
   };
 
-  // ✅ FIX: Sửa handleGenerateAI để khớp với backend API
+  // ✅ FIX: Sửa handleGenerateAI với form đẹp hơn và AI-powered
   const handleGenerateAI = async (deck) => {
     const { value: formValues } = await Swal.fire({
-      title: '🤖 Thêm Flashcards với AI',
+      title: '<span style="color: #667eea;">Thêm Flashcards với AI</span>',
       html: `
-        <div style="text-align: left;">
-          <p style="margin-bottom: 1rem; padding: 0.75rem; background: #e0e7ff; border-radius: 8px; color: #374151;">
-            📚 Deck: <strong>${deck.title}</strong>
-          </p>
-
-          <div style="margin-bottom: 1rem;">
-            <label style="display: flex; align-items: center; margin-bottom: 0.5rem; color: #374151; font-weight: 600;">
-              <input type="checkbox" id="swal-auto-generate-add" style="margin-right: 0.5rem;" checked />
-              Tự động tạo flashcards
-            </label>
-            <p style="margin: 0.5rem 0 0 1.5rem; font-size: 0.875rem; color: #6b7280;">
-              ✨ AI sẽ tạo 10 flashcards dựa vào chủ đề của deck
-            </p>
+        <div style="text-align: left; max-height: 70vh; overflow-y: auto; padding: 0.5rem;">
+          <!-- Deck Info Display -->
+          <div style="margin-bottom: 1.5rem; padding: 1rem; background: linear-gradient(135deg, #e0e7ff 0%, #f0f4ff 100%); border-radius: 12px; border: 2px solid #667eea;">
+            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+              <span style="font-size: 1.5rem;"></span>
+              <div>
+                <div style="font-weight: 700; color: #1e293b; font-size: 1.1rem;">${deck.title}</div>
+                <div style="font-size: 0.875rem; color: #64748b; margin-top: 0.25rem;">
+                  ${deck.description || 'Không có mô tả'} • ${deck.category || 'N/A'} • ${deck.level || 'N/A'}
+                </div>
+              </div>
+            </div>
+            <div style="display: flex; gap: 1rem; margin-top: 0.75rem; font-size: 0.875rem; color: #475569;">
+              <span>${deck.totalCards || 0} thẻ hiện tại</span>
+              <span>${deck.difficulty || 'INTERMEDIATE'}</span>
+            </div>
           </div>
 
-          <div id="manual-words-section-add" style="display: none;">
-            <label style="display: block; margin-bottom: 0.5rem; color: #374151; font-weight: 600;">
-              Danh sách từ vựng (mỗi từ một dòng):
+          <!-- Generation Mode -->
+          <div style="margin-bottom: 1.5rem; padding: 1.25rem; background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%); border: 2px solid #667eea40; border-radius: 12px;">
+            <label style="display: flex; align-items: center; margin-bottom: 0.75rem; cursor: pointer;">
+              <input type="checkbox" id="swal-auto-generate-add" style="width: 20px; height: 20px; margin-right: 0.75rem; cursor: pointer; accent-color: #667eea;" checked />
+              <span style="color: #1e293b; font-weight: 700; font-size: 1rem;">
+                Tự động tạo flashcards với AI
+              </span>
+            </label>
+            <p style="margin: 0 0 0.75rem 2rem; font-size: 0.875rem; color: #475569; line-height: 1.6;">
+              AI sẽ phân tích chủ đề deck và tự động tạo từ vựng phù hợp
+            </p>
+            
+            <!-- Count Selector -->
+            <div style="margin-left: 2rem; display: flex; align-items: center; gap: 0.75rem;">
+              <label style="font-size: 0.875rem; color: #64748b; font-weight: 600;">Số lượng:</label>
+              <select id="swal-card-count-add" style="padding: 0.5rem 1rem; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 0.9rem; background: white; cursor: pointer; min-width: 100px;">
+                <option value="5">5 thẻ</option>
+                <option value="10" selected>10 thẻ</option>
+                <option value="15">15 thẻ</option>
+                <option value="20">20 thẻ</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Manual Input Section -->
+          <div id="manual-words-section-add" style="display: none; margin-bottom: 1rem;">
+            <label style="display: block; margin-bottom: 0.75rem; color: #1e293b; font-weight: 700; font-size: 0.9rem;">
+              Danh sách từ vựng
             </label>
             <textarea 
               id="swal-words-input-add" 
               class="swal2-textarea"
-              placeholder="beautiful&#10;amazing&#10;wonderful"
-              rows="8"
-              style="width: 100%; font-family: monospace; resize: vertical;"
+              placeholder="Nhập mỗi từ trên một dòng:&#10;beautiful&#10;amazing&#10;wonderful&#10;fantastic&#10;excellent"
+              rows="10"
+              style="width: 100%; margin: 0; padding: 0.875rem; border: 2px solid #e2e8f0; border-radius: 10px; font-family: 'Courier New', monospace; font-size: 0.9rem; resize: vertical; transition: all 0.3s;"
+              onfocus="this.style.borderColor='#667eea'; this.style.boxShadow='0 0 0 3px rgba(102,126,234,0.1)';"
+              onblur="this.style.borderColor='#e2e8f0'; this.style.boxShadow='none';"
             ></textarea>
-            <p style="margin-top: 0.5rem; font-size: 0.875rem; color: #9ca3af;">
-              💡 Tối đa 10 từ mỗi lần
-            </p>
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.75rem; padding: 0.75rem; background: #fef3c7; border-radius: 8px;">
+              <span style="font-size: 1.25rem;"></span>
+              <p style="margin: 0; font-size: 0.875rem; color: #92400e; font-weight: 600;">
+                Tối đa 20 từ mỗi lần. Mỗi từ một dòng. AI sẽ tự động phân tích và tạo nghĩa, ví dụ, phát âm...
+              </p>
+            </div>
+          </div>
+
+          <!-- AI Features Info -->
+          <div style="margin-top: 1.5rem; padding: 1rem; background: #f0fdf4; border: 2px solid #10b981; border-radius: 10px;">
+            <div style="font-weight: 700; color: #166534; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+              <span style="font-size: 1.25rem;"></span>
+              AI sẽ tự động tạo:
+            </div>
+            <ul style="margin: 0.5rem 0 0 1.5rem; color: #15803d; font-size: 0.875rem; line-height: 1.8;">
+              <li>Phiên âm (IPA) chuẩn xác</li>
+              <li>Phân loại từ (noun, verb, adjective...)</li>
+              <li>Nghĩa tiếng Anh và dịch tiếng Việt</li>
+              <li>Câu ví dụ thực tế</li>
+              <li>Từ đồng nghĩa và trái nghĩa</li>
+              <li>Collocations phổ biến</li>
+            </ul>
+            
+            <!--  NEW: Checkbox để thêm hình ảnh -->
+            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #d1fae5;">
+              <label style="display: flex; align-items: center; cursor: pointer;">
+                <input type="checkbox" id="swal-use-images" style="width: 18px; height: 18px; margin-right: 0.75rem; cursor: pointer; accent-color: #10b981;" checked />
+                <span style="color: #166534; font-weight: 600; font-size: 0.875rem;">
+                  Tự động tạo hình ảnh minh họa bằng AI (DALL-E)
+                </span>
+              </label>
+              <p style="margin: 0.5rem 0 0 2rem; font-size: 0.75rem; color: #15803d;">
+                Sử dụng AI để tạo hình ảnh độc quyền cho flashcards (tốn phí)
+              </p>
+            </div>
           </div>
 
           <script>
-            document.getElementById('swal-auto-generate-add').addEventListener('change', function(e) {
-              const manualSection = document.getElementById('manual-words-section-add');
+            const autoCheckbox = document.getElementById('swal-auto-generate-add');
+            const manualSection = document.getElementById('manual-words-section-add');
+            
+            autoCheckbox.addEventListener('change', function(e) {
               manualSection.style.display = e.target.checked ? 'none' : 'block';
             });
           </script>
         </div>
       `,
-      width: '500px',
+      width: '680px',
+      padding: '2rem',
+      background: '#ffffff',
+      backdrop: 'rgba(0,0,0,0.4)',
       focusConfirm: false,
       showCancelButton: true,
-      confirmButtonText: '✨ Tạo flashcards',
+      confirmButtonText: '<span style="font-size: 1.1rem;">Tạo Flashcards với AI</span>',
       cancelButtonText: 'Hủy',
       confirmButtonColor: '#667eea',
+      cancelButtonColor: '#94a3b8',
+      buttonsStyling: true,
+      customClass: {
+        confirmButton: 'swal2-confirm-custom',
+        cancelButton: 'swal2-cancel-custom'
+      },
+      didOpen: () => {
+        // Add custom button styles
+        const style = document.createElement('style');
+        style.textContent = `
+          .swal2-confirm-custom {
+            padding: 0.875rem 2rem !important;
+            font-weight: 700 !important;
+            border-radius: 10px !important;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4) !important;
+            transition: all 0.3s !important;
+          }
+          .swal2-confirm-custom:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 6px 16px rgba(102, 126, 234, 0.5) !important;
+          }
+          .swal2-cancel-custom {
+            padding: 0.875rem 2rem !important;
+            font-weight: 600 !important;
+            border-radius: 10px !important;
+          }
+        `;
+        document.head.appendChild(style);
+      },
       preConfirm: () => {
         const autoGenerate = document.getElementById('swal-auto-generate-add').checked;
+        const cardCount = parseInt(document.getElementById('swal-card-count-add')?.value) || 10;
         const wordsInput = document.getElementById('swal-words-input-add')?.value || '';
         
+        // Validation
         if (!autoGenerate && !wordsInput.trim()) {
           Swal.showValidationMessage('⚠️ Vui lòng nhập danh sách từ hoặc chọn tự động tạo');
           return false;
         }
+
+        if (!autoGenerate) {
+          const words = wordsInput.split('\n').map(w => w.trim()).filter(w => w);
+          if (words.length === 0) {
+            Swal.showValidationMessage('⚠️ Vui lòng nhập ít nhất một từ');
+            return false;
+          }
+          if (words.length > 20) {
+            Swal.showValidationMessage('⚠️ Tối đa 20 từ mỗi lần');
+            return false;
+          }
+        }
         
-        return { autoGenerate, wordsInput };
+        return { autoGenerate, cardCount, wordsInput };
       }
     });
 
     if (formValues) {
-      const { autoGenerate, wordsInput } = formValues;
+      const { autoGenerate, cardCount, wordsInput } = formValues;
 
       try {
         setAiLoading(deck._id);
@@ -689,56 +1074,131 @@ const AdminDecks = () => {
         let words = [];
         
         if (autoGenerate) {
-          words = generateWordsFromDeckInfo(
+          // ✅ Auto generate với AI (không có fallback)
+          words = await generateWordsFromDeckInfo(
             deck.title, 
             deck.description || '', 
             deck.category || 'GENERAL', 
-            10
+            cardCount // ✅ Truyền cardCount từ form
           );
+          
+          console.log(`✅ Auto generated ${words.length} words for ${cardCount} cards`);
+          
+          if (words.length === 0) {
+            showToast('warning', 'Cảnh báo', 'Không thể tạo từ tự động. Vui lòng thử lại hoặc nhập thủ công.');
+            setAiLoading(null);
+            return;
+          }
         } else {
+          // Parse manual input
           words = wordsInput
             .split('\n')
             .map(word => word.trim())
             .filter(word => word.length > 0)
-            .slice(0, 10);
+            .slice(0, cardCount); // ✅ Limit theo cardCount
         }
 
+        // ✅ Validate
         if (words.length === 0) {
           showToast('warning', 'Cảnh báo', 'Không có từ nào để tạo');
           setAiLoading(null);
           return;
         }
 
+        // ✅ Final check
+        console.log(`📊 Creating ${words.length} flashcards:`, words);
+
         showToast('info', 'Đang xử lý', `🤖 AI đang phân tích ${words.length} từ...`);
 
         // ✅ Call backend API: POST /api/ai/batch-create
+        // Request: { deckId, words: [...] }
+        // Response: { success: true, message: "...", data: [...flashcards] }
         const createResult = await geminiService.batchCreate(deck._id, words);
-        console.log('Add AI flashcards result:', createResult);
+        console.log('✅ Add AI flashcards result:', createResult);
 
-        // ✅ Validate theo backend response
+        // ✅ Validate response
         if (!createResult?.success) {
-          throw new Error(createResult?.message || 'Không thể tạo flashcards');
+          throw new Error(createResult?.message || 'Không thể tạo flashcards với AI');
         }
 
         const createdCount = Array.isArray(createResult.data)
           ? createResult.data.length
           : (createResult.data?.count || 0);
 
-        showToast(
-          'success',
-          'Thành công',
-          `✅ Đã thêm ${createdCount} flashcards vào deck`
-        );
-        
-        await fetchDecks();
+        // ✅ Kiểm tra có lỗi không
+        const hasErrors = createResult.errors && createResult.errors.length > 0;
+        const errorCount = hasErrors ? createResult.errors.length : 0;
+
+        // ✅ Success modal with error details
+        await Swal.fire({
+          icon: hasErrors ? 'warning' : 'success',
+          title: `<span style="color: ${hasErrors ? '#f59e0b' : '#10b981'};">${hasErrors ? '⚠️ Hoàn thành với lỗi' : '🎉 Thành công!'}</span>`,
+          html: `
+            <div style="text-align: center;">
+              <p style="font-size: 1.1rem; margin-bottom: 1rem; color: #1e293b;">
+                Đã thêm flashcards vào deck <strong>"${deck.title}"</strong>
+              </p>
+              <div style="padding: 1.5rem; background: #f0fdf4; border-radius: 12px; border: 2px solid #10b981; margin-bottom: 1rem;">
+                <p style="font-size: 2.5rem; margin: 0; color: #166534;">${createdCount}</p>
+                <p style="margin: 0.5rem 0 0 0; color: #16a34a; font-weight: 600; font-size: 1.1rem;">flashcards thành công</p>
+              </div>
+              
+              ${hasErrors ? `
+                <div style="padding: 1rem; background: #fef3c7; border-radius: 8px; border: 1px solid #f59e0b; margin-bottom: 1rem;">
+                  <p style="color: #92400e; font-weight: 600; margin-bottom: 0.5rem;">
+                    ⚠️ ${errorCount} từ bị lỗi
+                  </p>
+                  <details style="text-align: left; margin-top: 0.5rem;">
+                    <summary style="cursor: pointer; font-weight: 600; color: #92400e;">Xem chi tiết lỗi</summary>
+                    <ul style="margin-top: 0.5rem; font-size: 0.875rem; color: #78350f;">
+                      ${createResult.errors.map(err => `<li><strong>${err.word}</strong>: ${err.error}</li>`).join('')}
+                    </ul>
+                  </details>
+                </div>
+              ` : ''}
+              
+              <div style="padding: 1rem; background: #eff6ff; border-radius: 8px; border: 1px solid #bfdbfe;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; text-align: left; font-size: 0.9rem; color: #1e40af;">
+                  <div>✅ Phiên âm đầy đủ</div>
+                  <div>✅ Nghĩa tiếng Việt</div>
+                  <div>✅ Ví dụ thực tế</div>
+                  <div>✅ Từ đồng nghĩa</div>
+                </div>
+              </div>
+            </div>
+          `,
+          confirmButtonColor: hasErrors ? '#f59e0b' : '#10b981',
+          confirmButtonText: '👀 Xem deck',
+          showCancelButton: true,
+          cancelButtonText: 'Đóng',
+          cancelButtonColor: '#94a3b8',
+          width: '600px'
+        }).then((result) => {
+          if (result.isConfirmed) {
+            navigate(`/admin/decks/${deck._id}`);
+          } else {
+            fetchDecks();
+          }
+        });
 
       } catch (error) {
-        console.error('Generate AI error:', error);
-        showToast(
-          'error',
-          'Lỗi',
-          error.response?.data?.message || error.message || 'Không thể tạo flashcards'
-        );
+        console.error('❌ Generate AI error:', error);
+        
+        await Swal.fire({
+          icon: 'error',
+          title: 'Lỗi',
+          html: `
+            <div style="text-align: center;">
+              <p style="color: #ef4444; font-weight: 600; margin-bottom: 0.5rem;">
+                ${error.response?.data?.message || error.message || 'Không thể tạo flashcards'}
+              </p>
+              <p style="color: #6b7280; font-size: 0.875rem;">
+                Vui lòng thử lại hoặc liên hệ hỗ trợ nếu lỗi vẫn tiếp diễn.
+              </p>
+            </div>
+          `,
+          confirmButtonColor: '#ef4444'
+        });
       } finally {
         setAiLoading(null);
       }

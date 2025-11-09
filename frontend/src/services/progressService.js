@@ -7,11 +7,15 @@ export const progressService = {
   },
 
   updateLessonProgress: async (lessonId, progressData) => {
-    const response = await api.post('/progress/lesson', {
-      lessonId,
-      ...progressData
-    });
-    return response.data;
+    console.log('📤 Updating lesson progress:', { lessonId, progressData });
+    try {
+      const response = await api.put(`/progress/lessons/${lessonId}`, progressData);
+      console.log('✅ Progress update response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Progress update error:', error);
+      throw error;
+    }
   }
 };
 

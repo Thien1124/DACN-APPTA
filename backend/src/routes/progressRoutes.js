@@ -1,9 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const progressController = require('../controllers/progressController');
-const { protect } = require('../middleware/authMiddleware');
+const { authenticate } = require('../middleware/auth'); // ✅ Sử dụng authenticate
 
-router.get('/', protect, progressController.getUserProgress);
-router.post('/lesson', protect, progressController.updateLessonProgress);
+// Get user progress
+router.get('/', authenticate, progressController.getUserProgress);
+
+// ✅ Update lesson progress - đúng endpoint
+router.put('/lessons/:lessonId', authenticate, progressController.updateLessonProgress);
 
 module.exports = router;

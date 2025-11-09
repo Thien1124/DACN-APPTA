@@ -379,15 +379,17 @@ const Shop = () => {
         cancelButtonText: 'Hủy'
       }).then((result) => {
         if (result.isConfirmed) {
-          // TODO: Integrate payment gateway
           showToast('info', 'Coming Soon', 'Tính năng thanh toán đang được phát triển');
         }
       });
       return;
     }
 
+    // Fix: Ensure price is a number
+    const productPrice = typeof product.price === 'number' ? product.price : 0;
+
     // Gems purchase (powerups, outfits)
-    if (userGems < product.price) {
+    if (userGems < productPrice) {
       showToast('error', 'Không đủ gems', 'Bạn cần thêm gems để mua vật phẩm này!');
       return;
     }
@@ -400,7 +402,7 @@ const Shop = () => {
             <p style="font-size: 1.125rem; margin-bottom: 1rem;">${product.description}</p>
             <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-size: 1.5rem; font-weight: 700; color: #1CB0F6;">
               <span>💎</span>
-              <span>${product.price}</span>
+              <span>${productPrice}</span>
             </div>
           </div>
         `,
@@ -419,8 +421,12 @@ const Shop = () => {
         const purchaseData = await shopService.purchase(product.id || product._id);
 
         if (purchaseData.success) {
-          // Update gems balance
-          setUserGems(purchaseData.gems);
+          // Update gems balance - Fix here too
+          const newGems = typeof purchaseData.userStats?.gems === 'object' 
+            ? purchaseData.userStats.gems.amount 
+            : purchaseData.userStats?.gems || userGems - productPrice;
+          
+          setUserGems(newGems);
 
           // Refresh inventory
           const inventoryData = await shopService.getInventory();
@@ -436,7 +442,7 @@ const Shop = () => {
                 <div style="font-size: 4rem; margin-bottom: 1rem;">✨</div>
                 <p style="font-size: 1.125rem; margin-bottom: 0.5rem;">Đã mua ${product.name}</p>
                 <p style="font-size: 0.9375rem; color: #6b7280;">
-                  Số dư còn lại: <span style="color: #1CB0F6; font-weight: 700;">${purchaseData.gems} 💎</span>
+                  Số dư còn lại: <span style="color: #1CB0F6; font-weight: 700;">${newGems} 💎</span>
                 </p>
               </div>
             `,
@@ -509,6 +515,20 @@ const Shop = () => {
 
   // Map backend data to frontend format
   const formatProduct = (item) => {
+    // ✅ Kiểm tra item có tồn tại không
+    if (!item) {
+      return {
+        id: 'unknown',
+        icon: <Diamond sx={{ fontSize: 32, color: 'white' }} />,
+        name: 'Vật phẩm không xác định',
+        description: 'Không có thông tin',
+        price: 0,
+        gradient: 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)',
+        special: null,
+        type: 'other'
+      };
+    }
+
     const iconMap = {
       'streak_freeze': <WhatshotIcon sx={{ fontSize: 40, color: 'white' }} />,
       'refill_hearts': <Favorite sx={{ fontSize: 40, color: 'white' }} />,
@@ -527,15 +547,25 @@ const Shop = () => {
       'gems': 'linear-gradient(135deg, #1CB0F6 0%, #0d9ed8 100%)'
     };
 
+    // ✅ Fix: Extract gems value from price object with null check
+    let priceValue = 0;
+    if (item.price) {
+      if (typeof item.price === 'object' && item.price.gems !== undefined) {
+        priceValue = item.price.gems;
+      } else if (typeof item.price === 'number') {
+        priceValue = item.price;
+      }
+    }
+
     return {
       id: item._id || item.id,
       icon: iconMap[item.itemId] || iconMap[item.type] || item.icon,
-      name: item.name,
-      description: item.description,
-      price: item.price,
-      gradient: gradientMap[item.itemId] || gradientMap[item.type] || item.gradient,
+      name: item.name || 'Vật phẩm',
+      description: item.description || 'Không có mô tả',
+      price: priceValue,
+      gradient: gradientMap[item.itemId] || gradientMap[item.type] || item.gradient || 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)',
       special: item.isLimited ? 'LIMITED' : item.special,
-      type: item.type
+      type: item.type || 'other'
     };
   };
 
@@ -651,16 +681,22 @@ const Shop = () => {
             <ProductsGrid>
               {inventory.length === 0 ? (
                 <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem', color: '#6b7280' }}>
-                  <div style={{ fontSize: '4rem', marginBottom: '1rem' }}></div>
+                  <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>📦</div>
                   <h3>Kho đồ trống</h3>
                   <p>Hãy mua vật phẩm từ cửa hàng!</p>
                 </div>
               ) : (
                 inventory.map(invItem => {
+                  // ✅ Kiểm tra invItem.item có tồn tại không trước khi format
+                  if (!invItem || !invItem.item) {
+                    console.warn('Invalid inventory item:', invItem);
+                    return null;
+                  }
+
                   const product = formatProduct(invItem.item);
                   return (
                     <ProductCard 
-                      key={invItem._id}
+                      key={invItem._id || Math.random()}
                       onClick={() => handleUseItem(invItem)}
                     >
                       <ProductIcon gradient={product.gradient}>
@@ -668,15 +704,17 @@ const Shop = () => {
                       </ProductIcon>
                       <ProductName>{product.name}</ProductName>
                       <ProductDescription>
-                        Số lượng: {invItem.quantity}
-                        {invItem.expiresAt && <div>Hết hạn: {new Date(invItem.expiresAt).toLocaleDateString()}</div>}
+                        Số lượng: {invItem.quantity || 1}
+                        {invItem.expiresAt && (
+                          <div>Hết hạn: {new Date(invItem.expiresAt).toLocaleDateString()}</div>
+                        )}
                       </ProductDescription>
                       <ProductPrice style={{ background: 'linear-gradient(135deg, #58CC02 0%, #46A302 100%)' }}>
                         ✓ Sử dụng
                       </ProductPrice>
                     </ProductCard>
                   );
-                })
+                }).filter(Boolean) // ✅ Loại bỏ các item null
               )}
             </ProductsGrid>
           )}

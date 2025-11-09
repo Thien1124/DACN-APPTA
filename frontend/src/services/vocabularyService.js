@@ -71,8 +71,25 @@ export const vocabularyService = {
   getByLesson: async (lessonId) => {
     const response = await api.get(`/lessons/${lessonId}/vocabularies`);
     return response.data;
+  },
+  
+  // ✅ Lấy từ vựng đã học
+  getLearnedVocabularies: async () => {
+    const response = await axiosInstance.get('/vocabularies/learned');
+    return response.data;
+  },
+  
+  // ✅ Đánh dấu đã học
+  markAsLearned: async (vocabularyId) => {
+    const response = await axiosInstance.post(`/vocabularies/${vocabularyId}/learn`);
+    return response.data;
+  },
+  
+  // ✅ Đánh dấu/bỏ đánh dấu từ vựng
+  toggleStar: async (vocabularyId, starred) => {
+    const response = await axiosInstance.post(`/vocabularies/${vocabularyId}/star`, { starred });
+    return response.data;
   }
-
 };
 
 export default vocabularyService;

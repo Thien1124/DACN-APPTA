@@ -122,6 +122,11 @@ const flashcardSchema = new mongoose.Schema({
     type: String,
     trim: true
   }],
+  partOfSpeech: {
+    type: String,
+    enum: ['noun', 'verb', 'adjective', 'adverb', 'preposition', 'conjunction', 'pronoun', 'interjection', 'phrase', 'idiom', 'other'],
+    trim: true
+  },
   
   // Difficulty level
   difficulty: {
