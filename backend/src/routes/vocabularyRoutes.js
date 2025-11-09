@@ -3,7 +3,17 @@ const router = express.Router();
 const vocabularyController = require('../controllers/vocabularyController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
-// Tất cả routes đều yêu cầu đăng nhập và quyền admin
+// ========== PUBLIC ROUTES (User có thể xem) ==========
+// ✅ Route lấy từ vựng đã học - KHÔNG cần admin
+router.get('/learned', protect, vocabularyController.getLearnedVocabularies);
+
+// ✅ Route đánh dấu/star từ vựng
+router.post('/:id/star', protect, vocabularyController.toggleStarVocabulary);
+
+// ✅ Route đánh dấu đã học
+router.post('/:id/learn', protect, vocabularyController.markAsLearned);
+
+// ========== ADMIN ROUTES ==========
 router.use(protect);
 router.use(authorize('admin'));
 

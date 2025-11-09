@@ -640,23 +640,67 @@ const AIFlashcardGenerator = () => {
 
     try {
       setLoading(true);
-      const response = await geminiService.generateFlashcards(formData);
 
-      if (response.success && response.data) {
-        setGeneratedCards(response.data);
-        setNewDeckTitle(`${formData.topic} - ${formData.level}`);
-        showToast(
-          "success",
-          "Thành công",
-          `✨ Đã tạo ${response.data.length} flashcards`
-        );
+      // === CÁCH 1: Dùng Gemini để tạo danh sách từ ===
+      // TODO: Cần có endpoint /api/ai/generate-flashcards hoặc tự generate từ topic
+      
+      // Tạm thời: Tạo danh sách từ mẫu từ topic
+      const mockWords = generateMockWords(formData.topic, formData.count);
+
+      // === CÁCH 2: Dùng Batch Analyze để lấy full data ===
+      const result = await geminiService.batchAnalyze(mockWords);
+
+      if (!result.success) {
+        throw new Error(result.message || 'Không thể tạo flashcards');
       }
+
+      // Transform AI data sang format frontend
+      const cards = result.data.map((aiData) => ({
+        word: aiData.word,
+        phonetic: aiData.pronunciation || '',
+        partOfSpeech: aiData.partOfSpeech || '',
+        meaning: aiData.meanings?.[0]?.definition || '',
+        translation: aiData.meanings?.[0]?.translation || '',
+        example: aiData.meanings?.[0]?.example || '',
+        synonyms: aiData.synonyms?.map(s => s.word).join(', ') || '',
+        collocations: aiData.collocations?.map(c => c.phrase).join(', ') || '',
+        difficulty: aiData.difficulty || 'intermediate',
+        cefrLevel: aiData.cefrLevel || 'B1'
+      }));
+
+      setGeneratedCards(cards);
+      showToast(
+        "success",
+        "Thành công",
+        `✅ Đã tạo ${cards.length} flashcards với AI`
+      );
+
     } catch (error) {
-      console.error("Generate flashcards error:", error);
+      console.error("Generate error:", error);
       showToast("error", "Lỗi", error.message || "Không thể tạo flashcards");
     } finally {
       setLoading(false);
     }
+  };
+
+  // Helper: Tạo danh sách từ mẫu từ topic
+  const generateMockWords = (topic, count) => {
+    // TODO: Có thể dùng AI để generate danh sách từ liên quan đến topic
+    // Hoặc có sẵn database từ vựng theo chủ đề
+    
+    const topicKeywords = {
+      'Common English Phrases': ['hello', 'goodbye', 'thank you', 'please', 'sorry', 'excuse me'],
+      'Business Vocabulary': ['negotiate', 'contract', 'proposal', 'deadline', 'revenue', 'profit'],
+      'Travel Expressions': ['reservation', 'luggage', 'passport', 'departure', 'arrival', 'accommodation'],
+      'Food & Cooking': ['recipe', 'ingredient', 'delicious', 'spicy', 'flavor', 'cuisine'],
+      'Technology Terms': ['software', 'hardware', 'algorithm', 'database', 'network', 'security'],
+      'Daily Conversation': ['weather', 'family', 'friend', 'work', 'hobby', 'shopping']
+    };
+
+    const keywords = topicKeywords[topic] || 
+                     topic.toLowerCase().split(' ').slice(0, Math.min(count, 6));
+    
+    return keywords.slice(0, count);
   };
 
   const handleEdit = (index) => {
@@ -698,24 +742,20 @@ const AIFlashcardGenerator = () => {
 
       // === TRƯỜNG HỢP 1: Thêm vào deck đã có ===
       if (deckId && !isNewDeck) {
-        // Thêm flashcards vào deck hiện có
-        for (const card of generatedCards) {
-          await deckService.addFlashcard(deckId, {
-            word: card.word,
-            phonetic: card.phonetic || "",
-            meaning: card.meaning,
-            example: card.example || "",
-            translation: card.translation || "",
-            partOfSpeech: card.partOfSpeech || "noun",
-          });
+        // Dùng AI Batch Create
+        const words = generatedCards.map(card => card.word);
+        const result = await geminiService.batchCreate(deckId, words);
+
+        if (!result.success) {
+          throw new Error(result.message || "Không thể tạo flashcards");
         }
 
         showToast(
           "success",
           "Thành công",
-          `✅ Đã thêm ${generatedCards.length} flashcards vào "${sourceDeckTitle}"`
+          `✅ Đã thêm ${result.data.length} flashcards vào "${sourceDeckTitle}"`
         );
-        navigate(`/topics/${deckId}`);
+        navigate(`/decks/${deckId}`);
         return;
       }
 
@@ -748,24 +788,21 @@ const AIFlashcardGenerator = () => {
 
       targetDeckId = deckResponse.data._id;
 
-      // Thêm flashcards vào deck mới
-      for (const card of generatedCards) {
-        await deckService.addFlashcard(targetDeckId, {
-          word: card.word,
-          phonetic: card.phonetic || "",
-          meaning: card.meaning,
-          example: card.example || "",
-          translation: card.translation || "",
-          partOfSpeech: card.partOfSpeech || "noun",
-        });
+      // Dùng AI Batch Create
+      const words = generatedCards.map(card => card.word);
+      const result = await geminiService.batchCreate(targetDeckId, words);
+
+      if (!result.success) {
+        throw new Error(result.message || "Không thể tạo flashcards");
       }
 
       showToast(
         "success",
         "Thành công",
-        `✅ Đã tạo bộ thẻ "${newDeckTitle}" với ${generatedCards.length} flashcards`
+        `✅ Đã tạo bộ thẻ "${newDeckTitle}" với ${result.data.length} flashcards`
       );
       navigate(`/topics/${targetDeckId}`);
+      
     } catch (error) {
       console.error("Save deck error:", error);
       showToast("error", "Lỗi", error.message || "Không thể lưu bộ thẻ");

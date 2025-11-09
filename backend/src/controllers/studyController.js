@@ -11,8 +11,25 @@ const User = require('../models/User');
  */
 exports.startStudySession = async (req, res) => {
   try {
-    const { deckId, studyMode, sessionType, cardLimit } = req.body;
+    const { deckId, studyMode = 'FLIP', sessionType = 'REVIEW', cardLimit = 20 } = req.body;
     const userId = req.user._id;
+    
+    // ✅ Enhanced validation logging
+    console.log('📚 Starting study session:', {
+      userId,
+      deckId,
+      studyMode,
+      sessionType,
+      cardLimit
+    });
+    
+    // ✅ Validate required fields
+    if (!deckId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Vui lòng cung cấp deckId'
+      });
+    }
     
     // Validate deck
     const deck = await Deck.findById(deckId);
@@ -23,7 +40,7 @@ exports.startStudySession = async (req, res) => {
       });
     }
     
-    // Check for existing active session
+    // ✅ Check for existing active session
     const existingSession = await StudySession.findOne({
       user: userId,
       deck: deckId,
@@ -31,11 +48,21 @@ exports.startStudySession = async (req, res) => {
     });
     
     if (existingSession) {
+      // ✅ UNCOMMENT để tự động abandon session cũ
+      console.log('⚠️ Auto-abandoning existing session:', existingSession._id);
+      existingSession.status = 'ABANDONED';
+      existingSession.endTime = Date.now();
+      existingSession.duration = Math.round((existingSession.endTime - existingSession.startTime) / 1000);
+      await existingSession.save();
+      
+      // ❌ Comment dòng return error này
+      /*
       return res.status(400).json({
         success: false,
         message: 'Bạn đang có phiên học chưa hoàn thành',
         data: existingSession
       });
+      */
     }
     
     // Get cards for this session based on session type
@@ -48,10 +75,19 @@ exports.startStudySession = async (req, res) => {
       flashcards = await StudyProgress.getNewCards(userId, deckId, cardLimit || 10);
       newCardsCount = flashcards.length;
     } else if (sessionType === 'REVIEW') {
-      // Get cards due for review
+      // ✅ Get cards due for review, OR all cards if no progress yet
       const dueCards = await StudyProgress.getDueCards(userId, deckId);
-      flashcards = dueCards.map(progress => progress.flashcard);
-      reviewCardsCount = flashcards.length;
+      
+      if (dueCards && dueCards.length > 0) {
+        flashcards = dueCards.map(progress => progress.flashcard);
+        reviewCardsCount = flashcards.length;
+      } else {
+        // ✅ No progress yet, get all cards from deck
+        console.log('⚠️ No due cards, fetching all cards from deck');
+        flashcards = await Flashcard.find({ deck: deckId })
+          .limit(cardLimit || 20);
+        newCardsCount = flashcards.length;
+      }
     } else if (sessionType === 'PRACTICE') {
       // Mix of new and review cards
       const newCards = await StudyProgress.getNewCards(userId, deckId, 5);
@@ -68,15 +104,20 @@ exports.startStudySession = async (req, res) => {
     }
     
     if (flashcards.length === 0) {
+      console.log('⚠️ No flashcards found for session');
       return res.status(400).json({
         success: false,
         message: 'Không có thẻ nào để học. Hãy thử lại sau!',
         info: {
           newCardsAvailable: await Flashcard.countDocuments({ deck: deckId }),
-          reviewCardsAvailable: 0
+          reviewCardsAvailable: 0,
+          sessionType,
+          cardLimit
         }
       });
     }
+    
+    console.log(`✅ Found ${flashcards.length} flashcards for session`);
     
     // Shuffle cards for better learning
     flashcards = shuffleArray(flashcards);
@@ -90,35 +131,41 @@ exports.startStudySession = async (req, res) => {
       totalCards: flashcards.length,
       startTime: Date.now()
     });
-    
+
     // Update deck study count
     deck.studyCount += 1;
     await deck.save();
-    
+
     res.status(201).json({
       success: true,
       message: 'Phiên học đã được khởi tạo',
       data: {
         session: {
-          sessionId: session._id,
-          deckId: deck._id,
+          _id: session._id,
+          deckId: session.deck,
           deckTitle: deck.title,
-          studyMode: session.studyMode,
-          sessionType: session.sessionType,
           totalCards: session.totalCards,
-          startTime: session.startTime
+          completedCards: 0
         },
+        // ✅ ĐẢM BẢO trả về flashcards
         flashcards: flashcards.map(card => ({
           _id: card._id,
           front: card.front,
           back: card.back,
-          example: card.example,
+          pronunciation: card.pronunciation,
+          partOfSpeech: card.partOfSpeech,
+          meanings: card.meanings,
+          synonyms: card.synonyms,
+          antonyms: card.antonyms,
+          collocations: card.collocations,
           imageUrl: card.imageUrl,
-          audioUrl: card.audioUrl
+          audioUrl: card.audioUrl,
+          isStarred: card.isStarred || false
         })),
         stats: {
-          newCards: newCardsCount,
-          reviewCards: reviewCardsCount
+          newCardsCount,
+          reviewCardsCount,
+          totalCards: flashcards.length
         }
       }
     });
@@ -522,6 +569,45 @@ exports.abandonSession = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Không thể hủy phiên học',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * @desc    Clean up abandoned sessions
+ * @route   POST /api/study/sessions/cleanup
+ * @access  Private/Admin
+ */
+exports.cleanupSessions = async (req, res) => {
+  try {
+    const { userId, olderThan = 24 } = req.body; // olderThan in hours
+    
+    const cutoffTime = new Date(Date.now() - olderThan * 60 * 60 * 1000);
+    
+    const result = await StudySession.updateMany(
+      {
+        ...(userId && { user: userId }),
+        status: 'IN_PROGRESS',
+        startTime: { $lt: cutoffTime }
+      },
+      {
+        $set: {
+          status: 'ABANDONED',
+          endTime: Date.now()
+        }
+      }
+    );
+    
+    res.status(200).json({
+      success: true,
+      message: `Đã cleanup ${result.modifiedCount} sessions`,
+      data: result
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Cleanup failed',
       error: error.message
     });
   }

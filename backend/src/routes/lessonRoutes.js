@@ -1,9 +1,18 @@
 const express = require('express');
 const router = express.Router();
 const lessonController = require('../controllers/lessonController');
+const vocabularyController = require('../controllers/vocabularyController');
+const exerciseController = require('../controllers/exerciseController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
-// Tất cả routes đều yêu cầu đăng nhập và quyền admin
+// ========== PUBLIC ROUTES (User có thể xem) ==========
+// ✅ Đặt TRƯỚC middleware admin
+router.get('/:id', lessonController.getLessonById);
+router.get('/:lessonId/vocabularies', vocabularyController.getVocabulariesByLesson);
+router.get('/:lessonId/exercises', exerciseController.getExercisesByLesson);
+
+// ========== ADMIN ROUTES ==========
+// ✅ Middleware chỉ apply cho các routes phía dưới
 router.use(protect);
 router.use(authorize('admin'));
 
@@ -14,7 +23,6 @@ router
 
 router
   .route('/:id')
-  .get(lessonController.getLessonById)
   .put(lessonController.updateLesson)
   .delete(lessonController.deleteLesson);
 

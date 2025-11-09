@@ -26,13 +26,17 @@ const exerciseRoutes = require('./src/routes/exerciseRoutes');
 const achievementRoutes = require('./src/routes/achievementRoutes');
 const deckRoutes = require('./src/routes/deckRoutes');
 const flashcardRoutes = require('./src/routes/flashcardRoutes');
+const richFlashcardRoutes = require('./src/routes/richFlashcardRoutes');
 const leaderboardRoutes = require('./src/routes/leaderboardRoutes');
 const studyRoutes = require('./src/routes/studyRoutes');
+const reviewRoutes = require('./src/routes/reviewRoutes');
+const aiRoutes = require('./src/routes/aiRoutes'); // Task 21: AI integration
 const streakRoutes = require('./src/routes/streakRoutes');
 const heartRoutes = require('./src/routes/heartRoutes');
 const xpRoutes = require('./src/routes/xpRoutes');
 const missionRoutes = require('./src/routes/missionRoutes');
 const shopRoutes = require('./src/routes/shopRoutes');
+<<<<<<< HEAD
 const practiceRoutes = require('./src/routes/practiceRoutes');
 const grammarQuizRoutes = require('./src/routes/grammarQuizRoutes');
 const analyticsRoutes = require('./src/routes/analyticsRoutes');
@@ -41,6 +45,9 @@ const roadmapRoutes = require('./src/routes/roadmapRoutes');
 const scheduleRoutes = require('./src/routes/scheduleRoutes');
 const calendarRoutes = require('./src/routes/calendarRoutes');
 
+=======
+const progressRoutes = require('./src/routes/progressRoutes');
+>>>>>>> origin/main
 
 
 const app = express();
@@ -72,12 +79,14 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Serve static files (Task 9: Avatar images)
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Serve static files from uploads directory
+app.use('/uploads', express.static(path.join(__dirname, 'src/uploads')));
 
 // Initialize Passport
 app.use(passport.initialize());
 passportConfig();
+
+
 
 // Routes của Thiện
 app.use('/api/auth', authRoutes);
@@ -89,6 +98,7 @@ app.use('/api/tests', testRoutes);
 app.use('/api/goals', goalRoutes);
 
 
+app.use('/api/progress', progressRoutes);
 
 // Sử dụng các routes mới
 app.use('/api/courses', courseRoutes);
@@ -99,8 +109,12 @@ app.use('/api/exercises', exerciseRoutes);
 app.use('/api/achievements', achievementRoutes);
 app.use('/api/decks', deckRoutes);
 app.use('/api/flashcards', flashcardRoutes);
+app.use('/api/flashcards-rich', richFlashcardRoutes); // Task 20: Rich flashcard data
 app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/study', studyRoutes);
+app.use('/api/reviews', reviewRoutes); // Task 17: Review actions
+app.use('/api/ai', aiRoutes); // Task 21: AI Gemini integration
+
 app.use('/api/streaks', streakRoutes);
 app.use('/api/hearts', heartRoutes);
 app.use('/api/xp', xpRoutes);
@@ -113,6 +127,10 @@ app.use('/api/friends', friendsRoutes); // Task 22: Friends/Social
 app.use('/api/roadmap', roadmapRoutes); // Task 20: Lộ trình theo mục tiêu
 app.use('/api/schedule', scheduleRoutes); // Task 21: Lịch học tuần/tháng
 app.use('/api/calendar', calendarRoutes); // Task 21: Đồng bộ Google Calendar (stub)
+
+// ✅ Vocabulary Bank routes
+app.use('/api/vocabulary-bank', require('./src/routes/vocabularyBankRoutes'));
+
 
 // Health root route
 app.get('/', (req, res) => {

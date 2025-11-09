@@ -9,11 +9,25 @@ export const goalService = {
         description: data.description,
         type: data.type,
         target: parseInt(data.target),
-        deadline: new Date(data.deadline).toISOString(),
         skill: data.skill,
         current: 0,
         status: 'ACTIVE'
       };
+
+      // ✅ Chỉ thêm deadline nếu có giá trị và không phải POMODORO
+      if (data.deadline && data.deadline.trim() && data.type !== 'POMODORO') {
+        formattedData.deadline = new Date(data.deadline).toISOString();
+      }
+
+      // ✅ Thêm Pomodoro fields nếu type là POMODORO
+      if (data.type === 'POMODORO') {
+        formattedData.workDuration = data.workDuration || 25;
+        formattedData.shortBreakDuration = data.shortBreakDuration || 5;
+        formattedData.longBreakInterval = data.longBreakInterval || 4;
+        formattedData.longBreakDuration = data.longBreakDuration || 15;
+      }
+
+      console.log('Sending goal data:', formattedData); // Debug log
 
       const response = await api.post('/goals', formattedData);
       return response.data;

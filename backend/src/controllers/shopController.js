@@ -349,3 +349,40 @@ exports.getUserInventory = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Lỗi server' });
   }
 };
+
+  /**
+ * Lấy số gems hiện tại của người dùng
+ * 
+ * API Test:
+ * GET /api/shop/gems
+ * Headers: Authorization: Bearer {token}
+ * 
+ * Response:
+ * {
+ *   "success": true,
+ *   "gems": 50
+ * }
+ */
+  exports.getUserGems = async (req, res) => {
+    try {
+      const userId = req.user.id;
+      
+      const user = await User.findById(userId).select('gems');
+      
+      if (!user) {
+        return res.status(404).json({ 
+          success: false, 
+          message: 'Không tìm thấy người dùng' 
+        });
+      }
+      
+      return res.status(200).json({
+        success: true,
+        gems: user.gems?.amount || 0
+      });
+      
+    } catch (error) {
+      console.error('Lỗi khi lấy gems:', error);
+      return res.status(500).json({ success: false, message: 'Lỗi server' });
+    }
+  };

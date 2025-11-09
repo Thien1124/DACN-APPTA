@@ -22,7 +22,7 @@ const goalSchema = new mongoose.Schema({
   type: {
     type: String,
     required: true,
-    enum: ['SCORE', 'CHAPTER', 'TEST', 'LESSON'],
+    enum: ['SCORE', 'CHAPTER', 'TEST', 'LESSON', 'POMODORO'], // ✅ Thêm POMODORO
     index: true
   },
   
@@ -40,7 +40,10 @@ const goalSchema = new mongoose.Schema({
   
   deadline: {
     type: Date,
-    required: true
+    required: function() {
+      // ✅ Deadline chỉ required cho các type khác POMODORO
+      return this.type !== 'POMODORO';
+    }
   },
   
   status: {
@@ -48,6 +51,35 @@ const goalSchema = new mongoose.Schema({
     enum: ['ACTIVE', 'COMPLETED', 'EXPIRED', 'CANCELLED'],
     default: 'ACTIVE',
     index: true
+  },
+  
+  // ✅ Thêm fields cho Pomodoro
+  workDuration: {
+    type: Number,
+    default: 25,
+    min: 15,
+    max: 60
+  },
+  
+  shortBreakDuration: {
+    type: Number,
+    default: 5,
+    min: 3,
+    max: 15
+  },
+  
+  longBreakInterval: {
+    type: Number,
+    default: 4,
+    min: 2,
+    max: 8
+  },
+  
+  longBreakDuration: {
+    type: Number,
+    default: 15,
+    min: 10,
+    max: 30
   },
   
   // Optional: liên kết với course/skill cụ thể
@@ -85,25 +117,12 @@ goalSchema.virtual('progress').get(function() {
 
 // Virtual: kiểm tra đã hết hạn chưa
 goalSchema.virtual('isExpired').get(function() {
-  return this.deadline < new Date() && this.status !== 'COMPLETED';
+  return new Date() > this.deadline;
 });
 
-// Middleware: tự động cập nhật status
+// Middleware để cập nhật updatedAt
 goalSchema.pre('save', function(next) {
-  // Cập nhật updatedAt
   this.updatedAt = Date.now();
-  
-  // Kiểm tra hoàn thành
-  if (this.current >= this.target && this.status === 'ACTIVE') {
-    this.status = 'COMPLETED';
-    this.completedAt = new Date();
-  }
-  
-  // Kiểm tra hết hạn
-  if (this.deadline < new Date() && this.status === 'ACTIVE') {
-    this.status = 'EXPIRED';
-  }
-  
   next();
 });
 

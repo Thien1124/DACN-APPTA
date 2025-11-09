@@ -1,16 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
 import LeftSidebar from '../components/LeftSidebar';
 import RightSidebar from '../components/RightSidebar';
-import chibiImg from '../assets/chibi.png';
+import LinhThuTini from '../assets/LinhThuTini.gif'; // ← THAY ĐỔI TỪ chibiImg
 import US from '../assets/US.png';
 
-import {  BiLock } from 'react-icons/bi';
+import { BiLock } from 'react-icons/bi';
 import { AiFillStar } from 'react-icons/ai';
 
-import { Star, Lock, LocalLibrary, LocalBar, Chat, Restaurant, 
-  FitnessCenter, EmojiEvents, MenuBook } from '@mui/icons-material';
+import { 
+  Star, Lock, LocalLibrary, LocalBar, Chat, Restaurant, 
+  FitnessCenter, EmojiEvents, MenuBook,
+  Whatshot, Diamond, Favorite, WorkspacePremium // New Material Icons
+} from '@mui/icons-material';
+
+// Import services
+import { xpService } from '../services/xpService';
+import { streakService } from '../services/streakService';
+import { heartService } from '../services/heartService';
+import { shopService } from '../services/shopService'; // ← THÊM DÒNG NÀY
+import courseService from '../services/courseService';
+import { lessonService } from '../services/lessonService';
+import progressService from '../services/progressService';
 
 // ========== ANIMATIONS ==========
 const fadeIn = keyframes`
@@ -28,11 +40,53 @@ const bounce = keyframes`
   50% { transform: translateY(-10px); }
 `;
 
+const shimmer = keyframes`
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+`;
+
 // ========== STYLED COMPONENTS ==========
 const PageWrapper = styled.div`
   display: flex;
   min-height: 100vh;
   background: linear-gradient(180deg, #f7f9fc 0%, #ffffff 100%);
+  position: relative;
+`;
+
+// Loading overlay
+const LoadingOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  backdrop-filter: blur(4px);
+`;
+
+const LoadingSpinner = styled.div`
+  width: 60px;
+  height: 60px;
+  border: 4px solid #e5e7eb;
+  border-top-color: #58CC02;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+`;
+
+const LoadingText = styled.div`
+  position: absolute;
+  margin-top: 100px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #6b7280;
 `;
 
 const MainContent = styled.div`
@@ -284,6 +338,7 @@ const StarBadge = styled.div`
 `;
 
 const PathSVG = styled.svg`
+  display: none;
   position: absolute;
   top: 0;
   left: 0;
@@ -291,6 +346,7 @@ const PathSVG = styled.svg`
   height: 100%;
   z-index: 1;
   pointer-events: none;
+  overflow: visible;
 `;
 
 const PathContainer = styled.div`
@@ -317,12 +373,43 @@ const StatItem = styled.div`
   font-weight: 700;
   color: #1f2937;
   transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
 
   &:hover {
-    border-color: #58CC02;
+    border-color: ${props => {
+      if (props.type === 'streak') return '#FF9600';
+      if (props.type === 'gems') return '#1CB0F6';
+      if (props.type === 'hearts') return '#FF4B4B';
+      return '#58CC02';
+    }};
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(88, 204, 2, 0.2);
+    box-shadow: 0 4px 12px ${props => {
+      if (props.type === 'streak') return 'rgba(255, 150, 0, 0.2)';
+      if (props.type === 'gems') return 'rgba(28, 176, 246, 0.2)';
+      if (props.type === 'hearts') return 'rgba(255, 75, 75, 0.2)';
+      return 'rgba(88, 204, 2, 0.2)';
+    }};
   }
+
+  ${props => props.isLoading && `
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.5) 50%,
+        transparent 100%
+      );
+      animation: ${shimmer} 2s infinite;
+      background-size: 200% 100%;
+    }
+  `}
 `;
 
 const StatIcon = styled.div`
@@ -330,6 +417,12 @@ const StatIcon = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
+  color: ${props => {
+    if (props.type === 'streak') return '#FF9600';
+    if (props.type === 'gems') return '#1CB0F6';
+    if (props.type === 'hearts') return '#FF4B4B';
+    return 'inherit';
+  }};
 `;
 
 const FlagImage = styled.img`
@@ -342,6 +435,8 @@ const FlagImage = styled.img`
 
 const StatValue = styled.span`
   font-size: 1.125rem;
+  min-width: 30px;
+  text-align: left;
 `;
 
 const SectionDivider = styled.div`
@@ -374,14 +469,30 @@ const SectionDivider = styled.div`
 `;
 
 const CharacterImage = styled.img`
-  width: 110px;
-  height: 110px;
+  width: 100px;
+  height: 100px;
+  max-width: none;
   object-fit: contain;
   position: absolute;
-  left: -160px;
   top: 50%;
-  transform: translateY(-50%);
-  animation: ${bounce} 3s ease infinite;
+  transform: translateY(-60%);
+  z-index: 5;
+  pointer-events: none;
+  display: block;
+
+  /* Nếu side === 'left' đặt hình ở bên trái nút, ngược lại đặt bên phải */
+  ${props => props.side === 'left' ? `
+    right: calc(100% + 12px);
+    left: auto;
+  ` : `
+    left: calc(100% + 12px);
+    right: auto;
+  `}
+
+  @media (max-width: 1024px) {
+    width: 120px;
+    height: 120px;
+  }
 
   @media (max-width: 768px) {
     display: none;
@@ -458,58 +569,228 @@ const LevelUpSubtext = styled.div`
 `;
 
 // ========== MOCK DATA ==========
-
-const unitsData = [
-  {
-    id: 1,
-    unitNumber: 1,
-    title: 'Nói về thú cưng của bạn',
-    color: '#58CC02',
-    shadowColor: '#46A302',
-    lessons: [
-      { id: 1, type: 'lesson', icon: <LocalLibrary sx={{ fontSize: 24 }} />, label: 'Mời khách xơi nước', completed: true, stars: 3, progress: '5/5' },
-      { id: 2, type: 'lesson', icon: <Star sx={{ fontSize: 24 }} />, label: 'Đồ uống', completed: false, current: true, stars: 0, progress: '0/5' },
-      { id: 3, type: 'practice', icon: <FitnessCenter sx={{ fontSize: 24 }} />, label: 'Luyện tập', locked: true },
-      { id: 4, type: 'lesson', icon: <Chat sx={{ fontSize: 24 }} />, label: 'Hội thoại', locked: true },
-      { id: 5, type: 'story', icon: <MenuBook sx={{ fontSize: 24 }} />, label: 'Câu chuyện', locked: true },
-      { id: 6, type: 'lesson', icon: <Restaurant sx={{ fontSize: 24 }} />, label: 'Đồ ăn', locked: true }, 
-      { id: 7, type: 'lesson', icon: <LocalLibrary sx={{ fontSize: 24 }} />, label: 'Chào hỏi', locked: true },
-      { id: 8, type: 'practice', icon: <FitnessCenter sx={{ fontSize: 24 }} />, label: 'Luyện tập 2', locked: true },
-      { id: 9, type: 'trophy', icon: <EmojiEvents sx={{ fontSize: 24 }} />, label: 'Kiểm tra cửa 1', locked: true },
-      { id: 10, type: 'lesson', icon: <MenuBook sx={{ fontSize: 24 }} />, label: 'Review', locked: true },
-    ]
-  },
-  {
-    id: 2,
-    unitNumber: 2,
-    title: 'Học từ, cụm từ và chủ điểm ngữ pháp để giao tiếp cơ bản', 
-    color: '#CE82FF',
-    shadowColor: '#A855F7',
-    lessons: [
-      { id: 11, type: 'lesson', icon: <Lock sx={{ fontSize: 24 }} />, label: 'Bài học tiếp theo', locked: true },
-    ]
-  }
-];
-
-
+const calculateLevel = (xp) => {
+  // Each level requires 100 XP
+  // Level 1: 0-99 XP
+  // Level 2: 100-199 XP
+  // etc.
+  return Math.floor(xp / 100) + 1;
+};
 // ========== COMPONENT ==========
 const Learn = () => {
   const navigate = useNavigate();
-  const [stats] = useState({
-    streak: 1,
-    gems: 505,
+  
+  const [stats, setStats] = useState({
+    streak: 0,
+    totalXP: 0,
+    level: 1,
     hearts: 5,
-    flag: US,
-    flagCount: 5
+    gems: 0,
+    flag: US
   });
 
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingStats, setIsLoadingStats] = useState({
+    streak: false,
+    xp: false,
+    hearts: false,
+    gems: false
+  });
+  const [unitsData, setUnitsData] = useState([]);
+  const [userProgress, setUserProgress] = useState({
+    completedLessons: [],
+    currentLesson: null
+  });
+
+// ========== FETCH UNITS FROM API ==========
+useEffect(() => {
+  const loadCoursesAndLessons = async () => {
+    try {
+      setIsLoading(true);
+
+      // ✅ 1. Lấy tất cả courses published (không cần enroll)
+      const coursesResponse = await courseService.getPublishedCourses();
+      const courses = coursesResponse.data || [];
+
+      if (courses.length === 0) {
+        console.warn('No published courses found');
+        setUnitsData([]);
+        return;
+      }
+
+      // 2. Lấy user progress (nếu có login)
+      let progress = { completedLessons: [], currentLesson: null };
+      try {
+        const progressResponse = await progressService.getUserProgress();
+        progress = progressResponse.data || progress;
+      } catch (error) {
+        console.warn('User not logged in or no progress data:', error);
+        // Không có progress thì tất cả lessons đều unlock để xem
+      }
+      setUserProgress(progress);
+
+      // 3. Lấy units và lessons cho mỗi course
+      const allUnits = [];
+
+      for (const course of courses) {
+        const unitsResponse = await courseService.getUnits(course._id);
+        const units = unitsResponse.data || [];
+
+        for (const unit of units) {
+          if (!unit.isPublished) continue;
+
+          const lessonsResponse = await lessonService.getLessonsByUnit(unit._id);
+          const lessons = lessonsResponse.data || [];
+
+          const transformedUnit = {
+            id: unit._id,
+            unitNumber: unit.order,
+            title: unit.title,
+            color: unit.order === 1 ? '#58CC02' : '#CE82FF',
+            shadowColor: unit.order === 1 ? '#46A302' : '#A855F7',
+            lessons: lessons
+              .filter(l => l.isPublished)
+              .sort((a, b) => a.order - b.order)
+              .map((lesson, index) => {
+                let frontendType = 'lesson';
+                if (lesson.type === 'vocabulary') frontendType = 'lesson';
+                else if (lesson.type === 'grammar' || lesson.type === 'reading') frontendType = 'practice';
+                else if (lesson.type === 'listening') frontendType = 'story';
+                else if (lesson.type === 'mixed') frontendType = 'trophy';
+
+                const isCompleted = progress.completedLessons.includes(lesson._id);
+                const isCurrent = progress.currentLesson === lesson._id;
+                
+                // ✅ Logic lock chính xác:
+                let isLocked = false;
+                if (index === 0) {
+                  // Lesson đầu tiên luôn unlock
+                  isLocked = false;
+                } else {
+                  // Các lesson sau chỉ unlock nếu lesson trước đã completed
+                  const previousLesson = lessons[index - 1];
+                  const isPreviousCompleted = progress.completedLessons.includes(previousLesson._id);
+                  isLocked = !isPreviousCompleted && !isCurrent;
+                }
+
+                return {
+                  id: lesson._id,
+                  type: frontendType,
+                  icon: getLessonIconByType(frontendType),
+                  label: lesson.title,
+                  completed: isCompleted,
+                  current: isCurrent || (index === 0 && progress.completedLessons.length === 0), // Lesson đầu là current nếu chưa học gì
+                  locked: isLocked,
+                  stars: isCompleted ? 3 : 0,
+                  progress: isCompleted ? '5/5' : isCurrent ? '2/5' : '0/5'
+                };
+              })
+          };
+
+          allUnits.push(transformedUnit);
+        }
+      }
+
+      setUnitsData(allUnits);
+    } catch (error) {
+      console.error('Error loading courses and lessons:', error);
+      setUnitsData([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  loadCoursesAndLessons();
+}, []);
+
+
+  // Helper function map icon theo type
+  const getLessonIconByType = (type) => {
+    const iconMap = {
+      'lesson': <LocalLibrary sx={{ fontSize: 24 }} />,
+      'vocabulary': <LocalLibrary sx={{ fontSize: 24 }} />,
+      'grammar': <Star sx={{ fontSize: 24 }} />,
+      'practice': <FitnessCenter sx={{ fontSize: 24 }} />,
+      'conversation': <Chat sx={{ fontSize: 24 }} />,
+      'story': <MenuBook sx={{ fontSize: 24 }} />,
+      'food': <Restaurant sx={{ fontSize: 24 }} />,
+      'trophy': <EmojiEvents sx={{ fontSize: 24 }} />,
+      'review': <EmojiEvents sx={{ fontSize: 24 }} />
+    };
+    return iconMap[type] || <LocalLibrary sx={{ fontSize: 24 }} />;
+  };
+
+  // ========== LOAD STATS FROM BACKEND ==========
+  useEffect(() => {
+    const loadStats = async () => {
+      try {
+        const [xpData, streakData, heartsData, gemsData] = await Promise.all([
+          xpService.getXP().catch(() => ({ totalXP: 0 })),
+          streakService.getStreak().catch(() => ({ currentStreak: 0 })),
+          heartService.refillHearts().catch(() => ({ hearts: 5 })),
+          shopService.getGems().catch(() => ({ gems: 0 }))
+        ]);
+
+        const totalXP = xpData.totalXP || 0;
+        const level = calculateLevel(totalXP);
+
+        setStats({
+          totalXP,
+          level,
+          streak: streakData.currentStreak || 0,
+          hearts: heartsData.hearts || 5,
+          gems: gemsData.gems || 0,
+          flag: US
+        });
+      } catch (error) {
+        console.error('Error loading stats:', error);
+      }
+    };
+
+    loadStats();
+    const interval = setInterval(loadStats, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // ========== REFRESH INDIVIDUAL STAT ==========
+  const refreshStat = async (type) => {
+    setIsLoadingStats(prev => ({ ...prev, [type]: true }));
+    
+    try {
+      switch (type) {
+        case 'xp':
+          const xpData = await xpService.getXP();
+          const totalXP = xpData.totalXP || 0;
+          setStats(prev => ({ ...prev, totalXP, level: calculateLevel(totalXP) }));
+          break;
+        case 'streak':
+          const streakData = await streakService.getStreak();
+          setStats(prev => ({ ...prev, streak: streakData.currentStreak || 0 }));
+          break;
+        case 'hearts':
+          const heartsData = await heartService.refillHearts();
+          setStats(prev => ({ ...prev, hearts: heartsData.hearts || 5 }));
+          break;
+        case 'gems':
+          const gemsData = await shopService.getGems();
+          setStats(prev => ({ ...prev, gems: gemsData.gems || 0 }));
+          break;
+      }
+    } catch (error) {
+      console.error(`Error refreshing ${type}:`, error);
+    } finally {
+      setIsLoadingStats(prev => ({ ...prev, [type]: false }));
+    }
+  };
+
+  // ========== EVENT HANDLERS ==========
   const handleLessonClick = (lesson, unitId) => {
     if (lesson.locked) return;
     
     if (lesson.type === 'lesson' || lesson.type === 'practice') {
-      navigate(`/lesson/${unitId}-${lesson.id}`);
+      navigate(`/lesson/${lesson.id}`); // Sửa: chỉ cần lessonId
     } else if (lesson.type === 'story') {
-      navigate(`/story/${unitId}-${lesson.id}`);
+      navigate(`/story/${lesson.id}`);
     } else if (lesson.type === 'trophy') {
       navigate(`/unit-review/${unitId}`);
     }
@@ -520,11 +801,11 @@ const Learn = () => {
   };
 
   const getLessonIcon = (lesson) => {
-    if (lesson.completed) return <AiFillStar size={24} />;
+    if (lesson.completed) return <AiFillStar size={24} color="#FFD700" />;
     if (lesson.current) return lesson.icon;
-    if (lesson.locked) return <BiLock size={24} />;
-  return lesson.icon;
-};
+    if (lesson.locked) return <BiLock size={24} color="#9ca3af" />;
+    return lesson.icon;
+  };
 
   const renderLessonButton = (lesson, unitId) => {
     if (lesson.type === 'trophy') {
@@ -580,147 +861,190 @@ const Learn = () => {
     );
   };
 
-  // Function to generate curved path - FIXED
-  const generateCurvedPath = (lessonsCount) => {
-    const spacing = 140;
-    const amplitude = 60;
-    let pathD = `M 50% 35`;
-
-    for (let i = 1; i < lessonsCount; i++) {
-      const y = i * spacing + 35;
-      const x = i % 2 === 0 ? `calc(50% - ${amplitude}px)` : `calc(50% + ${amplitude}px)`;
-      const controlY = (i - 0.5) * spacing + 35;
-      
-      pathD += ` Q 50% ${controlY}, ${x} ${y}`;
-    }
-
-    return pathD;
-  };
+  // ========== RENDER ==========
+  if (isLoading) {
+    return (
+      <PageWrapper>
+        <LoadingOverlay>
+          <div style={{ textAlign: 'center' }}>
+            <LoadingSpinner />
+            <LoadingText>Đang tải dữ liệu...</LoadingText>
+          </div>
+        </LoadingOverlay>
+      </PageWrapper>
+    );
+  }
 
   return (
     <PageWrapper>
-      {/* Left Sidebar - Using Component */}
       <LeftSidebar />
 
-      {/* Main Content */}
       <MainContent>
         <Header>
           <StatsBar>
-            <StatItem>
-              <StatIcon>
+            {/* Level Stat */}
+            <StatItem 
+              type="level"
+              onClick={() => navigate('/profile')}
+              title="Cấp độ của bạn"
+              style={{ cursor: 'pointer' }}
+            >
+              <StatIcon type="level" style={{ color: '#FFD700' }}>
                 <FlagImage src={stats.flag} alt="US Flag" />
               </StatIcon>
-              <StatValue>{stats.flagCount}</StatValue>
+              <StatValue>{stats.level}</StatValue>
             </StatItem>
-            <StatItem>
-              <StatIcon>🔥</StatIcon>
+
+            {/* Streak Stat */}
+            <StatItem 
+              type="streak"
+              isLoading={isLoadingStats.streak}
+              onClick={() => refreshStat('streak')}
+              title="Click để làm mới"
+              style={{ cursor: 'pointer' }}
+            >
+              <StatIcon type="streak">
+                <Whatshot sx={{ fontSize: 24 }} />
+              </StatIcon>
               <StatValue>{stats.streak}</StatValue>
             </StatItem>
-            <StatItem>
-              <StatIcon>💎</StatIcon>
+
+            {/* Gems Stat */}
+            <StatItem 
+              type="gems"
+              isLoading={isLoadingStats.gems}
+              onClick={() => refreshStat('gems')}
+              title="Click để làm mới"
+              style={{ cursor: 'pointer' }}
+            >
+              <StatIcon type="gems">
+                <Diamond sx={{ fontSize: 24 }} />
+              </StatIcon>
               <StatValue>{stats.gems}</StatValue>
             </StatItem>
-            <StatItem>
-              <StatIcon>❤️</StatIcon>
+
+            {/* Hearts Stat */}
+            <StatItem 
+              type="hearts"
+              isLoading={isLoadingStats.hearts}
+              onClick={() => refreshStat('hearts')}
+              title="Click để làm mới"
+              style={{ cursor: 'pointer' }}
+            >
+              <StatIcon type="hearts">
+                <Favorite sx={{ fontSize: 24 }} />
+              </StatIcon>
               <StatValue>{stats.hearts}</StatValue>
             </StatItem>
           </StatsBar>
         </Header>
 
-        {unitsData.map((unit, unitIndex) => (
-          <UnitSection key={unit.id}>
-            <UnitHeader color={unit.color} shadowColor={unit.shadowColor}>
-              <UnitInfo>
-                <UnitTitle>Phần {unit.unitNumber}, Cửa {unitIndex === 0 ? '1-10' : '11-20'}</UnitTitle>
-                <UnitDescription>{unit.title}</UnitDescription>
-              </UnitInfo>
-              <GuideButton onClick={() => handleGuideClick(unit.id)}>
-                📋 Hướng dẫn
-              </GuideButton>
-            </UnitHeader>
+        {/* Hiển thị message nếu không có units */}
+        {unitsData.length === 0 ? (
+          <IntroText style={{ marginTop: '3rem', fontSize: '1.125rem' }}>
+            Chưa có khóa học nào. Vui lòng liên hệ admin để được thêm khóa học.
+          </IntroText>
+        ) : (
+          <>
+            {unitsData.map((unit, unitIndex) => (
+              <UnitSection key={unit.id}>
+                <UnitHeader color={unit.color} shadowColor={unit.shadowColor}>
+                  <UnitInfo>
+                    <UnitTitle>Phần {unit.unitNumber}, Cửa 1-10</UnitTitle>
+                    <UnitDescription>{unit.title}</UnitDescription>
+                  </UnitInfo>
+                  <GuideButton onClick={() => handleGuideClick(unit.id)}>
+                    📋 Hướng dẫn
+                  </GuideButton>
+                </UnitHeader>
 
-            {unitIndex === 0 && unit.id === 1 && (
-              <IntroText>
-                Hãy bắt đầu với những từ và cụm từ đơn giản!
-              </IntroText>
+                {unitIndex === 0 && (
+                  <IntroText>
+                    Hãy bắt đầu với những từ và cụm từ đơn giản!
+                  </IntroText>
+                )}
+
+                <PathContainer lessonCount={unit.lessons.length}>
+                  {/* SVG Curved Path */}
+                  <PathSVG viewBox="0 0 100% 100%" preserveAspectRatio="none">
+                    <defs>
+                      <linearGradient id={`gradient-${unit.id}`} x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" style={{ stopColor: unitIndex === 0 ? '#58CC02' : '#e5e7eb', stopOpacity: 1 }} />
+                        <stop offset="40%" style={{ stopColor: unitIndex === 0 ? '#58CC02' : '#e5e7eb', stopOpacity: 0.6 }} />
+                        <stop offset="100%" style={{ stopColor: '#e5e7eb', stopOpacity: 0.3 }} />
+                      </linearGradient>
+                    </defs>
+                    <path
+                      d={(() => {
+                        const spacing = 140;
+                        const amplitude = 60;
+                        const center = 50;
+                        
+                        let pathD = `M ${center} 35`;
+                        
+                        for (let i = 1; i < unit.lessons.length; i++) {
+                          const y = i * spacing + 35;
+                          const xOffset = i % 2 === 0 ? -amplitude/10 : amplitude/10;
+                          const x = center + xOffset;
+                          const controlY = (i - 0.5) * spacing + 35;
+                          
+                          pathD += ` Q ${center} ${controlY}, ${x} ${y}`;
+                        }
+                        
+                        return pathD;
+                      })()}
+                      stroke={`url(#gradient-${unit.id})`}
+                      strokeWidth="5"
+                      fill="none"
+                      strokeLinecap="round"
+                      vectorEffect="non-scaling-stroke"
+                    />
+                  </PathSVG>
+                  
+                  {unit.lessons.map((lesson, lessonIndex) => {
+                    const side = lessonIndex % 2 === 0 ? 'left' : 'right';
+                    return (
+                      <LessonNode key={lesson.id} index={lessonIndex}>
+                        {lesson.current && (
+                          <CharacterImage src={LinhThuTini} alt="LinhThuTini" side={side} />
+                        )}
+
+                        {renderLessonButton(lesson, unit.id)}
+
+                        <LessonLabel locked={lesson.locked}>
+                          {lesson.label}
+                        </LessonLabel>
+
+                        {lesson.progress && !lesson.locked && (
+                          <LessonProgress>{lesson.progress}</LessonProgress>
+                        )}
+                      </LessonNode>
+                    );
+                  })}
+                </PathContainer>
+
+                {unitIndex === 0 && unitsData.length > 1 && (
+                  <SectionDivider>Giới thiệu góc gác</SectionDivider>
+                )}
+              </UnitSection>
+            ))}
+
+            {unitsData.length > 0 && (
+              <LevelUpBanner>
+                <LevelUpText>🎉 Hoàn thành Phần 1 để mở khóa Phần 2!</LevelUpText>
+                <LevelUpSubtext>Tiếp tục học để khám phá thêm nhiều nội dung thú vị</LevelUpSubtext>
+              </LevelUpBanner>
             )}
-
-            <PathContainer lessonCount={unit.lessons.length}>
-              {/* SVG Curved Path */}
-              <PathSVG viewBox="0 0 100% 100%" preserveAspectRatio="none">
-                <defs>
-                  <linearGradient id={`gradient-${unit.id}`} x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" style={{ stopColor: unitIndex === 0 ? '#58CC02' : '#e5e7eb', stopOpacity: 1 }} />
-                    <stop offset="40%" style={{ stopColor: unitIndex === 0 ? '#58CC02' : '#e5e7eb', stopOpacity: 0.6 }} />
-                    <stop offset="100%" style={{ stopColor: '#e5e7eb', stopOpacity: 0.3 }} />
-                  </linearGradient>
-                </defs>
-                <path
-                  d={(() => {
-                    const spacing = 140;
-                    const amplitude = 60;
-                    const containerWidth = 100;
-                    const center = 50;
-                    
-                    let pathD = `M ${center} 35`;
-                    
-                    for (let i = 1; i < unit.lessons.length; i++) {
-                      const y = i * spacing + 35;
-                      const xOffset = i % 2 === 0 ? -amplitude/10 : amplitude/10;
-                      const x = center + xOffset;
-                      const controlY = (i - 0.5) * spacing + 35;
-                      
-                      pathD += ` Q ${center} ${controlY}, ${x} ${y}`;
-                    }
-                    
-                    return pathD;
-                  })()}
-                  stroke={`url(#gradient-${unit.id})`}
-                  strokeWidth="5"
-                  fill="none"
-                  strokeLinecap="round"
-                  vectorEffect="non-scaling-stroke"
-                />
-              </PathSVG>
-              
-              {unit.lessons.map((lesson, lessonIndex) => (
-                <LessonNode key={lesson.id} index={lessonIndex}>
-                  {lessonIndex === 0 && unitIndex === 0 && (
-                    <CharacterImage src={chibiImg} alt="Character" />
-                  )}
-                  
-                  {renderLessonButton(lesson, unit.id)}
-                  
-                  <LessonLabel locked={lesson.locked}>
-                    {lesson.label}
-                  </LessonLabel>
-                  
-                  {lesson.progress && !lesson.locked && (
-                    <LessonProgress>{lesson.progress}</LessonProgress>
-                  )}
-                </LessonNode>
-              ))}
-            </PathContainer>
-
-            {unitIndex === 0 && (
-              <SectionDivider>Giới thiệu góc gác</SectionDivider>
-            )}
-          </UnitSection>
-        ))}
-
-        <LevelUpBanner>
-          <LevelUpText>🎉 Hoàn thành Phần 1 để mở khóa Phần 2!</LevelUpText>
-          <LevelUpSubtext>Tiếp tục học để khám phá thêm nhiều nội dung thú vị</LevelUpSubtext>
-        </LevelUpBanner>
+          </>
+        )}
       </MainContent>
 
-      {/* Right Sidebar - Using Component */}
       <RightSidebar
         lessonsToUnlock={8}
         dailyGoal={{
-          current: 10,
-          target: 10,
-          label: 'Kiếm 10 KN'
+          current: stats.totalXP % 50,
+          target: 50,
+          label: 'Kiếm 50 XP'
         }}
         streak={stats.streak}
         showProfile={true}

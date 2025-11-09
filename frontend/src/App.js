@@ -71,6 +71,9 @@ import AdminNotifications from './pages/AdminNotifications';
 import AdminAuditlog from './pages/AdminAuditlog';
 import AdminSettings from './pages/AdminSettings';
 import AdminFlashcardBulkCreate from './pages/AdminFlashcardBulkCreate';
+import AdminDeckDetail from './pages/AdminDeckDetail';
+import AdminVocabularyBulkCreate from './pages/AdminVocabularyBulkCreate';
+
 // Import Styles
 import './styles/App.css';
 
@@ -99,7 +102,7 @@ function App() {
             </ProtectedRoute>
           } />
 
-          <Route path="/lesson/:id" element={
+          <Route path="/lesson/:lessonId" element={
             <ProtectedRoute>
               <Lesson />
             </ProtectedRoute>
@@ -288,6 +291,7 @@ function App() {
               <AdminVocabularies />
             </ProtectedRoute>
           } />
+          <Route path="/admin/vocabularies/bulk-create" element={<AdminVocabularyBulkCreate />} />
 
           <Route path="/admin/exercises" element={
             <ProtectedRoute requireAdmin={true}>
@@ -307,6 +311,11 @@ function App() {
               <AdminDecks />
             </ProtectedRoute>
           } />
+          <Route path="/admin/decks/:id" element={
+          <ProtectedRoute allowedRoles={['admin', 'teacher']}>
+            <AdminDeckDetail />
+          </ProtectedRoute>
+        } />
 
           <Route path="/admin/flashcards" element={
             <ProtectedRoute requireAdmin={true}>

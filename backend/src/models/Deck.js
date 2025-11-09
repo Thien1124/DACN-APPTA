@@ -166,6 +166,12 @@ deckSchema.index({ isFeatured: 1, isPublic: 1 });
 deckSchema.index({ studyCount: -1 });
 deckSchema.index({ createdAt: -1 });
 
+// Text indexes for keyword search (Task 16)
+deckSchema.index({ title: 'text', description: 'text', tags: 'text' });
+
+// Compound index for tag search
+deckSchema.index({ tags: 1, isPublic: 1 });
+
 // Middleware trước khi lưu
 deckSchema.pre('save', function(next) {
   this.updatedAt = Date.now();

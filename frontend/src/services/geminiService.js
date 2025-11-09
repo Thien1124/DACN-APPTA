@@ -1,70 +1,194 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import { adminService } from './adminService';
-import api from '../utils/api';
+import axios from 'axios';
 
-const checkApiKey = () => {
-  const apiKey = process.env.REACT_APP_GEMINI_API_KEY;
-  if (!apiKey) {
-    throw new Error('Missing Gemini API key in .env file');
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:1124/api';
+
+const axiosInstance = axios.create({
+  baseURL: API_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+axiosInstance.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
-  return apiKey;
-};
+  return config;
+});
+
+// ==================== AI ENDPOINTS (TASK 21) ====================
 
 export const geminiService = {
-  generateFlashcards: async (topic, count = 10) => {
+  // POST /api/ai/analyze - Phân tích từ
+  analyze: async (word, context = '') => {
     try {
-      const apiKey = checkApiKey();
-      const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-
-      const prompt = `Generate ${count} vocabulary flashcards for "${topic}" topic.
-      Return as JSON array:
-      [
-        {
-          "word": "English word",
-          "translation": "Vietnamese meaning",
-          "phonetic": "/pronunciation/", 
-          "example": "Example sentence",
-          "exampleTranslation": "Vietnamese translation"
-        }
-      ]`;
-
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      const text = response.text();
-      
-      const flashcards = JSON.parse(text);
-      if (!Array.isArray(flashcards)) {
-        throw new Error('Invalid API response format');
-      }
-
-      return flashcards;
-
+      const response = await axiosInstance.post('/ai/analyze', {
+        word,
+        context,
+      });
+      return response.data;
     } catch (error) {
-      console.error('Gemini API Error:', error);
-      throw new Error('Could not generate flashcards. Please try again.');
+      console.error('Gemini analyze error:', error);
+      throw error;
     }
   },
 
-  // Add function to save to deck
-  saveFlashcardsToDeck: async (deckId, flashcards) => {
+  // POST /api/ai/analyze-and-create - Phân tích & tạo flashcard
+  analyzeAndCreate: async (deckId, word, context = '') => {
+    try {
+      const response = await axiosInstance.post('/ai/analyze-and-create', {
+        deckId,
+        word,
+        context,
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Gemini analyze and create error:', error);
+      throw error;
+    }
+  },
+
+  // POST /api/ai/detect-polysemy - Phát hiện đa nghĩa
+  detectPolysemy: async (word) => {
+    try {
+      const response = await axiosInstance.post('/ai/detect-polysemy', {
+        word,
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Gemini detect polysemy error:', error);
+      throw error;
+    }
+  },
+
+  // POST /api/ai/generate-examples - Sinh câu ví dụ
+  generateExamples: async (word, meaning = '', count = 3) => {
+    try {
+      const response = await axiosInstance.post('/ai/generate-examples', {
+        word,
+        meaning,
+        count,
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Gemini generate examples error:', error);
+      throw error;
+    }
+  },
+
+  // POST /api/ai/suggest-images - Gợi ý từ khóa hình ảnh
+  suggestImages: async (word, meaning = '') => {
+    try {
+      const response = await axiosInstance.post('/ai/suggest-images', {
+        word,
+        meaning,
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Gemini suggest images error:', error);
+      throw error;
+    }
+  },
+
+  // POST /api/ai/suggest-collocations - Gợi ý collocations
+  suggestCollocations: async (word, partOfSpeech = '') => {
+    try {
+      const response = await axiosInstance.post('/ai/suggest-collocations', {
+        word,
+        partOfSpeech,
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Gemini suggest collocations error:', error);
+      throw error;
+    }
+  },
+
+  // POST /api/ai/enrich/:id - Làm giàu flashcard
+  enrichFlashcard: async (flashcardId, regenerate = false) => {
+    try {
+      const response = await axiosInstance.post(`/ai/enrich/${flashcardId}`, {
+        regenerate,
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Gemini enrich flashcard error:', error);
+      throw error;
+    }
+  },
+
+  // POST /api/ai/batch-create - Tạo flashcards hàng loạt
+  batchCreate: async (deckId, words) => {
     try {
       // Validate input
-      if (!deckId || !flashcards?.length) {
-        throw new Error('Invalid deck ID or flashcards');
+      if (!deckId) {
+        throw new Error('Deck ID is required');
+      }
+      
+      if (!Array.isArray(words) || words.length === 0) {
+        throw new Error('Words array is required and cannot be empty');
       }
 
-      // Create flashcards in bulk instead of one by one
-      await adminService.flashcards.createBulk({
+      // Limit to 10 words
+      const limitedWords = words.slice(0, 10);
+
+      console.log('Batch create request:', { deckId, words: limitedWords });
+
+      // ✅ Backend endpoint: POST /api/ai/batch-create
+      const response = await axiosInstance.post('/ai/batch-create', {
         deckId,
-        flashcards: flashcards.map(card => ({
-          ...card,
-          deck: deckId
-        }))
+        words: limitedWords
       });
 
+      console.log('Batch create response:', response.data);
+
+      // ✅ Backend response format: { success: true, message: "...", data: [...flashcards] }
+      return response.data;
     } catch (error) {
-      throw new Error('Could not save flashcards: ' + error.message); 
+      console.error('Gemini batch create error:', error);
+      console.error('Error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
+      throw error;
     }
-  }
+  },
+
+  // POST /api/ai/generate-vocabulary - Tạo danh sách từ vựng
+  generateVocabulary: async (topic, category, level, count = 10) => {
+    try {
+      const response = await axiosInstance.post('/ai/generate-vocabulary', {
+        topic,
+        category,
+        level,
+        count
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Generate vocabulary error:', error);
+      throw error;
+    }
+  },
+
+  // POST /api/ai/batch-create-with-images - Tạo flashcards với hình ảnh
+  batchCreateWithImages: async (deckId, words) => {
+    try {
+      console.log('🖼️ Calling batchCreateWithImages API with:', words.length, 'words');
+      
+      const response = await axiosInstance.post('/ai/batch-create-with-images', {
+        deckId,
+        words
+      });
+      
+      console.log('🖼️ batchCreateWithImages response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Batch create with images error:', error);
+      throw error;
+    }
+  },
 };
+
+export default geminiService;

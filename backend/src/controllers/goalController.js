@@ -15,14 +15,36 @@ exports.createGoal = async (req, res) => {
       });
     }
 
-    const { title, description, type, target, deadline, courseId, skill } = req.body;
+    const { 
+      title, 
+      description, 
+      type, 
+      target, 
+      deadline,
+      courseId,
+      skill,
+      // ✅ Thêm Pomodoro fields
+      workDuration,
+      shortBreakDuration,
+      longBreakInterval,
+      longBreakDuration
+    } = req.body;
 
     // Kiểm tra deadline phải là tương lai
-    if (new Date(deadline) <= new Date()) {
+    // ✅ Chỉ validate deadline cho type khác POMODORO
+    if (type !== 'POMODORO' && (!deadline || new Date(deadline) <= new Date())) {
       return res.status(400).json({
         success: false,
         message: 'Deadline phải là thời gian trong tương lai'
       });
+    }
+
+    // ✅ Set deadline mặc định cho POMODORO (cuối ngày hôm nay)
+    let finalDeadline = deadline;
+    if (type === 'POMODORO' && !deadline) {
+      const today = new Date();
+      today.setHours(23, 59, 59, 999); // Cuối ngày hôm nay
+      finalDeadline = today;
     }
 
     const goal = await Goal.create({
@@ -31,9 +53,14 @@ exports.createGoal = async (req, res) => {
       description,
       type,
       target,
-      deadline,
+      deadline: finalDeadline,
       courseId,
-      skill
+      skill,
+      // ✅ Thêm Pomodoro fields với default values
+      workDuration: workDuration || 25,
+      shortBreakDuration: shortBreakDuration || 5,
+      longBreakInterval: longBreakInterval || 4,
+      longBreakDuration: longBreakDuration || 15
     });
 
     res.status(201).json({
@@ -157,7 +184,19 @@ exports.updateGoal = async (req, res) => {
       });
     }
 
-    const { title, description, target, deadline, status, current } = req.body;
+    const { 
+      title, 
+      description, 
+      target, 
+      deadline, 
+      status, 
+      current,
+      // ✅ Thêm Pomodoro fields
+      workDuration,
+      shortBreakDuration,
+      longBreakInterval,
+      longBreakDuration
+    } = req.body;
 
     // Chỉ cho phép cập nhật một số field
     if (title) goal.title = title;
@@ -174,6 +213,12 @@ exports.updateGoal = async (req, res) => {
     }
     if (status) goal.status = status;
     if (typeof current === 'number') goal.current = current;
+    
+    // ✅ Cập nhật Pomodoro fields
+    if (workDuration) goal.workDuration = workDuration;
+    if (shortBreakDuration) goal.shortBreakDuration = shortBreakDuration;
+    if (longBreakInterval) goal.longBreakInterval = longBreakInterval;
+    if (longBreakDuration) goal.longBreakDuration = longBreakDuration;
 
     await goal.save();
 

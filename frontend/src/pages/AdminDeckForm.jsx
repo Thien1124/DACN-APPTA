@@ -173,10 +173,14 @@ const AdminDeckForm = () => {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    course: '',
-    unit: '',
+    category: 'GENERAL', // ✅ Thêm mặc định
+    level: 'A1', // ✅ Thêm mặc định
+    difficulty: 'BEGINNER', // ✅ Thêm mặc định
+    tags: [], // ✅ Thêm tags
+    isPublic: true, // ✅ Thêm isPublic (thay vì isPublished)
     imageUrl: '',
-    isPublished: false
+    course: '', // Optional
+    unit: '' // Optional
   });
   const [errors, setErrors] = useState({});
 
@@ -204,7 +208,14 @@ const AdminDeckForm = () => {
       setLoading(true);
       const response = await adminService.decks.getById(id);
       setFormData({
-        ...response.data,
+        title: response.data.title || '',
+        description: response.data.description || '',
+        category: response.data.category || 'GENERAL',
+        level: response.data.level || 'A1',
+        difficulty: response.data.difficulty || 'BEGINNER',
+        tags: response.data.tags || [],
+        isPublic: response.data.isPublic !== undefined ? response.data.isPublic : true,
+        imageUrl: response.data.imageUrl || '',
         course: response.data.course?._id || response.data.course || '',
         unit: response.data.unit?._id || response.data.unit || ''
       });
@@ -261,6 +272,18 @@ const AdminDeckForm = () => {
       newErrors.description = 'Vui lòng nhập mô tả';
     }
 
+    if (!formData.category) {
+      newErrors.category = 'Vui lòng chọn category';
+    }
+
+    if (!formData.level) {
+      newErrors.level = 'Vui lòng chọn level';
+    }
+
+    if (!formData.difficulty) {
+      newErrors.difficulty = 'Vui lòng chọn difficulty';
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -276,9 +299,21 @@ const AdminDeckForm = () => {
     setLoading(true);
 
     try {
-      const submitData = { ...formData };
-      if (!submitData.course) delete submitData.course;
-      if (!submitData.unit) delete submitData.unit;
+      // ✅ Chỉ gửi các trường cần thiết cho API
+      const submitData = {
+        title: formData.title.trim(),
+        description: formData.description.trim(),
+        category: formData.category,
+        level: formData.level,
+        difficulty: formData.difficulty,
+        tags: formData.tags,
+        isPublic: formData.isPublic,
+        imageUrl: formData.imageUrl || undefined
+      };
+
+      // Optional fields
+      if (formData.course) submitData.course = formData.course;
+      if (formData.unit) submitData.unit = formData.unit;
 
       if (id) {
         await adminService.decks.update(id, submitData);
@@ -334,6 +369,80 @@ const AdminDeckForm = () => {
                 placeholder="Mô tả chi tiết về bộ flashcard này..."
               />
               {errors.description && <ErrorText>{errors.description}</ErrorText>}
+            </FormGroup>
+
+            <FormRow columns="1fr 1fr 1fr">
+              <FormGroup>
+                <Label theme={theme}>Category *</Label>
+                <Select
+                  theme={theme}
+                  name="category"
+                  value={formData.category}
+                  onChange={handleChange}
+                >
+                  <option value="GENERAL">General - Tổng hợp</option>
+                  <option value="ACADEMIC">Academic - Học thuật</option>
+                  <option value="BUSINESS">Business - Kinh doanh</option>
+                  <option value="TRAVEL">Travel - Du lịch</option>
+                  <option value="FOOD">Food - Ẩm thực</option>
+                  <option value="HEALTH">Health - Y tế</option>
+                  <option value="TECHNOLOGY">Technology - Công nghệ</option>
+                  <option value="DAILY_LIFE">Daily Life - Cuộc sống</option>
+                  <option value="ENTERTAINMENT">Entertainment - Giải trí</option>
+                </Select>
+                {errors.category && <ErrorText>{errors.category}</ErrorText>}
+              </FormGroup>
+
+              <FormGroup>
+                <Label theme={theme}>Level *</Label>
+                <Select
+                  theme={theme}
+                  name="level"
+                  value={formData.level}
+                  onChange={handleChange}
+                >
+                  <option value="A1">A1 - Beginner</option>
+                  <option value="A2">A2 - Elementary</option>
+                  <option value="B1">B1 - Intermediate</option>
+                  <option value="B2">B2 - Upper Intermediate</option>
+                  <option value="C1">C1 - Advanced</option>
+                  <option value="C2">C2 - Mastery</option>
+                </Select>
+                {errors.level && <ErrorText>{errors.level}</ErrorText>}
+              </FormGroup>
+
+              <FormGroup>
+                <Label theme={theme}>Difficulty *</Label>
+                <Select
+                  theme={theme}
+                  name="difficulty"
+                  value={formData.difficulty}
+                  onChange={handleChange}
+                >
+                  <option value="BEGINNER">Beginner - Người mới</option>
+                  <option value="INTERMEDIATE">Intermediate - Trung cấp</option>
+                  <option value="ADVANCED">Advanced - Nâng cao</option>
+                </Select>
+                {errors.difficulty && <ErrorText>{errors.difficulty}</ErrorText>}
+              </FormGroup>
+            </FormRow>
+
+            <FormGroup>
+              <Label theme={theme}>Tags (tùy chọn)</Label>
+              <Input
+                theme={theme}
+                type="text"
+                name="tagsInput"
+                value={formData.tags.join(', ')}
+                onChange={(e) => {
+                  const tags = e.target.value.split(',').map(tag => tag.trim()).filter(tag => tag);
+                  setFormData(prev => ({ ...prev, tags }));
+                }}
+                placeholder="VD: toeic, vocabulary, essential"
+              />
+              <HelpText theme={theme}>
+                Nhập các tag cách nhau bằng dấu phẩy
+              </HelpText>
             </FormGroup>
 
             <FormRow columns="1fr 1fr">
@@ -398,8 +507,8 @@ const AdminDeckForm = () => {
               <CheckboxContainer>
                 <Checkbox
                   type="checkbox"
-                  name="isPublished"
-                  checked={formData.isPublished}
+                  name="isPublic"
+                  checked={formData.isPublic}
                   onChange={handleChange}
                 />
                 <Label theme={theme} style={{ marginBottom: 0 }}>
@@ -407,7 +516,7 @@ const AdminDeckForm = () => {
                 </Label>
               </CheckboxContainer>
               <HelpText theme={theme}>
-                Chỉ công khai deck khi đã thêm đủ số lượng flashcard
+                Cho phép người dùng khác xem và học deck này
               </HelpText>
             </FormGroup>
 

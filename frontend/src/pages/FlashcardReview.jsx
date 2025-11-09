@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import styled, { keyframes } from 'styled-components';
+import styled, { keyframes, css } from 'styled-components'; // ✅ Thêm css
 import { useNavigate, useParams } from 'react-router-dom';
 import LeftSidebar from '../components/LeftSidebar';
 import RightSidebar from '../components/RightSidebar';
+import Swal from 'sweetalert2';
 import {
   Replay,
   NavigateNext,
@@ -21,10 +22,13 @@ import {
   Lightbulb,
   ArrowBack,
   FullscreenExit,
-  Fullscreen
+  Fullscreen,
+  BookmarkBorder,
+  Bookmark
 } from '@mui/icons-material';
 import { useToast } from '../hooks/useToast';
 import { flashcardService } from '../services/flashcardServices';
+import { vocabularyBankService } from '../services/vocabularyBankService';
 
 // ========== ANIMATIONS ==========
 const fadeIn = keyframes`
@@ -84,7 +88,6 @@ const MainContent = styled.main`
   margin: 0 auto;
   animation: ${fadeIn} 0.6s ease;
   
-  /* Đảm bảo không bị che */
   position: relative;
   z-index: 1;
 
@@ -258,7 +261,11 @@ const CardFace = styled.div`
   align-items: center;
   justify-content: center;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1);
-  animation: ${props => props.shake ? shake : 'none'} 0.5s ease;
+  
+  /* ✅ Sửa animation conditional */
+  ${props => props.shake && css`
+    animation: ${shake} 0.5s ease;
+  `}
 
   @media (max-width: 768px) {
     padding: 2rem;
@@ -268,6 +275,40 @@ const CardFace = styled.div`
 const CardFront = styled(CardFace)`
   background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
   border: 3px solid #e6f3e6;
+`;
+
+const CardImage = styled.img`
+  width: 200px;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 12px;
+  margin-bottom: 1rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border: 2px solid #e6f3e6;
+
+  @media (max-width: 768px) {
+    width: 150px;
+    height: 120px;
+  }
+`;
+
+const CardImagePlaceholder = styled.div`
+  width: 200px;
+  height: 150px;
+  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+  border-radius: 12px;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9ca3af;
+  font-size: 1rem;
+  border: 2px dashed #d1d5db;
+
+  @media (max-width: 768px) {
+    width: 150px;
+    height: 120px;
+  }
 `;
 
 const CardBack = styled(CardFace)`
@@ -540,7 +581,11 @@ const ToggleSwitch = styled.label`
   justify-content: space-between;
   cursor: pointer;
 `;
-
+const LoadingIcon = styled.div`
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  animation: ${pulse} 1.5s infinite;
+`;
 const Switch = styled.input.attrs({ type: 'checkbox' })`
   appearance: none;
   width: 52px;
@@ -564,6 +609,13 @@ const Switch = styled.input.attrs({ type: 'checkbox' })`
   }
 `;
 
+const LoadingText = styled.div`
+  text-align: center;
+  padding: 4rem;
+  color: #6b7280;
+  font-size: 1.125rem;
+`;
+
 // ========== COMPONENT ==========
 const FlashcardReview = () => {
   const navigate = useNavigate();
@@ -577,6 +629,12 @@ const FlashcardReview = () => {
   const [isCompleted, setIsCompleted] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  // ✅ NEW: Session tracking
+  const [sessionId, setSessionId] = useState(null);
+  const [startTime, setStartTime] = useState(null);
+  const [deckInfo, setDeckInfo] = useState(null);
 
   // Stats
   const [stats, setStats] = useState({
@@ -598,79 +656,271 @@ const FlashcardReview = () => {
   // Animation states
   const [shakeCard, setShakeCard] = useState(false);
 
+  // ✅ Thêm state
+  const [savedCards, setSavedCards] = useState(new Set()); // Track saved cards
+  const [savingCard, setSavingCard] = useState(false);
+
   useEffect(() => {
-    fetchFlashcards();
+    if (deckId) {
+      initializeReview();
+    }
   }, [deckId]);
 
-  const fetchFlashcards = async () => {
+  // ✅ Initialize review session with fallback to deck flashcards
+  const initializeReview = async () => {
     try {
-      // TODO: Replace with real API call
-      // const response = await flashcardService.getByDeck(deckId);
-      // setFlashcards(response.data);
+      setLoading(true);
 
-      // Mock data
-      const mockCards = [
-        {
-          id: 1,
-          word: 'Hello',
-          phonetic: '/həˈloʊ/',
-          meaning: 'Xin chào',
-          example: 'Hello, how are you today?',
-          starred: true,
-          reviewed: false
-        },
-        {
-          id: 2,
-          word: 'Beautiful',
-          phonetic: '/ˈbjuː.tɪ.fəl/',
-          meaning: 'Đẹp, xinh đẹp',
-          example: 'She has a beautiful smile.',
-          starred: false,
-          reviewed: false
-        },
-        {
-          id: 3,
-          word: 'Challenge',
-          phonetic: '/ˈtʃæl.ɪndʒ/',
-          meaning: 'Thử thách',
-          example: 'Learning English is a fun challenge.',
-          starred: true,
-          reviewed: false
-        },
-        {
-          id: 4,
-          word: 'Adventure',
-          phonetic: '/ədˈven.tʃər/',
-          meaning: 'Cuộc phiêu lưu',
-          example: 'Life is a great adventure.',
-          starred: false,
-          reviewed: false
-        },
-        {
-          id: 5,
-          word: 'Wonderful',
-          phonetic: '/ˈwʌn.də.fəl/',
-          meaning: 'Tuyệt vời',
-          example: 'What a wonderful day!',
-          starred: false,
-          reviewed: false
+      // ✅ Get deck info FIRST
+      const deckResponse = await flashcardService.getByDeck(deckId);
+      if (deckResponse.success) {
+        setDeckInfo(deckResponse.data);
+        console.log('✅ Deck info:', deckResponse.data);
+      } else {
+        throw new Error(deckResponse.message || 'Không thể lấy thông tin deck');
+      }
+
+      // 1. Start study session (TIẾP TỤC TỪ ĐÂY)
+      const sessionResponse = await flashcardService.startSession(
+        deckId, 
+        'FLIP',
+        'REVIEW',
+        50
+      );
+      console.log('✅ Session response:', sessionResponse);
+
+      if (!sessionResponse.success) {
+        throw new Error(sessionResponse.message || 'Không thể bắt đầu session');
+      }
+
+      setSessionId(sessionResponse.data.sessionId);
+      setStartTime(Date.now());
+
+      // 2. Get flashcards from session OR fallback to deck
+      let flashcardsData = sessionResponse.data.flashcards || [];
+      console.log('✅ Flashcards from session:', flashcardsData.length);
+
+      // ✅ Fallback: If session returns no flashcards, get from deck directly
+      if (flashcardsData.length === 0 && deckResponse.data?.totalCards > 0) {
+        console.warn('⚠️ Session returned no flashcards, trying fallback...');
+        try {
+          const fallbackResponse = await flashcardService.getAllByDeck(deckId);
+          if (fallbackResponse.success) {
+            flashcardsData = Array.isArray(fallbackResponse.data) 
+              ? fallbackResponse.data 
+              : (fallbackResponse.data?.data || fallbackResponse.data?.flashcards || []);
+            console.log('✅ Fallback flashcards:', flashcardsData.length);
+          }
+        } catch (fallbackError) {
+          console.error('❌ Fallback failed:', fallbackError);
         }
-      ];
+      }
 
-      const shuffled = settings.shuffle 
-        ? mockCards.sort(() => Math.random() - 0.5)
-        : mockCards;
+      // ✅ If still no flashcards, show error
+      if (flashcardsData.length === 0) {
+        throw new Error('Deck này chưa có flashcard nào để ôn tập');
+      }
 
-      setFlashcards(shuffled);
+      // ✅ Map backend data to frontend format
+      const formattedCards = flashcardsData.map(card => ({
+        id: card._id,
+        word: card.front || card.word || '',
+        phonetic: card.pronunciation ? `/${card.pronunciation}/` : '',
+        meaning: card.back || '',
+        example: card.meanings?.[0]?.example || '',
+        partOfSpeech: card.partOfSpeech || '',
+        synonyms: card.synonyms || [],
+        antonyms: card.antonyms || [],
+        imageUrl: card.imageUrl || '',
+        audioUrl: card.audioUrl || '',
+        starred: card.isStarred || false,
+        reviewed: false,
+        difficulty: null
+      }));
+
+      // 3. Shuffle if enabled
+      const finalCards = settings.shuffle 
+        ? formattedCards.sort(() => Math.random() - 0.5)
+        : formattedCards;
+
+      setFlashcards(finalCards);
       setStats({
         reviewed: 0,
         correct: 0,
         difficult: 0,
-        toReview: shuffled.length
+        toReview: finalCards.length
       });
+
+      // 4. Update deck info with actual card count
+      if (deckInfo) {
+        setDeckInfo(prev => ({
+          ...prev,
+          totalCards: finalCards.length
+        }));
+      }
+
     } catch (error) {
-      console.error('Fetch flashcards error:', error);
-      showToast('error', 'Lỗi', 'Không thể tải flashcards');
+      console.error('❌ Initialize review error:', error);
+      
+      // ✅ Handle permission error specifically
+      if (error.response?.status === 403) {
+        await Swal.fire({
+          icon: 'warning',
+          title: 'Không có quyền truy cập',
+          text: 'Bạn không có quyền học bộ thẻ này. Vui lòng liên hệ với chủ sở hữu.',
+          confirmButtonText: 'Về trang chủ',
+          confirmButtonColor: '#58cc02'
+        });
+        navigate('/decks');
+        return;
+      }
+
+      // ✅ Handle existing session error
+      if (error.response?.status === 400 && error.response?.data?.data) {
+        const existingSession = error.response.data.data;
+        
+        // ✅ Get deck info if not available
+        let currentDeckInfo = deckInfo;
+        if (!currentDeckInfo) {
+          try {
+            const deckResponse = await flashcardService.getByDeck(deckId);
+            if (deckResponse.success) {
+              currentDeckInfo = deckResponse.data;
+              setDeckInfo(currentDeckInfo);
+            }
+          } catch (err) {
+            console.error('Failed to get deck info:', err);
+          }
+        }
+        
+        // Show confirmation dialog
+        const result = await Swal.fire({
+          icon: 'warning',
+          title: 'Phiên học chưa hoàn thành',
+          html: `
+            <div style="text-align: left;">
+              <p style="margin-bottom: 1rem; font-size: 1rem; color: #374151;">
+                Bạn có một phiên học chưa hoàn thành.
+              </p>
+              <div style="padding: 1.25rem; background: #f3f4f6; border-radius: 10px; margin-bottom: 1.5rem; border-left: 4px solid #667eea;">
+                <p style="margin: 0.5rem 0; font-size: 0.95rem;"><strong>📚 Deck:</strong> ${currentDeckInfo?.title || 'Unknown'}</p>
+                <p style="margin: 0.5rem 0; font-size: 0.95rem;"><strong>📊 Tiến độ:</strong> ${existingSession.completedCards || 0}/${existingSession.totalCards || 0} thẻ</p>
+                <p style="margin: 0.5rem 0; font-size: 0.95rem;"><strong>🕐 Bắt đầu:</strong> ${new Date(existingSession.startTime).toLocaleString('vi-VN')}</p>
+              </div>
+              <p style="font-weight: 600; font-size: 1rem; margin-bottom: 0.5rem; color: #1f2937;">Bạn muốn:</p>
+            </div>
+          `,
+          showDenyButton: true,
+          showCancelButton: true,
+          confirmButtonText: '📖 Tiếp tục phiên cũ',
+          denyButtonText: '🔄 Bắt đầu phiên mới',
+          cancelButtonText: '❌ Hủy',
+          confirmButtonColor: '#58cc02',
+          denyButtonColor: '#f59e0b',
+          cancelButtonColor: '#6b7280',
+          customClass: {
+            popup: 'custom-swal-popup',
+            confirmButton: 'custom-swal-button',
+            denyButton: 'custom-swal-button',
+            cancelButton: 'custom-swal-button'
+          }
+        });
+
+        if (result.isConfirmed) {
+          // Continue existing session
+          await continueExistingSession(existingSession);
+        } else if (result.isDenied) {
+          // Abandon old session and start new one
+          await abandonAndStartNew(existingSession._id);
+        } else {
+          // User cancelled - go back
+          navigate('/decks');
+        }
+        
+        return;
+      }
+
+      showToast('error', 'Lỗi', error.message || 'Không thể khởi tạo phiên ôn tập');
+      navigate('/decks');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ✅ Helper: Continue existing session
+  const continueExistingSession = async (existingSession) => {
+    try {
+      setLoading(true);
+
+      setSessionId(existingSession._id);
+      setStartTime(Date.now());
+
+      // Get remaining flashcards from existing session
+      const sessionDetails = await flashcardService.getSessionDetails(existingSession._id);
+      
+      if (!sessionDetails.success) {
+        throw new Error('Không thể lấy thông tin phiên học');
+      }
+
+      // Map flashcards that haven't been reviewed yet
+      const allCards = sessionDetails.data.flashcards || [];
+      const reviewedCardIds = (sessionDetails.data.cardReviews || []).map(r => r.flashcard);
+      
+      const remainingCards = allCards
+        .filter(card => !reviewedCardIds.includes(card._id))
+        .map(card => ({
+          id: card._id,
+          word: card.front,
+          phonetic: card.pronunciation ? `/${card.pronunciation}/` : '',
+          meaning: card.back,
+          example: card.meanings?.[0]?.example || '',
+          partOfSpeech: card.partOfSpeech || '',
+          synonyms: card.synonyms || [],
+          antonyms: card.antonyms || [],
+          imageUrl: card.imageUrl || '',
+          audioUrl: card.audioUrl || '',
+          starred: card.isStarred || false,
+          reviewed: false,
+          difficulty: null
+        }));
+
+      setFlashcards(remainingCards);
+      setStats({
+        reviewed: sessionDetails.data.completedCards || 0,
+        correct: sessionDetails.data.correctAnswers || 0,
+        difficult: 0,
+        toReview: remainingCards.length
+      });
+
+      showToast('success', 'Đã tiếp tục', `Còn ${remainingCards.length} thẻ chưa ôn`);
+
+    } catch (error) {
+      console.error('❌ Continue session error:', error);
+      showToast('error', 'Lỗi', 'Không thể tiếp tục phiên học');
+      navigate('/decks');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ✅ Helper: Abandon old session and start new
+  const abandonAndStartNew = async (oldSessionId) => {
+    try {
+      setLoading(true);
+
+      // Abandon old session
+      await flashcardService.abandonSession(oldSessionId);
+      console.log('✅ Abandoned old session:', oldSessionId);
+
+      // Start new session
+      await initializeReview();
+
+    } catch (error) {
+      console.error('❌ Abandon and restart error:', error);
+      showToast('error', 'Lỗi', 'Không thể bắt đầu phiên mới');
+      navigate('/decks');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -679,28 +929,63 @@ const FlashcardReview = () => {
   const handleFlip = () => {
     setIsFlipped(!isFlipped);
     setShowAnswer(!showAnswer);
-    if (settings.autoPlay && !isFlipped) {
+    if (settings.autoPlay && !isFlipped && currentCard) {
       speakWord(currentCard.word);
     }
   };
 
-  const handleEasy = () => {
-    markCard('easy');
+  // ✅ Map difficulty to SM-2 quality (0-5)
+  const difficultyToQuality = {
+    'again': 0,  // Completely forgot
+    'hard': 2,   // Difficult to recall
+    'good': 4,   // Correct with some hesitation
+    'easy': 5    // Perfect recall
+  };
+
+  const handleEasy = async () => {
+    await submitReview('easy', 5);
     nextCard();
   };
 
-  const handleHard = () => {
-    markCard('hard');
+  const handleHard = async () => {
+    await submitReview('hard', 2);
     setShakeCard(true);
     setTimeout(() => setShakeCard(false), 500);
     nextCard();
   };
 
-  const handleAgain = () => {
-    markCard('again');
+  const handleAgain = async () => {
+    await submitReview('again', 0);
     setIsFlipped(false);
     setShowAnswer(false);
     showToast('info', 'Ôn lại', 'Thẻ này sẽ xuất hiện lại sau');
+  };
+
+  // ✅ Submit review to backend
+  const submitReview = async (difficulty, quality) => {
+    try {
+      if (!sessionId || !currentCard) return;
+
+      const responseTime = Date.now() - startTime;
+
+      // Submit answer to backend
+      const response = await flashcardService.submitAnswer(
+        sessionId,
+        currentCard.id,
+        quality,
+        responseTime
+      );
+
+      console.log('✅ Answer submitted:', response);
+
+      // Update local state
+      markCard(difficulty);
+
+    } catch (error) {
+      console.error('❌ Submit review error:', error);
+      // Still update local state even if API fails
+      markCard(difficulty);
+    }
   };
 
   const markCard = (difficulty) => {
@@ -723,8 +1008,9 @@ const FlashcardReview = () => {
       setCurrentIndex(currentIndex + 1);
       setIsFlipped(false);
       setShowAnswer(false);
+      setStartTime(Date.now()); // Reset timer for next card
     } else {
-      setIsCompleted(true);
+      completeReview();
     }
   };
 
@@ -733,36 +1019,283 @@ const FlashcardReview = () => {
       setCurrentIndex(currentIndex - 1);
       setIsFlipped(false);
       setShowAnswer(false);
+      setStartTime(Date.now());
     }
   };
 
-  const handleRestart = () => {
+  // ✅ Complete review session
+  const completeReview = async () => {
+    try {
+      if (!sessionId) {
+        setIsCompleted(true);
+        return;
+      }
+
+      const response = await flashcardService.completeSession(sessionId);
+      console.log('✅ Session completed:', response);
+
+      if (response.success) {
+        // Update stats from backend
+        const result = response.data;
+        setStats(prev => ({
+          ...prev,
+          xpEarned: result.xpEarned || 0,
+          accuracy: result.accuracy || prev.accuracy
+        }));
+
+        showToast('success', 'Hoàn thành', `Bạn đã nhận ${result.xpEarned || 0} XP!`);
+      }
+
+      setIsCompleted(true);
+
+    } catch (error) {
+      console.error('❌ Complete session error:', error);
+      setIsCompleted(true);
+    }
+  };
+
+  const handleRestart = async () => {
     setCurrentIndex(0);
     setIsFlipped(false);
     setShowAnswer(false);
     setIsCompleted(false);
-    setStats({
-      reviewed: 0,
-      correct: 0,
-      difficult: 0,
-      toReview: flashcards.length
-    });
-    fetchFlashcards();
+    setSessionId(null);
+    await initializeReview();
   };
 
-  const toggleStar = () => {
-    const updatedCards = [...flashcards];
-    updatedCards[currentIndex].starred = !updatedCards[currentIndex].starred;
-    setFlashcards(updatedCards);
-    showToast('success', 'Đã cập nhật', 'Đánh dấu thẻ thành công');
+  // ✅ Toggle star with backend sync
+  const toggleStar = async () => {
+    try {
+      if (!currentCard) return;
+
+      const updatedCards = [...flashcards];
+      updatedCards[currentIndex].starred = !updatedCards[currentIndex].starred;
+      setFlashcards(updatedCards);
+
+      // Sync with backend
+      await flashcardService.toggleStar(currentCard.id);
+      
+      showToast('success', 'Đã cập nhật', 
+        updatedCards[currentIndex].starred ? 'Đã đánh dấu quan trọng' : 'Đã bỏ đánh dấu'
+      );
+
+    } catch (error) {
+      console.error('❌ Toggle star error:', error);
+      // Revert on error
+      const updatedCards = [...flashcards];
+      updatedCards[currentIndex].starred = !updatedCards[currentIndex].starred;
+      setFlashcards(updatedCards);
+      showToast('error', 'Lỗi', 'Không thể cập nhật');
+    }
   };
 
-  const speakWord = (word) => {
-    if ('speechSynthesis' in window) {
-      const utterance = new SpeechSynthesisUtterance(word);
+  // ✅ Check saved status khi load flashcards
+  useEffect(() => {
+    if (flashcards.length > 0) {
+      checkSavedStatus();
+    }
+  }, [flashcards]);
+
+  const checkSavedStatus = async () => {
+    try {
+      const checks = await Promise.all(
+        flashcards.map(card => 
+          vocabularyBankService.checkSaved(card.id)
+            .then(res => ({ id: card.id, saved: res.isSaved }))
+            .catch(() => ({ id: card.id, saved: false }))
+        )
+      );
+      
+      const saved = new Set(
+        checks.filter(c => c.saved).map(c => c.id)
+      );
+      setSavedCards(saved);
+    } catch (error) {
+      console.error('Check saved status error:', error);
+    }
+  };
+
+  // ✅ Handle save to vocabulary bank
+  const handleSaveToBank = async () => {
+    if (!currentCard) return;
+
+    try {
+      setSavingCard(true);
+
+      const response = await vocabularyBankService.saveFlashcard(currentCard.id);
+      
+      if (response.success) {
+        setSavedCards(prev => new Set([...prev, currentCard.id]));
+        
+        await Swal.fire({
+          icon: 'success',
+          title: 'Đã lưu!',
+          html: `
+            <div style="text-align: left;">
+              <p style="font-size: 1rem; margin-bottom: 1rem;">
+                Từ vựng "<strong>${currentCard.word}</strong>" đã được lưu vào sổ tay của bạn
+              </p>
+              <div style="padding: 1rem; background: #e6f7e8; border-radius: 8px; margin-top: 1rem;">
+                <p style="margin: 0.5rem 0; font-size: 0.9rem;"><strong>📚 Từ:</strong> ${currentCard.word}</p>
+                <p style="margin: 0.5rem 0; font-size: 0.9rem;"><strong>💡 Nghĩa:</strong> ${currentCard.meaning}</p>
+                ${currentCard.phonetic ? `<p style="margin: 0.5rem 0; font-size: 0.9rem;"><strong>🔊 Phát âm:</strong> ${currentCard.phonetic}</p>` : ''}
+              </div>
+            </div>
+          `,
+          showCancelButton: true,
+          confirmButtonText: '📖 Xem sổ tay',
+          cancelButtonText: 'Tiếp tục ôn',
+          confirmButtonColor: '#58cc02',
+          cancelButtonColor: '#6b7280'
+        }).then((result) => {
+          if (result.isConfirmed) {
+            navigate('/worldbank');
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Save to bank error:', error);
+      
+      if (error.response?.status === 400) {
+        showToast('info', 'Thông báo', 'Từ này đã có trong sổ tay của bạn');
+      } else {
+        showToast('error', 'Lỗi', 'Không thể lưu từ vựng vào sổ tay');
+      }
+    } finally {
+      setSavingCard(false);
+    }
+  };
+
+  const speakWord = (text) => {
+    if (!text || !text.toString().trim()) {
+      console.warn('⚠️ Không có text để phát âm');
+      return;
+    }
+
+    // ✅ Cancel bất kỳ speech nào đang chạy
+    if (window.speechSynthesis.speaking) {
+      window.speechSynthesis.cancel();
+    }
+
+    // ✅ Hàm chọn giọng ENGLISH tốt nhất
+    const getEnglishVoice = (voices) => {
+      console.log('📋 Available voices:', voices.map(v => `${v.name} (${v.lang})`));
+
+      // ✅ 1. Ưu tiên Google US English
+      let voice = voices.find(v => 
+        v.lang === 'en-US' && 
+        v.name.toLowerCase().includes('google')
+      );
+      if (voice) {
+        console.log('✅ Chọn Google US:', voice.name);
+        return voice;
+      }
+
+      // ✅ 2. Microsoft David/Zira (Windows)
+      voice = voices.find(v => 
+        v.lang === 'en-US' && 
+        (v.name.includes('David') || v.name.includes('Zira'))
+      );
+      if (voice) {
+        console.log('✅ Chọn Microsoft:', voice.name);
+        return voice;
+      }
+
+      // ✅ 3. Samantha (macOS)
+      voice = voices.find(v => 
+        v.lang === 'en-US' && 
+        v.name.includes('Samantha')
+      );
+      if (voice) {
+        console.log('✅ Chọn Samantha:', voice.name);
+        return voice;
+      }
+
+      // ✅ 4. BẤT KỲ giọng en-US nào (KHÔNG phải en-GB)
+      voice = voices.find(v => v.lang === 'en-US');
+      if (voice) {
+        console.log('✅ Chọn en-US:', voice.name);
+        return voice;
+      }
+
+      // ✅ 5. Bất kỳ giọng English nào (en-GB, en-AU...)
+      voice = voices.find(v => v.lang && v.lang.startsWith('en-'));
+      if (voice) {
+        console.log('✅ Chọn English:', voice.name);
+        return voice;
+      }
+
+      // ✅ 6. LOẠI BỎ tất cả giọng Vietnamese
+      voice = voices.find(v => 
+        v.lang && 
+        !v.lang.startsWith('vi') && 
+        !v.name.toLowerCase().includes('vietnam')
+      );
+      if (voice) {
+        console.log('⚠️ Fallback voice:', voice.name);
+        return voice;
+      }
+
+      console.error('❌ Không tìm thấy giọng English!');
+      return null;
+    };
+
+    // ✅ Hàm thực hiện speak
+    const doSpeak = (selectedVoice) => {
+      const utterance = new SpeechSynthesisUtterance(text.toString());
+      
+      // ✅ QUAN TRỌNG: Set voice TRƯỚC khi set lang
+      if (selectedVoice) {
+        utterance.voice = selectedVoice;
+      }
+      
+      // ✅ Luôn set lang = en-US
       utterance.lang = 'en-US';
-      utterance.rate = 0.9;
+      
+      // ✅ Điều chỉnh giọng nói
+      utterance.rate = 0.9;   // Tốc độ (0.1 - 10)
+      utterance.pitch = 1.0;  // Cao độ (0 - 2)
+      utterance.volume = 1.0; // Âm lượng (0 - 1)
+
+      utterance.onstart = () => {
+        console.log(`🔊 Đang đọc: "${text}"`);
+        console.log(`   Voice: ${utterance.voice?.name || 'default'}`);
+        console.log(`   Lang: ${utterance.lang}`);
+      };
+
+      utterance.onend = () => {
+        console.log('✅ Hoàn thành');
+      };
+
+      utterance.onerror = (err) => {
+        if (err.error !== 'canceled') {
+          console.error('❌ Lỗi:', err.error);
+        }
+      };
+
       window.speechSynthesis.speak(utterance);
+    };
+
+    // ✅ Lấy danh sách voices
+    let voices = window.speechSynthesis.getVoices();
+
+    if (voices.length > 0) {
+      // ✅ Đã có voices, chọn ngay
+      const englishVoice = getEnglishVoice(voices);
+      doSpeak(englishVoice);
+    } else {
+      
+      // ✅ Chỉ set event 1 lần
+      window.speechSynthesis.onvoiceschanged = () => {
+        voices = window.speechSynthesis.getVoices();
+        console.log(`✅ Loaded ${voices.length} voices`);
+        
+        const englishVoice = getEnglishVoice(voices);
+        doSpeak(englishVoice);
+        
+        // ✅ Clear event sau khi dùng xong
+        window.speechSynthesis.onvoiceschanged = null;
+      };
     }
   };
 
@@ -772,13 +1305,39 @@ const FlashcardReview = () => {
 
   const updateSetting = (key, value) => {
     setSettings(prev => ({ ...prev, [key]: value }));
-    if (key === 'shuffle') {
-      fetchFlashcards();
+    if (key === 'shuffle' && value) {
+      // Re-shuffle cards
+      const shuffled = [...flashcards].sort(() => Math.random() - 0.5);
+      setFlashcards(shuffled);
+      setCurrentIndex(0);
+      setIsFlipped(false);
+      setShowAnswer(false);
     }
   };
 
+  // ✅ Loading state
+  if (loading) {
+    return (
+      <PageWrapper>
+        <LeftSidebar />
+        <MainContent>
+          <ContentInner>
+            <LoadingText>
+            <LoadingIcon>📚</LoadingIcon>
+            Đang tải flashcards...
+          </LoadingText>
+          </ContentInner>
+        </MainContent>
+        <RightSidebar />
+      </PageWrapper>
+    );
+  }
+
+  // ✅ Completion screen with backend stats
   if (isCompleted) {
-    const accuracy = stats.reviewed > 0 ? Math.round((stats.correct / stats.reviewed) * 100) : 0;
+    const accuracy = stats.reviewed > 0 
+      ? Math.round((stats.correct / stats.reviewed) * 100) 
+      : 0;
 
     return (
       <PageWrapper fullscreen={fullscreen}>
@@ -806,6 +1365,12 @@ const FlashcardReview = () => {
                   <CompletionStatNumber color="#166a0b">{accuracy}%</CompletionStatNumber>
                   <CompletionStatLabel>Độ chính xác</CompletionStatLabel>
                 </CompletionStatCard>
+                {stats.xpEarned && (
+                  <CompletionStatCard bgColor="#fef3c7">
+                    <CompletionStatNumber color="#f59e0b">+{stats.xpEarned}</CompletionStatNumber>
+                    <CompletionStatLabel>XP nhận được</CompletionStatLabel>
+                  </CompletionStatCard>
+                )}
               </CompletionStats>
 
               <CompletionActions>
@@ -826,14 +1391,21 @@ const FlashcardReview = () => {
     );
   }
 
+  // ✅ No flashcards found
   if (!currentCard) {
     return (
       <PageWrapper>
         <LeftSidebar />
         <MainContent>
           <ContentInner>
-            <div style={{ textAlign: 'center', padding: '4rem' }}>
-              Đang tải flashcards...
+            <div style={{ textAlign: 'center', padding: '4rem', color: '#6b7280' }}>
+              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📭</div>
+              <h3>Không có flashcard nào</h3>
+              <p>Deck này chưa có flashcard để ôn tập</p>
+              <ActionButton onClick={() => navigate('/decks')} style={{ marginTop: '2rem' }}>
+                <ArrowBack />
+                Về danh sách
+              </ActionButton>
             </div>
           </ContentInner>
         </MainContent>
@@ -854,8 +1426,18 @@ const FlashcardReview = () => {
             </BackButton>
 
             <HeaderActions>
-              <IconButton onClick={toggleStar} active={currentCard.starred}>
-                {currentCard.starred ? <Star /> : <StarBorder />}
+              {/* ✅ NÚT LƯU VÀO SỔ TAY */}
+              <IconButton 
+                onClick={handleSaveToBank} 
+                active={savedCards.has(currentCard?.id)}
+                disabled={savingCard || savedCards.has(currentCard?.id)}
+                title={savedCards.has(currentCard?.id) ? "Đã lưu vào sổ tay" : "Lưu vào sổ tay"}
+              >
+                {savedCards.has(currentCard?.id) ? <Bookmark /> : <BookmarkBorder />}
+              </IconButton>
+
+              <IconButton onClick={toggleStar} active={currentCard?.starred}>
+                {currentCard?.starred ? <Star /> : <StarBorder />}
               </IconButton>
               <IconButton onClick={() => updateSetting('shuffle', !settings.shuffle)} active={settings.shuffle}>
                 <Shuffle />
@@ -873,6 +1455,11 @@ const FlashcardReview = () => {
             <ProgressHeader>
               <ProgressText>
                 Thẻ {currentIndex + 1} / {flashcards.length}
+                {deckInfo && (
+                  <span style={{ fontSize: '0.875rem', color: '#6b7280', marginLeft: '1rem' }}>
+                    (Tổng: {deckInfo.totalCards || flashcards.length} thẻ trong deck)
+                  </span>
+                )}
               </ProgressText>
               <ProgressStats>
                 <StatItem color="#58cc02">
@@ -898,6 +1485,22 @@ const FlashcardReview = () => {
                   {currentCard.starred ? <Star /> : <StarBorder />}
                   {currentCard.starred ? 'Quan trọng' : 'Bình thường'}
                 </CardBadge>
+
+                {/* ✅ THÊM: Hiển thị hình ảnh nếu có */}
+                {currentCard.imageUrl ? (
+                  <CardImage 
+                    src={currentCard.imageUrl} 
+                    alt={currentCard.word}
+                    onError={(e) => {
+                      console.warn('Image failed to load:', currentCard.imageUrl);
+                      e.target.style.display = 'none';
+                    }}
+                  />
+                ) : (
+                  <CardImagePlaceholder>
+                    Không có hình ảnh
+                  </CardImagePlaceholder>
+                )}
 
                 <CardLabel>Từ vựng</CardLabel>
                 <CardContent>{currentCard.word}</CardContent>

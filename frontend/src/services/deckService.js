@@ -1,4 +1,22 @@
+import axios from 'axios';
 import api from '../utils/api';
+
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+
+const axiosInstance = axios.create({
+  baseURL: API_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+axiosInstance.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
 
 export const deckService = {
   browseDecks: async () => {
@@ -97,5 +115,94 @@ export const deckService = {
       console.error('Delete deck error:', error);
       throw new Error(error.response?.data?.message || 'Could not delete deck');
     }
+  },
+
+  // THÊM CÁC API MỚI:
+
+  // GET /api/decks/search
+  searchDecks: async (query, filters = {}) => {
+    const response = await axiosInstance.get('/decks/search', {
+      params: { q: query, ...filters },
+    });
+    return response.data;
+  },
+
+  // GET /api/decks/public
+  getPublicDecks: async (page = 1, limit = 20, filters = {}) => {
+    const response = await axiosInstance.get('/decks/public', {
+      params: { page, limit, ...filters },
+    });
+    return response.data;
+  },
+
+  // GET /api/decks/trending
+  getTrendingDecks: async (limit = 10) => {
+    const response = await axiosInstance.get('/decks/trending', {
+      params: { limit },
+    });
+    return response.data;
+  },
+
+  // POST /api/decks/:id/favorite
+  favoriteDeck: async (deckId) => {
+    const response = await axiosInstance.post(`/decks/${deckId}/favorite`);
+    return response.data;
+  },
+
+  // DELETE /api/decks/:id/favorite
+  unfavoriteDeck: async (deckId) => {
+    const response = await axiosInstance.delete(`/decks/${deckId}/favorite`);
+    return response.data;
+  },
+
+  // GET /api/decks/favorites
+  getFavoriteDecks: async () => {
+    const response = await axiosInstance.get('/decks/favorites');
+    return response.data;
+  },
+
+  // POST /api/decks/:id/subscribe
+  subscribeDeck: async (deckId) => {
+    const response = await axiosInstance.post(`/decks/${deckId}/subscribe`);
+    return response.data;
+  },
+
+  // DELETE /api/decks/:id/subscribe
+  unsubscribeDeck: async (deckId) => {
+    const response = await axiosInstance.delete(`/decks/${deckId}/subscribe`);
+    return response.data;
+  },
+
+  // GET /api/decks/subscribed
+  getSubscribedDecks: async () => {
+    const response = await axiosInstance.get('/decks/subscribed');
+    return response.data;
+  },
+
+  cloneDeck: async (deckId, newTitle, isPublic) => {
+    const response = await api.post(`/decks/${deckId}/clone`, {
+      newTitle,
+      isPublic
+    });
+    return response.data;
+  },
+
+  mergeDecks: async (deckIds, newTitle, isPublic) => {
+    const response = await api.post('/decks/merge', {
+      deckIds,
+      newTitle,
+      isPublic
+    });
+    return response.data;
+  },
+
+  splitDeck: async (deckId, splitBy, criteria) => {
+    const response = await api.post(`/decks/${deckId}/split`, {
+      splitBy,
+      criteria
+    });
+    return response.data;
   }
 };
+
+export default deckService;

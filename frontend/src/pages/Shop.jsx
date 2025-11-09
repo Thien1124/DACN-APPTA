@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import LeftSidebar from '../components/LeftSidebar';
@@ -15,6 +15,10 @@ import {
   Person
 } from '@mui/icons-material';
 import WhatshotIcon from '@mui/icons-material/Whatshot';
+
+// Import shopService
+import { shopService } from '../services/shopService';
+
 // ========== STYLED COMPONENTS ==========
 
 const PageWrapper = styled.div`
@@ -298,102 +302,72 @@ const SpecialBadge = styled.div`
   box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
 `;
 
-// ========== DATA ==========
-
-const shopProducts = {
-  powerups: [
-    {
-      id: 1,
-      icon: <WhatshotIcon sx={{ fontSize: 40, color: 'white' }} />,
-      name: 'Streak Freeze',
-      description: 'Bảo vệ streak của bạn 1 ngày khi không học',
-      price: 200,
-      gradient: 'linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)'
-    },
-    {
-      id: 2,
-      icon: <Favorite sx={{ fontSize: 40, color: 'white' }} />,
-      name: 'Refill Hearts',
-      description: 'Khôi phục toàn bộ trái tim ngay lập tức',
-      price: 350,
-      gradient: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'
-    },
-    {
-      id: 3,
-      icon: <Timer sx={{ fontSize: 40, color: 'white' }} />,
-      name: 'Unlimited Hearts',
-      description: 'Trái tim không giới hạn trong 2 giờ',
-      price: 450,
-      gradient: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)'
-    }
-  ],
-  outfits: [
-    {
-      id: 4,
-      icon: '👔',
-      name: 'Business Duo',
-      description: 'Bộ vest lịch lãm cho Duo',
-      price: 500,
-      gradient: 'linear-gradient(135deg, #374151 0%, #1f2937 100%)'
-    },
-    {
-      id: 5,
-      icon: '🎃',
-      name: 'Halloween Costume',
-      description: 'Trang phục Halloween độc đáo',
-      price: 600,
-      gradient: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-      special: 'LIMITED'
-    },
-    {
-      id: 6,
-      icon: '👑',
-      name: 'Royal Outfit',
-      description: 'Trang phục hoàng gia sang trọng',
-      price: 800,
-      gradient: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)'
-    }
-  ],
-  gems: [
-    {
-      id: 7,
-      icon: <Diamond sx={{ fontSize: 32, color: 'white' }} />,
-      name: '100 Gems',
-      description: 'Gói gems nhỏ',
-      price: '$0.99',
-      gradient: 'linear-gradient(135deg, #1CB0F6 0%, #0d9ed8 100%)'
-    },
-    {
-      id: 8,
-      icon: <Diamond sx={{ fontSize: 32, color: 'white' }} />,
-      name: '500 Gems',
-      description: 'Gói gems trung bình',
-      price: '$4.99',
-      gradient: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)'
-    },
-    {
-      id: 9,
-      icon: <Diamond sx={{ fontSize: 32, color: 'white' }} />,
-      name: '1000 Gems',
-      description: 'Gói gems lớn',
-      price: '$9.99',
-      gradient: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-      special: 'BEST VALUE'
-    }
-  ]
-};
-
 // ========== COMPONENT ==========
 
 const Shop = () => {
   const navigate = useNavigate();
   const { toast, showToast, hideToast } = useToast();
   const [activeTab, setActiveTab] = useState('powerups');
-  const [userGems, setUserGems] = useState(532);
+  const [userGems, setUserGems] = useState(0);
+  const [shopItems, setShopItems] = useState({
+    powerups: [],
+    outfits: [],
+    gems: []
+  });
+  const [inventory, setInventory] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isPurchasing, setIsPurchasing] = useState(false);
 
-  const handlePurchase = (product) => {
-    if (typeof product.price === 'string') {
-      // Real money purchase
+  // Load initial data
+  useEffect(() => {
+    loadShopData();
+  }, []);
+
+  const loadShopData = async () => {
+    try {
+      setIsLoading(true);
+
+      // Load gems balance
+      const gemsData = await shopService.getGems();
+      if (gemsData.success) {
+        setUserGems(gemsData.gems);
+      }
+
+      // Load shop items
+      const itemsData = await shopService.getItems();
+      if (itemsData.success && itemsData.items.length > 0) {
+        // Group items by type
+        const groupedItems = {
+          powerups: itemsData.items.filter(item => item.type === 'powerup'),
+          outfits: itemsData.items.filter(item => item.type === 'outfit'),
+          gems: itemsData.items.filter(item => item.type === 'gems')
+        };
+        setShopItems(groupedItems);
+      } else {
+        // Fallback to mock data if backend not ready
+        setShopItems(mockShopProducts);
+      }
+
+      // Load inventory
+      const inventoryData = await shopService.getInventory();
+      if (inventoryData.success) {
+        setInventory(inventoryData.inventory);
+      }
+
+    } catch (error) {
+      console.error('Error loading shop data:', error);
+      showToast('warning', 'Thông báo', 'Đang sử dụng dữ liệu mẫu');
+      setShopItems(mockShopProducts);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handlePurchase = async (product) => {
+    if (isPurchasing) return;
+
+    // Real money purchase (gems packages)
+    if (product.type === 'gems' || typeof product.price === 'string') {
       Swal.fire({
         title: `Mua ${product.name}?`,
         text: `Giá: ${product.price}`,
@@ -405,38 +379,130 @@ const Shop = () => {
         cancelButtonText: 'Hủy'
       }).then((result) => {
         if (result.isConfirmed) {
-          showToast('success', 'Thành công!', `Đã mua ${product.name}`);
+          showToast('info', 'Coming Soon', 'Tính năng thanh toán đang được phát triển');
         }
       });
-    } else {
-      // Gems purchase
-      if (userGems >= product.price) {
-        Swal.fire({
-          title: `Mua ${product.name}?`,
-          html: `
-            <div style="text-align: center;">
-              <p style="font-size: 1.125rem; margin-bottom: 1rem;">${product.description}</p>
-              <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-size: 1.5rem; font-weight: 700; color: #1CB0F6;">
-                <span>💎</span>
-                <span>${product.price}</span>
-              </div>
+      return;
+    }
+
+    // Fix: Ensure price is a number
+    const productPrice = typeof product.price === 'number' ? product.price : 0;
+
+    // Gems purchase (powerups, outfits)
+    if (userGems < productPrice) {
+      showToast('error', 'Không đủ gems', 'Bạn cần thêm gems để mua vật phẩm này!');
+      return;
+    }
+
+    try {
+      const result = await Swal.fire({
+        title: `Mua ${product.name}?`,
+        html: `
+          <div style="text-align: center;">
+            <p style="font-size: 1.125rem; margin-bottom: 1rem;">${product.description}</p>
+            <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-size: 1.5rem; font-weight: 700; color: #1CB0F6;">
+              <span>💎</span>
+              <span>${productPrice}</span>
             </div>
-          `,
-          icon: 'question',
-          showCancelButton: true,
-          confirmButtonColor: '#1CB0F6',
-          cancelButtonColor: '#6b7280',
-          confirmButtonText: '✓ Xác nhận',
-          cancelButtonText: 'Hủy'
-        }).then((result) => {
-          if (result.isConfirmed) {
-            setUserGems(prev => prev - product.price);
-            showToast('success', 'Thành công!', `Đã mua ${product.name}`);
+          </div>
+        `,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#1CB0F6',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: '✓ Xác nhận',
+        cancelButtonText: 'Hủy'
+      });
+
+      if (result.isConfirmed) {
+        setIsPurchasing(true);
+
+        // Call API to purchase
+        const purchaseData = await shopService.purchase(product.id || product._id);
+
+        if (purchaseData.success) {
+          // Update gems balance - Fix here too
+          const newGems = typeof purchaseData.userStats?.gems === 'object' 
+            ? purchaseData.userStats.gems.amount 
+            : purchaseData.userStats?.gems || userGems - productPrice;
+          
+          setUserGems(newGems);
+
+          // Refresh inventory
+          const inventoryData = await shopService.getInventory();
+          if (inventoryData.success) {
+            setInventory(inventoryData.inventory);
           }
-        });
-      } else {
-        showToast('error', 'Không đủ gems', 'Bạn cần thêm gems để mua vật phẩm này!');
+
+          // Show success message
+          await Swal.fire({
+            title: 'Thành công!',
+            html: `
+              <div style="text-align: center;">
+                <div style="font-size: 4rem; margin-bottom: 1rem;">✨</div>
+                <p style="font-size: 1.125rem; margin-bottom: 0.5rem;">Đã mua ${product.name}</p>
+                <p style="font-size: 0.9375rem; color: #6b7280;">
+                  Số dư còn lại: <span style="color: #1CB0F6; font-weight: 700;">${newGems} 💎</span>
+                </p>
+              </div>
+            `,
+            icon: 'success',
+            confirmButtonColor: '#58CC02',
+            confirmButtonText: 'Tuyệt vời!'
+          });
+
+          showToast('success', 'Mua thành công!', `${product.name} đã được thêm vào kho`);
+        }
       }
+    } catch (error) {
+      console.error('Purchase error:', error);
+      
+      const errorMessage = error.response?.data?.message || 'Có lỗi xảy ra khi mua vật phẩm';
+      
+      await Swal.fire({
+        title: 'Lỗi!',
+        text: errorMessage,
+        icon: 'error',
+        confirmButtonColor: '#ef4444',
+        confirmButtonText: 'Đóng'
+      });
+      
+      showToast('error', 'Lỗi', errorMessage);
+    } finally {
+      setIsPurchasing(false);
+    }
+  };
+
+  const handleUseItem = async (inventoryItem) => {
+    try {
+      const result = await Swal.fire({
+        title: `Sử dụng ${inventoryItem.item?.name}?`,
+        text: inventoryItem.item?.description,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#1CB0F6',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: '✓ Sử dụng',
+        cancelButtonText: 'Hủy'
+      });
+
+      if (result.isConfirmed) {
+        const useData = await shopService.useItem(inventoryItem._id);
+
+        if (useData.success) {
+          // Refresh inventory
+          const inventoryData = await shopService.getInventory();
+          if (inventoryData.success) {
+            setInventory(inventoryData.inventory);
+          }
+
+          showToast('success', 'Thành công!', useData.message);
+        }
+      }
+    } catch (error) {
+      console.error('Use item error:', error);
+      const errorMessage = error.response?.data?.message || 'Có lỗi xảy ra khi sử dụng vật phẩm';
+      showToast('error', 'Lỗi', errorMessage);
     }
   };
 
@@ -445,7 +511,83 @@ const Shop = () => {
     showToast('info', 'Kiếm gems', 'Hoàn thành bài học để nhận gems!');
   };
 
-  const currentProducts = shopProducts[activeTab];
+  const currentProducts = shopItems[activeTab] || [];
+
+  // Map backend data to frontend format
+  const formatProduct = (item) => {
+    // ✅ Kiểm tra item có tồn tại không
+    if (!item) {
+      return {
+        id: 'unknown',
+        icon: <Diamond sx={{ fontSize: 32, color: 'white' }} />,
+        name: 'Vật phẩm không xác định',
+        description: 'Không có thông tin',
+        price: 0,
+        gradient: 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)',
+        special: null,
+        type: 'other'
+      };
+    }
+
+    const iconMap = {
+      'streak_freeze': <WhatshotIcon sx={{ fontSize: 40, color: 'white' }} />,
+      'refill_hearts': <Favorite sx={{ fontSize: 40, color: 'white' }} />,
+      'unlimited_hearts': <Timer sx={{ fontSize: 40, color: 'white' }} />,
+      'powerup': <Bolt sx={{ fontSize: 40, color: 'white' }} />,
+      'outfit': <Person sx={{ fontSize: 40, color: 'white' }} />,
+      'gems': <Diamond sx={{ fontSize: 32, color: 'white' }} />
+    };
+
+    const gradientMap = {
+      'streak_freeze': 'linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)',
+      'refill_hearts': 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+      'unlimited_hearts': 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+      'powerup': 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+      'outfit': 'linear-gradient(135deg, #374151 0%, #1f2937 100%)',
+      'gems': 'linear-gradient(135deg, #1CB0F6 0%, #0d9ed8 100%)'
+    };
+
+    // ✅ Fix: Extract gems value from price object with null check
+    let priceValue = 0;
+    if (item.price) {
+      if (typeof item.price === 'object' && item.price.gems !== undefined) {
+        priceValue = item.price.gems;
+      } else if (typeof item.price === 'number') {
+        priceValue = item.price;
+      }
+    }
+
+    return {
+      id: item._id || item.id,
+      icon: iconMap[item.itemId] || iconMap[item.type] || item.icon,
+      name: item.name || 'Vật phẩm',
+      description: item.description || 'Không có mô tả',
+      price: priceValue,
+      gradient: gradientMap[item.itemId] || gradientMap[item.type] || item.gradient || 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)',
+      special: item.isLimited ? 'LIMITED' : item.special,
+      type: item.type || 'other'
+    };
+  };
+
+  if (isLoading) {
+    return (
+      <PageWrapper>
+        <LeftSidebar />
+        <MainContent>
+          <LoadingOverlay>
+            <LoadingSpinner />
+            <LoadingText>Đang tải cửa hàng...</LoadingText>
+          </LoadingOverlay>
+        </MainContent>
+        <RightSidebar
+          lessonsToUnlock={8}
+          dailyGoal={{ current: 10, target: 10, label: 'Kiếm 10 KN' }}
+          streak={1}
+          showProfile={true}
+        />
+      </PageWrapper>
+    );
+  }
 
   return (
     <PageWrapper>
@@ -455,7 +597,7 @@ const Shop = () => {
       <MainContent>
         <Container>
           <Header>
-            <Title> Cửa hàng</Title>
+            <Title>Cửa hàng</Title>
             <Subtitle>Mua vật phẩm để nâng cao trải nghiệm học tập!</Subtitle>
           </Header>
 
@@ -495,34 +637,87 @@ const Shop = () => {
             >
               <Diamond sx={{ fontSize: 20 }} /> Mua Gems
             </Tab>
+            <Tab 
+              active={activeTab === 'inventory'} 
+              onClick={() => setActiveTab('inventory')}
+            >
+              Kho đồ ({inventory.length})
+            </Tab>
           </TabsContainer>
 
           {/* Products Grid */}
-          <ProductsGrid>
-            {currentProducts.map(product => (
-              <ProductCard 
-                key={product.id}
-                onClick={() => handlePurchase(product)}
-              >
-                {product.special && <SpecialBadge>{product.special}</SpecialBadge>}
-                <ProductIcon gradient={product.gradient}>
-                  {product.icon}
-                </ProductIcon>
-                <ProductName>{product.name}</ProductName>
-                <ProductDescription>{product.description}</ProductDescription>
-                <ProductPrice>
-                  {typeof product.price === 'number' ? (
-                    <>
-                      <span><Diamond sx={{ fontSize: 20 }} /></span>
-                      <span>{product.price}</span>
-                    </>
-                  ) : (
-                    <span>{product.price}</span>
-                  )}
-                </ProductPrice>
-              </ProductCard>
-            ))}
-          </ProductsGrid>
+          {activeTab !== 'inventory' ? (
+            <ProductsGrid>
+              {currentProducts.map(product => {
+                const formattedProduct = formatProduct(product);
+                return (
+                  <ProductCard 
+                    key={formattedProduct.id}
+                    onClick={() => handlePurchase(formattedProduct)}
+                    style={{ opacity: isPurchasing ? 0.6 : 1, cursor: isPurchasing ? 'not-allowed' : 'pointer' }}
+                  >
+                    {formattedProduct.special && <SpecialBadge>{formattedProduct.special}</SpecialBadge>}
+                    <ProductIcon gradient={formattedProduct.gradient}>
+                      {formattedProduct.icon}
+                    </ProductIcon>
+                    <ProductName>{formattedProduct.name}</ProductName>
+                    <ProductDescription>{formattedProduct.description}</ProductDescription>
+                    <ProductPrice>
+                      {typeof formattedProduct.price === 'number' ? (
+                        <>
+                          <Diamond sx={{ fontSize: 20 }} />
+                          <span>{formattedProduct.price}</span>
+                        </>
+                      ) : (
+                        <span>{formattedProduct.price}</span>
+                      )}
+                    </ProductPrice>
+                  </ProductCard>
+                );
+              })}
+            </ProductsGrid>
+          ) : (
+            // Inventory View
+            <ProductsGrid>
+              {inventory.length === 0 ? (
+                <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem', color: '#6b7280' }}>
+                  <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>📦</div>
+                  <h3>Kho đồ trống</h3>
+                  <p>Hãy mua vật phẩm từ cửa hàng!</p>
+                </div>
+              ) : (
+                inventory.map(invItem => {
+                  // ✅ Kiểm tra invItem.item có tồn tại không trước khi format
+                  if (!invItem || !invItem.item) {
+                    console.warn('Invalid inventory item:', invItem);
+                    return null;
+                  }
+
+                  const product = formatProduct(invItem.item);
+                  return (
+                    <ProductCard 
+                      key={invItem._id || Math.random()}
+                      onClick={() => handleUseItem(invItem)}
+                    >
+                      <ProductIcon gradient={product.gradient}>
+                        {product.icon}
+                      </ProductIcon>
+                      <ProductName>{product.name}</ProductName>
+                      <ProductDescription>
+                        Số lượng: {invItem.quantity || 1}
+                        {invItem.expiresAt && (
+                          <div>Hết hạn: {new Date(invItem.expiresAt).toLocaleDateString()}</div>
+                        )}
+                      </ProductDescription>
+                      <ProductPrice style={{ background: 'linear-gradient(135deg, #58CC02 0%, #46A302 100%)' }}>
+                        ✓ Sử dụng
+                      </ProductPrice>
+                    </ProductCard>
+                  );
+                }).filter(Boolean) // ✅ Loại bỏ các item null
+              )}
+            </ProductsGrid>
+          )}
         </Container>
       </MainContent>
 
@@ -535,5 +730,58 @@ const Shop = () => {
     </PageWrapper>
   );
 };
+
+// Mock data fallback
+const mockShopProducts = {
+  powerups: [
+    {
+      id: 'mock1',
+      name: 'Streak Freeze',
+      description: 'Bảo vệ streak của bạn 1 ngày khi không học',
+      price: 200,
+      type: 'powerup',
+      itemId: 'streak_freeze'
+    },
+    {
+      id: 'mock2',
+      name: 'Refill Hearts',
+      description: 'Khôi phục toàn bộ trái tim ngay lập tức',
+      price: 350,
+      type: 'powerup',
+      itemId: 'refill_hearts'
+    }
+  ],
+  outfits: [],
+  gems: []
+};
+
+// Add Loading components
+const LoadingOverlay = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+`;
+
+const LoadingSpinner = styled.div`
+  width: 60px;
+  height: 60px;
+  border: 4px solid #e5e7eb;
+  border-top-color: #1CB0F6;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+`;
+
+const LoadingText = styled.div`
+  margin-top: 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #6b7280;
+`;
 
 export default Shop;
