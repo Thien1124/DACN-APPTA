@@ -39,6 +39,31 @@ const vocabularySchema = new mongoose.Schema({
     enum: ['easy', 'medium', 'hard'],
     default: 'medium'
   },
+  learnedBy: [{
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true
+    },
+    learnedAt: {
+      type: Date,
+      default: Date.now
+    },
+    reviewCount: {
+      type: Number,
+      default: 0
+    },
+    mastery: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100
+    },
+    starred: {
+      type: Boolean,
+      default: false
+    }
+  }],
   createdAt: {
     type: Date,
     default: Date.now
@@ -51,7 +76,6 @@ const vocabularySchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Middleware trước khi lưu để cập nhật updatedAt
 vocabularySchema.pre('save', function(next) {
   this.updatedAt = Date.now();
   next();

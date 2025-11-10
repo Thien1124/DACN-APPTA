@@ -24,16 +24,25 @@ const storage = multer.diskStorage({
   }
 });
 
-// Kiểm tra file type (chỉ cho phép ảnh)
+// Kiểm tra file type (cho phép ảnh và Excel files)
 const fileFilter = (req, file, cb) => {
-  const allowedTypes = /jpeg|jpg|png|gif|webp/;
-  const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-  const mimetype = allowedTypes.test(file.mimetype);
+  // Cho phép các file ảnh
+  const allowedImageTypes = /jpeg|jpg|png|gif|webp/;
+  const extname = allowedImageTypes.test(path.extname(file.originalname).toLowerCase());
+  const isImage = allowedImageTypes.test(file.mimetype);
 
-  if (mimetype && extname) {
+  // Cho phép các file Excel
+  const allowedExcelTypes = [
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+    'application/vnd.ms-excel' // .xls
+  ];
+  const excelExtname = /xlsx|xls/.test(path.extname(file.originalname).toLowerCase());
+  const isExcel = allowedExcelTypes.includes(file.mimetype);
+
+  if ((isImage && extname) || (isExcel && excelExtname)) {
     return cb(null, true);
   } else {
-    cb(new Error('Chỉ chấp nhận file ảnh (JPEG, JPG, PNG, GIF, WEBP)'));
+    cb(new Error('Chỉ chấp nhận file ảnh (JPEG, JPG, PNG, GIF, WEBP) hoặc file Excel (XLSX, XLS)'));
   }
 };
 
@@ -41,7 +50,7 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({
   storage: storage,
   limits: {
-    fileSize: 5 * 1024 * 1024 // Giới hạn 5MB
+    fileSize: 10 * 1024 * 1024 // Giới hạn 10MB
   },
   fileFilter: fileFilter
 });

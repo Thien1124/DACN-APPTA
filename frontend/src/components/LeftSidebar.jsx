@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom'; // ✅ add portal import
 import { useNavigate, useLocation } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
 import logo from '../assets/logo.png';
@@ -11,8 +12,16 @@ import {
   BiTrophy,
   BiTask,
   BiStore,
-  BiUser, BiBrain, BiCard, BiFlag,BiBookContent
+  BiUser,
+  BiBrain,
+  BiCard,
+  BiFlag,
+  BiBookContent,
+  BiBook,
+  BiQuestionMark,
+  BiMap
 } from 'react-icons/bi';
+import { BiBell } from 'react-icons/bi';
 
 // ========== ANIMATIONS ==========
 const fadeIn = keyframes`
@@ -197,22 +206,6 @@ const SocialLinks = styled.div`
   margin-top: 1rem;
 `;
 
-const NavIconImage = styled.img`
-  width: 28px;
-  height: 28px;
-  object-fit: contain;
-  transition: all 0.3s ease;
-  filter: ${props => props.active ? 'none' : 'grayscale(50%) opacity(0.7)'};
-
-  ${NavItem}:hover & {
-    filter: none;
-    transform: scale(1.1);
-  }
-
-  ${props => props.active && `
-    filter: brightness(1.1);
-  `}
-`;
 const SocialIcon = styled.a`
   width: 36px;
   height: 36px;
@@ -233,10 +226,53 @@ const SocialIcon = styled.a`
   }
 `;
 
+// New styled components for "Xem thêm" dropdown
+const MoreDropdown = styled.div`
+  position: fixed;
+  z-index: 1300; /* tăng z-index để luôn nổi trên các layer khác */
+  width: 300px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+  padding: 0.5rem;
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+  animation: ${fadeIn} 0.18s ease;
+`;
+
+const MoreItem = styled.button`
+  width: 100%;
+  background: transparent;
+  border: none;
+  text-align: left;
+  padding: 0.75rem 0.75rem;
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  font-weight: 700;
+  color: #374151;
+  cursor: pointer;
+  border-radius: 8px;
+
+  &:hover {
+    background: #f8fafc;
+  }
+`;
+
+const MoreItemSub = styled.div`
+  font-size: 0.85rem;
+  color: #6b7280;
+  font-weight: 600;
+`;
+
 // ========== COMPONENT ==========
 const LeftSidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [moreOpen, setMoreOpen] = useState(false);
+  const moreAnchorRef = useRef(null);
+  const moreMenuRef = useRef(null);
+  const [moreStyle, setMoreStyle] = useState({ top: 120, left: 300 });
 
   const navItems = [
     {
@@ -284,6 +320,24 @@ const LeftSidebar = () => {
       path: '/decks'
     },
     {
+      id: 'worldbank',
+      icon: <BiBook size={24} />,
+      text: 'Sổ tay từ vựng',
+      path: '/worldbank'
+    },
+    {
+      id: 'quiz-bank',
+      icon: <BiQuestionMark size={24} />,
+      text: 'Bộ Quiz Phụ',
+      path: '/quiz-bank'
+    },
+    {
+      id: 'roadmap',
+      icon: <BiMap size={24} />,
+      text: 'Lộ trình Cá nhân hóa',
+      path: '/roadmap'
+    },
+    {
       id: 'goals',
       icon: <BiFlag size={24} />,
       text: 'Mục tiêu học tập',
@@ -305,18 +359,88 @@ const LeftSidebar = () => {
       id: 'settings',
       icon: <FiSettings size={24} />,
       text: 'Xem thêm',
-      path: '/settings'
+      path: '/settings' // keep for fallback / accessibility
     },
   ];
 
+  // compute position when opening
+  const openMoreMenu = () => {
+    const rect = moreAnchorRef.current?.getBoundingClientRect();
+    if (rect) {
+      const left = Math.round(rect.right + 12);
+      const top = Math.round(rect.top);
+      setMoreStyle({ top, left });
+    } else {
+      setMoreStyle({ top: 120, left: 300 });
+    }
+    setMoreOpen(true);
+  };
+
   const handleNavClick = (item) => {
+    if (item.id === 'settings') {
+      // toggle local dropdown instead of navigating to Settings page
+      if (moreOpen) {
+        setMoreOpen(false);
+        return;
+      }
+      openMoreMenu();
+      return;
+    }
     navigate(item.path);
   };
+
+  // close dropdown on outside click or ESC
+  useEffect(() => {
+    const onClick = (e) => {
+      if (!moreOpen) return;
+      if (moreMenuRef.current && moreMenuRef.current.contains(e.target)) return;
+      if (moreAnchorRef.current && moreAnchorRef.current.contains(e.target)) return;
+      setMoreOpen(false);
+    };
+    const onKey = (e) => {
+      if (e.key === 'Escape') setMoreOpen(false);
+    };
+    window.addEventListener('mousedown', onClick);
+    window.addEventListener('touchstart', onClick);
+    window.addEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('mousedown', onClick);
+      window.removeEventListener('touchstart', onClick);
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [moreOpen]);
+
+  // adjust position after render (menu height known)
+  useEffect(() => {
+    if (!moreOpen) return;
+    let mounted = true;
+    const adjustPosition = () => {
+      const anchorRect = moreAnchorRef.current?.getBoundingClientRect();
+      const menu = moreMenuRef.current;
+      if (!menu) return;
+      const menuRect = menu.getBoundingClientRect();
+      let topCalc = anchorRect ? Math.round(anchorRect.top) : moreStyle.top;
+      const margin = 12;
+      const maxTop = window.innerHeight - menuRect.height - margin;
+      if (topCalc > maxTop) topCalc = Math.max(margin, maxTop);
+      if (topCalc < margin) topCalc = margin;
+      if (mounted) setMoreStyle(s => ({ ...s, top: topCalc }));
+    };
+
+    const t = setTimeout(adjustPosition, 0);
+    window.addEventListener('resize', adjustPosition);
+    return () => {
+      mounted = false;
+      clearTimeout(t);
+      window.removeEventListener('resize', adjustPosition);
+    };
+  }, [moreOpen, moreStyle.top]);
 
   const isActive = (path) => {
     return location.pathname === path || location.pathname.startsWith(path + '/');
   };
 
+  // ========== RENDER ==========
   return (
     <SidebarContainer>
       <Logo onClick={() => navigate('/learn')}>
@@ -330,6 +454,7 @@ const LeftSidebar = () => {
             <NavItem
               active={isActive(item.path)}
               onClick={() => handleNavClick(item)}
+              ref={item.id === 'settings' ? moreAnchorRef : null}
             >
               <NavIcon active={isActive(item.path)}>
                 {item.icon}
@@ -364,6 +489,60 @@ const LeftSidebar = () => {
           </SocialIcon>
         </SocialLinks>
       </SidebarFooter>
+
+      {/* Render dropdown with portal so it's not clipped by any container */}
+      {moreOpen && createPortal(
+        <MoreDropdown
+          ref={moreMenuRef}
+          style={{ top: moreStyle.top, left: moreStyle.left }}
+          role="menu"
+          aria-label="Xem thêm"
+        >
+          <MoreItem onClick={() => { navigate('/settings/profile'); setMoreOpen(false); }}>
+            <div>👤</div>
+            <div>
+              Hồ sơ
+              <MoreItemSub>Thay đổi tên, email, ảnh đại diện và mật khẩu.</MoreItemSub>
+            </div>
+          </MoreItem>
+          <MoreItem onClick={() => { navigate('/notifications'); setMoreOpen(false); }}>
+            <div><BiBell /></div>
+            <div>
+              Thông báo
+              <MoreItemSub>Quản lý thông báo hệ thống.</MoreItemSub>
+            </div>
+          </MoreItem>
+          <MoreItem onClick={() => { navigate('/settings/social'); setMoreOpen(false); }}>
+            <div>🔗</div>
+            <div>
+              Tài khoản mạng xã hội
+              <MoreItemSub>Kết nối / ngắt kết nối Google, Facebook.</MoreItemSub>
+            </div>
+          </MoreItem>
+          <MoreItem onClick={() => { navigate('/settings/privacy'); setMoreOpen(false); }}>
+            <div>🔒</div>
+            <div>
+              Quyền riêng tư
+              <MoreItemSub>Tùy chọn hiển thị hồ sơ và thông báo.</MoreItemSub>
+            </div>
+          </MoreItem>
+          <MoreItem onClick={() => { navigate('/settings/audit-log'); setMoreOpen(false); }}>
+            <div>🕘</div>
+            <div>
+              Lịch sử hoạt động
+              <MoreItemSub>Xem và quản lý hoạt động tài khoản của bạn.</MoreItemSub>
+            </div>
+          </MoreItem>
+          <MoreItem onClick={() => { navigate('/settings/account'); setMoreOpen(false); }}>
+            <div>⚙️</div>
+            <div>
+              Cài đặt tài khoản
+              <MoreItemSub>Các tuỳ chọn giao diện và trải nghiệm học tập.</MoreItemSub>
+            </div>
+          </MoreItem>
+        </MoreDropdown>,
+        document.body
+      )}
     </SidebarContainer>
   );
 };

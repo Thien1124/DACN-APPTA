@@ -237,7 +237,7 @@ const sendWelcomeNotification = async ({ userId, userName }) => {
     message: 'Chúng tôi rất vui khi bạn tham gia. Hãy bắt đầu hành trình học tiếng Anh của bạn ngay hôm nay!',
     priority: 'HIGH',
     sendEmail: true,
-    actionUrl: '/getting-started'
+    actionUrl: '/welcome'
   });
 };
 

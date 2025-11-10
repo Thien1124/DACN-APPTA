@@ -78,7 +78,7 @@ router
 
 router
   .route('/:id')
-  .get(protect, authorize('admin'), deckController.getDeckById)
+  .get(protect, deckController.getDeckByIdForUser)  // ✅ Dùng getDeckByIdForUser thay vì getDeckById
   .put(protect, authorize('admin'), deckController.updateDeck)
   .delete(protect, authorize('admin'), deckController.deleteDeck);
 
@@ -87,5 +87,8 @@ router.patch('/:id/publish', protect, authorize('admin'), deckController.toggleP
 // Routes để lấy deck theo khóa học và unit (admin)
 router.get('/course/:courseId', protect, authorize('admin'), deckController.getDecksByCourse);
 router.get('/unit/:unitId', protect, authorize('admin'), deckController.getDecksByUnit);
+
+// ✅ Đảm bảo route có protect middleware
+router.get('/:id/flashcards', protect, deckController.getDeckWithFlashcards);
 
 module.exports = router;

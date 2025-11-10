@@ -1,14 +1,17 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import styled, { keyframes } from 'styled-components';
+import styled, { keyframes, css } from 'styled-components';
 import { authService } from '../services/authService';
+import { streakService } from '../services/streakService';
 import Swal from 'sweetalert2';
+
 // Import icons
-import { FiTarget, FiCheck, FiLock, FiLogOut, FiSettings } from 'react-icons/fi'; 
-import { BsFire, BsTrophy, BsInfoCircle } from 'react-icons/bs';
+import { FiTarget, FiLock, FiLogOut } from 'react-icons/fi'; 
+import { BsFire, BsInfoCircle, BsLightningChargeFill } from 'react-icons/bs';
 import { BiStore } from 'react-icons/bi';
 import { MdWorkOutline, MdTrendingUp } from 'react-icons/md';
 import { HiOutlineDocumentText, HiOutlineShieldCheck } from 'react-icons/hi';
+import { IoCheckmarkDone } from 'react-icons/io5';
 
 // ========== ANIMATIONS ==========
 const fadeIn = keyframes`
@@ -29,6 +32,15 @@ const bounce = keyframes`
 const shine = keyframes`
   0% { background-position: -200% center; }
   100% { background-position: 200% center; }
+`;
+
+const shimmer = keyframes`
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+`;
+
+const spin = keyframes`
+  to { transform: rotate(360deg); }
 `;
 
 // ========== STYLED COMPONENTS ==========
@@ -71,18 +83,42 @@ const SidebarContainer = styled.div`
   }
 `;
 
-const StreakCount = styled.div`
-  font-size: 2.5rem;
-  font-weight: 800;
-  color: #7c2d12;
-  line-height: 1;
-  margin-bottom: 0.25rem;
-`;
+const StreakSection = styled.div`
+  background: linear-gradient(135deg, #fed7aa 0%, #fdba74 100%);
+  border: 2px solid #fb923c;
+  border-radius: 16px;
+  padding: 1.25rem;
+  text-align: center;
+  margin-bottom: 1.5rem;
+  position: relative;
+  overflow: hidden;
+  cursor: ${props => props.clickable ? 'pointer' : 'default'};
+  transition: all 0.3s ease;
+  animation: ${fadeIn} 0.6s ease;
 
-const StreakDescription = styled.div`
-  font-size: 0.875rem;
-  color: #9a3412;
-  font-weight: 600;
+  &:hover {
+    transform: ${props => props.clickable ? 'translateY(-2px)' : 'none'};
+    box-shadow: ${props => props.clickable ? '0 4px 12px rgba(251, 146, 60, 0.3)' : 'none'};
+  }
+
+  ${props => props.isLoading && css`
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.5) 50%,
+        transparent 100%
+      );
+      animation: ${shimmer} 2s infinite;
+      background-size: 200% 100%;
+    }
+  `}
 `;
 
 const StreakHeader = styled.div`
@@ -92,41 +128,79 @@ const StreakHeader = styled.div`
   gap: 0.5rem;
   margin-bottom: 0.75rem;
 `;
-const StreakSection = styled.div`
-  background: linear-gradient(135deg, #fed7aa 0%, #fdba74 100%);
-  border: 2px solid #fb923c;
-  border-radius: 16px;
-  padding: 1.25rem;
-  text-align: center;
-`;
+
 const StreakTitle = styled.div`
   font-size: 0.9375rem;
   font-weight: 700;
   color: #9a3412;
 `;
 
+const StreakCount = styled.div`
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #7c2d12;
+  line-height: 1;
+  margin-bottom: 0.25rem;
+  animation: ${pulse} 2s ease infinite;
+`;
+
+const StreakDescription = styled.div`
+  font-size: 0.875rem;
+  color: #9a3412;
+  font-weight: 600;
+`;
+
+const RefreshHint = styled.div`
+  font-size: 0.75rem;
+  color: #78350f;
+  margin-top: 0.5rem;
+  opacity: 0.8;
+  font-weight: 500;
+`;
+
+const LoadingSpinner = styled.div`
+  width: 20px;
+  height: 20px;
+  border: 2px solid #fed7aa;
+  border-top-color: #7c2d12;
+  border-radius: 50%;
+  animation: ${spin} 0.8s linear infinite;
+  margin: 0 auto;
+`;
 
 const GoalIcon = styled.div`
   width: 48px;
   height: 48px;
   border-radius: 12px;
-  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  background: ${props => props.completed 
+    ? 'linear-gradient(135deg, #58CC02 0%, #45a302 100%)'
+    : 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)'
+  };
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1.5rem;
   flex-shrink: 0;
+  color: white;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: scale(1.05);
+  }
 `;
 
 const GoalContent = styled.div`
   flex: 1;
 `;
+
 const GoalSection = styled.div`
   background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(10px);
   border-radius: 16px;
   padding: 1.25rem;
   border: 2px solid rgba(229, 231, 235, 0.5);
+  margin-bottom: 1.5rem;
+  animation: ${fadeIn} 0.6s ease;
 `;
 
 const GoalHeader = styled.div`
@@ -143,21 +217,6 @@ const GoalTitle = styled.h3`
   margin: 0;
 `;
 
-const EditButton = styled.button`
-  background: none;
-  border: none;
-  color: #1CB0F6;
-  font-size: 0.8125rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  &:hover {
-    color: #0d9ed8;
-    transform: scale(1.05);
-  }
-`;
-
 const GoalCard = styled.div`
   display: flex;
   align-items: center;
@@ -165,13 +224,21 @@ const GoalCard = styled.div`
   background: #f9fafb;
   padding: 1rem;
   border-radius: 12px;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: #f3f4f6;
+    transform: translateY(-2px);
+  }
 `;
+
 const UnlockDescription = styled.p`
   font-size: 0.875rem;
   color: #78350f;
   margin: 0;
   line-height: 1.5;
 `;
+
 const UnlockSection = styled.div`
   background: linear-gradient(135deg, #DDF4FF 0%, #e0f2fe 100%);
   border-radius: 16px;
@@ -189,103 +256,6 @@ const UnlockTitle = styled.h3`
   display: flex;
   align-items: center;
   gap: 0.5rem;
-`;
-
-const UnlockTitleIcon = styled.img`
-  width: 24px;
-  height: 24px;
-  object-fit: contain;
-`;
-
-const UnlockItem = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 0.75rem;
-  background: white;
-  border-radius: 12px;
-  border: 2px solid #e5e7eb;
-`;
-
-const UnlockIcon = styled.div`
-  width: 48px;
-  height: 48px;
-  background: linear-gradient(135deg, #1CB0F6 0%, #0891b2 100%);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(28, 176, 246, 0.3);
-`;
-
-const UnlockIconImage = styled.img`
-  width: 28px;
-  height: 28px;
-  object-fit: contain;
-  filter: brightness(0) invert(1);
-`;
-
-const UnlockText = styled.div`
-  flex: 1;
-  font-size: 0.9375rem;
-  color: #4b5563;
-  line-height: 1.5;
-  font-weight: 600;
-`;
-
-const DailyGoalSection = styled.div`
-  background: white;
-  border-radius: 16px;
-  padding: 1.5rem;
-  border: 2px solid #e5e7eb;
-  margin-bottom: 1.5rem;
-  animation: ${fadeIn} 0.6s ease;
-  animation-delay: 0.2s;
-  animation-fill-mode: both;
-`;
-
-const DailyGoalHeader = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1rem;
-`;
-
-const DailyGoalTitle = styled.h3`
-  font-size: 1.125rem;
-  font-weight: 700;
-  color: #1f2937;
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-`;
-
-const DailyGoalIcon = styled.img`
-  width: 24px;
-  height: 24px;
-  object-fit: contain;
-`;
-
-const ViewAllLink = styled.a`
-  font-size: 0.8125rem;
-  color: #1CB0F6;
-  text-decoration: none;
-  font-weight: 700;
-  cursor: pointer;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  transition: all 0.3s ease;
-
-  &:hover {
-    text-decoration: underline;
-    color: #0891b2;
-  }
-`;
-
-const GoalProgress = styled.div`
-  margin: 1rem 0;
 `;
 
 const GoalLabel = styled.div`
@@ -342,50 +312,6 @@ const ProgressText = styled.div`
   text-align: center;
 `;
 
-
-
-const StreakCard = styled.div`
-  background: linear-gradient(135deg, #FF9600 0%, #FF6B00 100%);
-  border-radius: 16px;
-  padding: 1.5rem;
-  color: white;
-  margin-bottom: 1.5rem;
-  box-shadow: 0 4px 0 #CC5500;
-  text-align: center;
-  animation: ${fadeIn} 0.6s ease;
-  animation-delay: 0.3s;
-  animation-fill-mode: both;
-`;
-
-const StreakIconWrapper = styled.div`
-  display: flex;
-  justify-content: center;
-  margin-bottom: 0.5rem;
-  animation: ${bounce} 2s ease infinite;
-`;
-
-const StreakIcon = styled.img`
-  width: 64px;
-  height: 64px;
-  object-fit: contain;
-  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.2));
-`;
-
-const StreakNumber = styled.div`
-  font-size: 3rem;
-  font-weight: 800;
-  margin: 0.5rem 0;
-  animation: ${pulse} 2s ease infinite;
-`;
-
-const StreakText = styled.div`
-  font-size: 1rem;
-  font-weight: 700;
-  opacity: 0.95;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-`;
-
 const ProfileSection = styled.div`
   background: linear-gradient(135deg, #58CC02 0%, #45a302 100%);
   border-radius: 16px;
@@ -429,7 +355,7 @@ const ActionButton = styled.button`
   text-transform: uppercase;
   letter-spacing: 0.5px;
 
-  ${props => props.primary ? `
+  ${props => props.primary ? css`
     background: white;
     color: #58CC02;
     box-shadow: 0 4px 0 #e5e7eb;
@@ -443,7 +369,7 @@ const ActionButton = styled.button`
       transform: translateY(2px);
       box-shadow: 0 2px 0 #e5e7eb;
     }
-  ` : `
+  ` : css`
     background: transparent;
     color: white;
     border: 2px solid white;
@@ -498,6 +424,10 @@ const LogoutButton = styled.button`
   transition: all 0.3s ease;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
 
   &:hover {
     transform: translateY(-2px);
@@ -513,16 +443,83 @@ const LogoutButton = styled.button`
 const RightSidebar = ({ 
   lessonsToUnlock = 8,
   dailyGoal = { current: 10, target: 10, label: 'Kiếm 10 KN' },
-  streak: streakCount = 1,
+  streak: initialStreakCount = 0,
   showProfile = true
 }) => {
   const navigate = useNavigate();
+  
+  // State for streak
+  const [streakData, setStreakData] = useState({
+    currentStreak: initialStreakCount,
+    longestStreak: initialStreakCount,
+    lastActivityDate: null
+  });
+  const [isLoadingStreak, setIsLoadingStreak] = useState(false);
+  const [streakError, setStreakError] = useState(null);
 
-  // Kiểm tra xem người dùng đã đăng nhập chưa
+  // Check authentication
   const isLoggedIn = authService.isAuthenticated();
 
   const progress = (dailyGoal.current / dailyGoal.target) * 100;
   const isCompleted = progress >= 100;
+
+  // Load streak from API on component mount
+  useEffect(() => {
+    const loadStreak = async () => {
+      if (!isLoggedIn) {
+        setStreakData({
+          currentStreak: initialStreakCount,
+          longestStreak: initialStreakCount,
+          lastActivityDate: null
+        });
+        return;
+      }
+
+      try {
+        setIsLoadingStreak(true);
+        setStreakError(null);
+        const data = await streakService.getStreak();
+        setStreakData({
+          currentStreak: data.currentStreak || 0,
+          longestStreak: data.longestStreak || 0,
+          lastActivityDate: data.lastActivityDate
+        });
+      } catch (error) {
+        console.error('Error loading streak:', error);
+        setStreakError('Không thể tải streak');
+        setStreakData({
+          currentStreak: initialStreakCount,
+          longestStreak: initialStreakCount,
+          lastActivityDate: null
+        });
+      } finally {
+        setIsLoadingStreak(false);
+      }
+    };
+
+    loadStreak();
+  }, [isLoggedIn, initialStreakCount]);
+
+  // Refresh streak manually
+  const handleRefreshStreak = async () => {
+    if (!isLoggedIn || isLoadingStreak) return;
+
+    try {
+      setIsLoadingStreak(true);
+      setStreakError(null);
+      const data = await streakService.getStreak();
+      setStreakData({
+        currentStreak: data.currentStreak || 0,
+        longestStreak: data.longestStreak || 0,
+        lastActivityDate: data.lastActivityDate
+      });
+    } catch (error) {
+      console.error('Error refreshing streak:', error);
+      setStreakError('Không thể làm mới');
+    } finally {
+      setIsLoadingStreak(false);
+    }
+  };
 
   const handleLogout = async () => {
     const result = await Swal.fire({
@@ -547,13 +544,12 @@ const RightSidebar = ({
     }
   };
 
-
   return (
     <SidebarContainer>
       {/* Unlock Leaderboard */}
       <UnlockSection>
         <UnlockTitle>
-          <FiLock size={24} /> {/* Thay thế 🔒 */}
+          <FiLock size={24} />
           Mở khóa Bảng xếp hạng!
         </UnlockTitle>
         <UnlockDescription>
@@ -561,20 +557,24 @@ const RightSidebar = ({
         </UnlockDescription>
       </UnlockSection>
 
-      {/* Daily Goal */}
+      {/* Daily Goal - Icon tia sét đứng yên */}
       <GoalSection>
         <GoalHeader>
           <GoalTitle>Mục tiêu hàng ngày</GoalTitle>
         </GoalHeader>
         
         <GoalCard>
-          <GoalIcon>
-            {isCompleted ? <FiCheck size={24} /> : <FiTarget size={24} />} {/* Thay thế ✓ và 🎯 */}
+          <GoalIcon completed={isCompleted}>
+            {isCompleted ? (
+              <IoCheckmarkDone size={28} />
+            ) : (
+              <BsLightningChargeFill size={26} />
+            )}
           </GoalIcon>
           <GoalContent>
             <GoalLabel>{dailyGoal.label}</GoalLabel>
             <ProgressBar>
-              <ProgressFill progress={progress} completed={isCompleted} />
+              <ProgressFill progress={progress} />
             </ProgressBar>
             <ProgressText completed={isCompleted}>
               {dailyGoal.current}/{dailyGoal.target} KN
@@ -583,14 +583,35 @@ const RightSidebar = ({
         </GoalCard>
       </GoalSection>
 
-      {/* Streak Section */}
-      <StreakSection>
+      {/* Streak Section - Using API */}
+      <StreakSection 
+        isLoading={isLoadingStreak}
+        clickable={isLoggedIn}
+        onClick={handleRefreshStreak}
+        title={isLoggedIn ? "Click để làm mới" : ""}
+      >
         <StreakHeader>
           <StreakTitle>Chuỗi ngày streak</StreakTitle>
-          <BsFire size={24} color="#FF6B00" /> {/* Thay thế 🔥 */}
+          <BsFire size={24} color="#FF6B00" />
         </StreakHeader>
-        <StreakCount>{streakCount}</StreakCount>
-        <StreakDescription>ngày liên tiếp</StreakDescription>
+        
+        {isLoadingStreak ? (
+          <LoadingSpinner />
+        ) : (
+          <>
+            <StreakCount>{streakData.currentStreak}</StreakCount>
+            <StreakDescription>ngày liên tiếp</StreakDescription>
+            {streakError && (
+              <RefreshHint style={{ color: '#dc2626' }}>{streakError}</RefreshHint>
+            )}
+            {isLoggedIn && !streakError && (
+              <RefreshHint>Click để làm mới</RefreshHint>
+            )}
+            {!isLoggedIn && (
+              <RefreshHint>Đăng nhập để lưu streak</RefreshHint>
+            )}
+          </>
+        )}
       </StreakSection>
 
       {/* Profile Section - Only show if not logged in */}
@@ -615,7 +636,7 @@ const RightSidebar = ({
       {isLoggedIn && (
         <LogoutSection>
           <LogoutButton onClick={handleLogout}>
-            <FiLogOut size={20} style={{ marginRight: '8px' }} />
+            <FiLogOut size={20} />
             Đăng xuất
           </LogoutButton>
         </LogoutSection>

@@ -662,7 +662,7 @@ const Welcome = () => {
     } else {
       localStorage.setItem('onboardingComplete', 'true');
       localStorage.setItem('userPreferences', JSON.stringify(selections));
-      navigate('/lesson');
+      navigate('/lesson/1-1');
     }
   };
 

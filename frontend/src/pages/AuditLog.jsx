@@ -175,7 +175,7 @@ const AuditLog = () => {
   const [activities, setActivities] = useState([]);
   const [pagination, setPagination] = useState({
     page: 1,
-    limit: 20,
+    limit: 5,
     total: 0,
     pages: 0
   });
@@ -200,13 +200,29 @@ const AuditLog = () => {
         ...filters
       });
 
-      if (response.success) {
+      if (response && response.success) {
         setActivities(response.data.logs);
         setPagination(response.data.pagination);
+      } else {
+        // fallback to client-side mock pagination when API not available
+        const total = mockActivities.length;
+        const pages = Math.max(1, Math.ceil(total / pagination.limit));
+        const start = (pagination.page - 1) * pagination.limit;
+        const paged = mockActivities.slice(start, start + pagination.limit);
+        setActivities(paged);
+        setPagination(prev => ({ ...prev, total, pages }));
       }
     } catch (error) {
       console.error('Error fetching audit logs:', error);
       showToast('error', 'Lỗi', 'Không thể tải lịch sử hoạt động');
+
+      // fallback to mock data on error
+      const total = mockActivities.length;
+      const pages = Math.max(1, Math.ceil(total / pagination.limit));
+      const start = (pagination.page - 1) * pagination.limit;
+      const paged = mockActivities.slice(start, start + pagination.limit);
+      setActivities(paged);
+      setPagination(prev => ({ ...prev, total, pages }));
     } finally {
       setLoading(false);
     }
@@ -314,17 +330,34 @@ const AuditLog = () => {
               </Table>
 
               {/* Pagination */}
-              <div style={{ marginTop: '1rem', textAlign: 'right' }}>
-                {Array.from({ length: pagination.pages }, (_, i) => (
-                  <Button
-                    key={i + 1}
-                    onClick={() => handlePageChange(i + 1)}
-                    disabled={pagination.page === i + 1}
-                    style={{ margin: '0 0.25rem' }}
-                  >
-                    {i + 1}
-                  </Button>
-                ))}
+              <div style={{ marginTop: '1rem', textAlign: 'right', display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                <Button
+                  onClick={() => handlePageChange(Math.max(1, pagination.page - 1))}
+                  disabled={pagination.page === 1}
+                >
+                  Prev
+                </Button>
+
+                {Array.from({ length: pagination.pages }, (_, i) => {
+                  const pageNum = i + 1;
+                  return (
+                    <Button
+                      key={pageNum}
+                      onClick={() => handlePageChange(pageNum)}
+                      disabled={pagination.page === pageNum}
+                      style={{ background: pagination.page === pageNum ? '#1CB0F6' : undefined }}
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                })}
+
+                <Button
+                  onClick={() => handlePageChange(Math.min(pagination.pages || 1, pagination.page + 1))}
+                  disabled={pagination.page === (pagination.pages || 1)}
+                >
+                  Next
+                </Button>
               </div>
             </>
           )}

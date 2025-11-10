@@ -794,7 +794,7 @@ exports.getMyDecks = async (req, res) => {
     res.status(200).json({
       success: true,
       count: decks.length,
-      data: decks
+      data: decks  // ✅ Đã có totalCards trong Deck model
     });
   } catch (error) {
     res.status(500).json({
@@ -832,6 +832,134 @@ exports.incrementStudyCount = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Lỗi khi cập nhật lượt học',
+      error: error.message
+    });
+  }
+};
+
+// ✅ NEW: Get deck by ID for regular users (check ownership or public)
+// @desc    Get deck by ID for user (public or owned)
+// @route   GET /api/decks/:id
+// @access  Private
+exports.getDeckByIdForUser = async (req, res) => {
+  try {
+    const deck = await Deck.findById(req.params.id)
+      .populate('course', 'title')
+      .populate('unit', 'title')
+      .populate('createdBy', 'fullName email avatar');
+    
+    if (!deck) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy deck với ID này'
+      });
+    }
+
+    // ✅ Check permission (FIXED)
+    const isOwner = deck.createdBy && deck.createdBy._id.toString() === req.user._id.toString();
+    const isPublic = deck.isPublic === true;
+    const isAdmin = req.user.role === 'admin';
+    
+    // ✅ NEW: Check if user has active study session for this deck
+    const StudySession = require('../models/StudySession');
+    const hasActiveSession = await StudySession.findOne({
+      user: req.user._id,
+      deck: req.params.id,
+      status: 'IN_PROGRESS'
+    });
+
+    // ✅ Allow access if: public, owner, admin, or has active session
+    if (!isPublic && !isOwner && !isAdmin && !hasActiveSession) {
+      return res.status(403).json({
+        success: false,
+        message: 'Bạn không có quyền truy cập deck này',
+        debug: {
+          isPublic,
+          isOwner,
+          isAdmin,
+          hasActiveSession: !!hasActiveSession,
+          deckCreatedBy: deck.createdBy?._id?.toString(),
+          currentUser: req.user._id.toString()
+        }
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: deck
+    });
+  } catch (error) {
+    console.error('[ERROR] Get deck by ID for user:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Không thể lấy thông tin deck',
+      error: error.message
+    });
+  }
+};
+
+// ✅ NEW: Get deck with all flashcards for study/review
+// @desc    Get deck with flashcards
+// @route   GET /api/decks/:id/flashcards
+// @access  Private
+exports.getDeckWithFlashcards = async (req, res) => {
+  try {
+    const deck = await Deck.findById(req.params.id)
+      .populate('course', 'title')
+      .populate('unit', 'title')
+      .populate('createdBy', 'fullName email avatar');
+    
+    if (!deck) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy deck'
+      });
+    }
+
+    // ✅ Check permission (FIXED)
+    const isOwner = deck.createdBy && deck.createdBy._id.toString() === req.user._id.toString();
+    const isPublic = deck.isPublic === true;
+    const isAdmin = req.user.role === 'admin';
+    
+    // ✅ NEW: Check if user has active study session for this deck
+    const StudySession = require('../models/StudySession');
+    const hasActiveSession = await StudySession.findOne({
+      user: req.user._id,
+      deck: req.params.id,
+      status: 'IN_PROGRESS'
+    });
+
+    // ✅ Allow access if: public, owner, admin, or has active session
+    if (!isPublic && !isOwner && !isAdmin && !hasActiveSession) {
+      return res.status(403).json({
+        success: false,
+        message: 'Bạn không có quyền truy cập deck này',
+        debug: {
+          isPublic,
+          isOwner,
+          isAdmin,
+          hasActiveSession: !!hasActiveSession,
+          deckCreatedBy: deck.createdBy?._id?.toString(),
+          currentUser: req.user._id.toString()
+        }
+      });
+    }
+
+    // ✅ Get all flashcards
+    const flashcards = await Flashcard.find({ deck: req.params.id });
+
+    res.status(200).json({
+      success: true,
+      data: {
+        ...deck.toObject(),
+        flashcards
+      }
+    });
+  } catch (error) {
+    console.error('[ERROR] Get deck with flashcards:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Không thể lấy flashcards',
       error: error.message
     });
   }

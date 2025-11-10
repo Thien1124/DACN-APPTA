@@ -33,8 +33,15 @@ import AuditLog from './pages/AuditLog';
 import Notifications from './pages/Notifications';
 import LearningGoals from './pages/LearningGoals';
 import TopicFlashcards from './pages/TopicFlashcards';
-import Topics from './pages/Topics';
+import Decks from './pages/Decks';
 import Flashcards from './pages/Flashcards';
+import PracticeTest from './pages/PracticeTest';
+import Worldbank from './pages/Worldbank';
+import DeckReviews from './pages/DeckReviews';
+import QuizBank from './pages/QuizBank';
+import PersonalizedRoadmap from './pages/PersonalizedRoadmap';
+import FlashcardReview from './pages/FlashcardReview';
+import AIFlashcardGenerator from './pages/AIFlashcardGenerator';
 
 // Admin Pages
 import AdminDashboard from './pages/AdminDashboard';
@@ -64,6 +71,9 @@ import AdminNotifications from './pages/AdminNotifications';
 import AdminAuditlog from './pages/AdminAuditlog';
 import AdminSettings from './pages/AdminSettings';
 import AdminFlashcardBulkCreate from './pages/AdminFlashcardBulkCreate';
+import AdminDeckDetail from './pages/AdminDeckDetail';
+import AdminVocabularyBulkCreate from './pages/AdminVocabularyBulkCreate';
+
 // Import Styles
 import './styles/App.css';
 
@@ -92,7 +102,7 @@ function App() {
             </ProtectedRoute>
           } />
 
-          <Route path="/lesson/:id" element={
+          <Route path="/lesson/:lessonId" element={
             <ProtectedRoute>
               <Lesson />
             </ProtectedRoute>
@@ -189,17 +199,12 @@ function App() {
               <LearningGoals />
             </ProtectedRoute>
           } />
-          {/* Flashcards & Decks Routes */}
-          <Route path="/topics" element={
-            <ProtectedRoute>
-              <Topics />
-            </ProtectedRoute>
-          } />
+          
           
          
           <Route path="/decks" element={
             <ProtectedRoute>
-              <Topics />
+              <Decks />
             </ProtectedRoute>
           } />
 
@@ -230,11 +235,22 @@ function App() {
               <Practice />
             </ProtectedRoute>
           } />
+          <Route path="/practice/:id" element={
+            <ProtectedRoute>
+              <PracticeTest />
+            </ProtectedRoute>
+          } />
           <Route path="/flashcards" element={
             <ProtectedRoute>
               <Flashcards />
             </ProtectedRoute>
           } />
+          <Route path="/worldbank" element={<Worldbank />} />
+          <Route path="/decks/:deckId/reviews" element={<DeckReviews />} />
+          <Route path="/quiz-bank" element={<QuizBank />} />
+          <Route path="/roadmap" element={<PersonalizedRoadmap />} />
+          <Route path="/flashcards/review/:deckId" element={<FlashcardReview />} />
+          <Route path="/ai-flashcards" element={<AIFlashcardGenerator />} />
           {/* ========== ADMIN DASHBOARD & PAGES ========== */}
           
           {/* Dashboard */}
@@ -275,6 +291,7 @@ function App() {
               <AdminVocabularies />
             </ProtectedRoute>
           } />
+          <Route path="/admin/vocabularies/bulk-create" element={<AdminVocabularyBulkCreate />} />
 
           <Route path="/admin/exercises" element={
             <ProtectedRoute requireAdmin={true}>
@@ -294,6 +311,11 @@ function App() {
               <AdminDecks />
             </ProtectedRoute>
           } />
+          <Route path="/admin/decks/:id" element={
+          <ProtectedRoute allowedRoles={['admin', 'teacher']}>
+            <AdminDeckDetail />
+          </ProtectedRoute>
+        } />
 
           <Route path="/admin/flashcards" element={
             <ProtectedRoute requireAdmin={true}>

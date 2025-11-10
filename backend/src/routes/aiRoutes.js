@@ -54,4 +54,15 @@ router.post('/batch-analyze', aiController.batchAnalyze);
 // @access  Private (Admin/Teacher)
 router.post('/batch-create', aiController.batchCreateFlashcards);
 
+// @route   POST /api/ai/generate-vocabulary
+// @desc    Generate vocabulary list by topic
+// @access  Private (Admin/Teacher)
+router.post('/generate-vocabulary', authorize('admin', 'teacher'), aiController.generateVocabulary);
+
+// @route   POST /api/ai/batch-create-with-images
+// @desc    Batch create flashcards with images
+// @access  Private (Admin/Teacher)
+router.post('/batch-create-with-images', authorize('admin', 'teacher'), aiController.batchCreateWithImages);
+
+
 module.exports = router;
