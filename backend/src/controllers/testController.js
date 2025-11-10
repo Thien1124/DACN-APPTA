@@ -2,6 +2,7 @@ const Test = require('../models/Test');
 const Exercise = require('../models/Exercise');
 const TestAttempt = require('../models/TestAttempt');
 const { sendTestCompletedNotification } = require('../services/notificationService');
+const { logAudit, getIpAddress, getUserAgent } = require('../services/auditService'); // Task 11: Audit logging
 
 /**
  * ROUTES CHO USER THƯỜNG
@@ -186,6 +187,20 @@ exports.startTest = async (req, res) => {
       startedAt: new Date()
     });
 
+    // Task 11: Log audit
+    await logAudit({
+      userId,
+      action: 'START_TEST',
+      status: 'SUCCESS',
+      ipAddress: getIpAddress(req),
+      userAgent: getUserAgent(req),
+      details: {
+        testId,
+        testTitle: test.title,
+        attemptId: attempt._id
+      }
+    });
+
     console.log(`[INFO] User ${userId} started test ${testId}`);
 
     res.json({
@@ -346,6 +361,23 @@ exports.completeTest = async (req, res) => {
     attempt.passed = attempt.percentage >= (attempt.testId.passingScore || 70);
 
     await attempt.save();
+
+    // Task 11: Log audit
+    await logAudit({
+      userId: req.user._id,
+      action: 'COMPLETE_TEST',
+      status: 'SUCCESS',
+      ipAddress: getIpAddress(req),
+      userAgent: getUserAgent(req),
+      details: {
+        testId: attempt.testId._id,
+        testTitle: attempt.testId.title,
+        attemptId: attempt._id,
+        score: attempt.score,
+        percentage: attempt.percentage,
+        passed: attempt.passed
+      }
+    });
 
     // Gửi notification
     try {
