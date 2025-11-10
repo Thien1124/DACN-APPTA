@@ -1,6 +1,8 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const TokenBlacklist = require('../models/TokenBlacklist');
+const { DeviceSession } = require('../models/DeviceSession');
+const deviceService = require('../services/deviceService');
 
 /**
  * Middleware xác thực JWT token
@@ -63,7 +65,42 @@ const authenticate = async (req, res, next) => {
       });
     }
 
-    // Bước 7: Gán user vào request object
+    // Bước 7: Kiểm tra và cập nhật device session (Task 33)
+    try {
+      // Tìm session từ token
+      const session = await DeviceSession.findOne({
+        user: user._id,
+        jwtToken: token,
+        status: 'active',
+        expiresAt: { $gt: new Date() }
+      });
+
+      if (session) {
+        // Update last activity
+        await deviceService.updateSessionActivity(
+          session._id,
+          'activity',
+          req.ip || req.connection.remoteAddress
+        );
+        
+        // Attach session to request
+        req.session = session;
+        
+        // Check if session is suspicious
+        if (session.suspiciousActivity?.isSuspicious) {
+          console.warn(`⚠️ Suspicious session detected: ${session._id}`);
+          // Could optionally block or require additional verification
+        }
+      } else {
+        // Session not found or expired - allow but log warning
+        console.warn(`⚠️ Valid JWT but no active session found for user ${user._id}`);
+      }
+    } catch (sessionError) {
+      // Don't block request if session check fails, just log
+      console.error('Session check error:', sessionError);
+    }
+
+    // Bước 8: Gán user vào request object
     req.user = user;
     next();
 

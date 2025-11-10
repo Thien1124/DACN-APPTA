@@ -1,6 +1,7 @@
 const mongoose = require('mongoose'); 
 const Goal = require('../models/Goal');
 const { validationResult } = require('express-validator');
+const { logAudit, getIpAddress, getUserAgent } = require('../services/auditService'); // Task 11: Audit logging
 
 // @desc    Tạo mục tiêu mới
 // @route   POST /api/goals
@@ -34,6 +35,21 @@ exports.createGoal = async (req, res) => {
       deadline,
       courseId,
       skill
+    });
+
+    // Task 11: Log audit
+    await logAudit({
+      userId: req.user.id,
+      action: 'CREATE_GOAL',
+      status: 'SUCCESS',
+      ipAddress: getIpAddress(req),
+      userAgent: getUserAgent(req),
+      details: {
+        goalId: goal._id,
+        title: goal.title,
+        type: goal.type,
+        target: goal.target
+      }
     });
 
     res.status(201).json({
@@ -260,6 +276,19 @@ exports.deleteGoal = async (req, res) => {
     }
 
     await goal.deleteOne();
+
+    // Task 11: Log audit
+    await logAudit({
+      userId: req.user.id,
+      action: 'DELETE_GOAL',
+      status: 'SUCCESS',
+      ipAddress: getIpAddress(req),
+      userAgent: getUserAgent(req),
+      details: {
+        goalId: goal._id,
+        title: goal.title
+      }
+    });
 
     res.json({
       success: true,

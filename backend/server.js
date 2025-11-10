@@ -41,6 +41,9 @@ const interactiveLearningRoutes = require('./src/routes/interactiveLearningRoute
 const shadowingRoutes = require('./src/routes/shadowingRoutes'); // Task 29: Shadowing Audio
 const wordbankRoutes = require('./src/routes/wordbankRoutes'); // Task 30: Wordbank
 const aiExplanationRoutes = require('./src/routes/aiExplanationRoutes'); // Task 31: AI Explanation
+const mnemonicRoutes = require('./src/routes/mnemonicRoutes'); // Task 32: Mnemonic & Visualization
+const deviceRoutes = require('./src/routes/deviceRoutes'); // Task 33: Device Management
+const testHistoryRoutes = require('./src/routes/testHistoryRoutes'); // Task 34: Test History
 
 const app = express();
 const PORT = process.env.PORT || 1124;
@@ -113,6 +116,9 @@ app.use('/api/interactive', interactiveLearningRoutes); // Task 28: Interactive 
 app.use('/api/shadowing', shadowingRoutes); // Task 29: Shadowing audio practice
 app.use('/api/wordbank', wordbankRoutes); // Task 30: Worldbank vocabulary notebook
 app.use('/api/ai-explain', aiExplanationRoutes); // Task 31: AI word explanation & synonym comparison
+app.use('/api/mnemonic', mnemonicRoutes); // Task 32: Mnemonic generation & visualization suggestions
+app.use('/api/devices', deviceRoutes); // Task 33: Multi-device management & session tracking
+app.use('/api/test-history', testHistoryRoutes); // Task 34: Test history & progress tracking
 
 // Health root route
 app.get('/', (req, res) => {

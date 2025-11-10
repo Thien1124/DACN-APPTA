@@ -219,6 +219,19 @@ const transformSynonymComparisonResponse = (aiData) => {
  * Helper: Validate and transform context example response
  */
 const transformContextExampleResponse = (aiData) => {
+  // Helper: Extract string from keyPoints (may be string array or object array)
+  const extractKeyPoints = (points) => {
+    if (!Array.isArray(points)) return [];
+    return points.map(point => {
+      if (typeof point === 'string') return point;
+      // If it's an object, try to get 'point' or 'text' field
+      if (typeof point === 'object' && point !== null) {
+        return point.point || point.text || point.description || JSON.stringify(point);
+      }
+      return String(point);
+    });
+  };
+  
   // Ensure required arrays exist
   if (!Array.isArray(aiData.examples)) {
     aiData.examples = [];
@@ -230,14 +243,14 @@ const transformContextExampleResponse = (aiData) => {
     aiData.donts = [];
   }
   
-  // Validate examples structure
+  // Validate examples structure and normalize keyPoints
   aiData.examples = aiData.examples.map(example => {
     return {
       situation: example.situation || '',
       situationVietnamese: example.situationVietnamese || '',
       dialogue: Array.isArray(example.dialogue) ? example.dialogue : [],
-      keyPoints: Array.isArray(example.keyPoints) ? example.keyPoints : [],
-      keyPointsVietnamese: Array.isArray(example.keyPointsVietnamese) ? example.keyPointsVietnamese : []
+      keyPoints: extractKeyPoints(example.keyPoints),
+      keyPointsVietnamese: extractKeyPoints(example.keyPointsVietnamese)
     };
   });
   
@@ -497,10 +510,21 @@ Provide in JSON format:
      * dialogue: array of dialogue exchanges
        - Each with: speaker, text, explanation
      * keyPoints: array of important points about usage in this example
+1. examples: Array of realistic examples (at least 3)
+   - Each with:
+     * situation: description of the situation
+     * dialogue: array of dialogue exchanges
+       - Each with: speaker, text, explanation
+     * keyPoints: MUST BE array of strings (simple text points)
+     * keyPointsVietnamese: MUST BE array of strings (simple text points)
 2. dos: Array of do's for using this word in this context (at least 3)
    - Each with: point, example
 3. donts: Array of don'ts - common mistakes (at least 3)
    - Each with: point, wrongExample, correctExample, explanation
+
+IMPORTANT: keyPoints and keyPointsVietnamese MUST be simple string arrays, not object arrays.
+Example: ["Point 1", "Point 2", "Point 3"]
+NOT: [{"point": "Point 1"}, {"point": "Point 2"}]
 
 ${includeVietnamese ? `
 Also provide Vietnamese translations for all text fields with "Vietnamese" suffix.
