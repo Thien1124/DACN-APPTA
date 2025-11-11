@@ -292,25 +292,6 @@ const CardImage = styled.img`
   }
 `;
 
-const CardImagePlaceholder = styled.div`
-  width: 200px;
-  height: 150px;
-  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
-  border-radius: 12px;
-  margin-bottom: 1rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #9ca3af;
-  font-size: 1rem;
-  border: 2px dashed #d1d5db;
-
-  @media (max-width: 768px) {
-    width: 150px;
-    height: 120px;
-  }
-`;
-
 const CardBack = styled(CardFace)`
   background: linear-gradient(135deg, #e6f7e8 0%, #d1f0d4 100%);
   border: 3px solid #58cc02;
@@ -1136,14 +1117,14 @@ const FlashcardReview = () => {
                 Từ vựng "<strong>${currentCard.word}</strong>" đã được lưu vào sổ tay của bạn
               </p>
               <div style="padding: 1rem; background: #e6f7e8; border-radius: 8px; margin-top: 1rem;">
-                <p style="margin: 0.5rem 0; font-size: 0.9rem;"><strong>📚 Từ:</strong> ${currentCard.word}</p>
-                <p style="margin: 0.5rem 0; font-size: 0.9rem;"><strong>💡 Nghĩa:</strong> ${currentCard.meaning}</p>
-                ${currentCard.phonetic ? `<p style="margin: 0.5rem 0; font-size: 0.9rem;"><strong>🔊 Phát âm:</strong> ${currentCard.phonetic}</p>` : ''}
+                <p style="margin: 0.5rem 0; font-size: 0.9rem;"><strong>Từ:</strong> ${currentCard.word}</p>
+                <p style="margin: 0.5rem 0; font-size: 0.9rem;"><strong>Nghĩa:</strong> ${currentCard.meaning}</p>
+                ${currentCard.phonetic ? `<p style="margin: 0.5rem 0; font-size: 0.9rem;"><strong>Phát âm:</strong> ${currentCard.phonetic}</p>` : ''}
               </div>
             </div>
           `,
           showCancelButton: true,
-          confirmButtonText: '📖 Xem sổ tay',
+          confirmButtonText: 'Xem sổ tay',
           cancelButtonText: 'Tiếp tục ôn',
           confirmButtonColor: '#58cc02',
           cancelButtonColor: '#6b7280'
@@ -1487,20 +1468,16 @@ const FlashcardReview = () => {
                 </CardBadge>
 
                 {/* ✅ THÊM: Hiển thị hình ảnh nếu có */}
-                {currentCard.imageUrl ? (
-                  <CardImage 
-                    src={currentCard.imageUrl} 
-                    alt={currentCard.word}
-                    onError={(e) => {
-                      console.warn('Image failed to load:', currentCard.imageUrl);
-                      e.target.style.display = 'none';
-                    }}
-                  />
-                ) : (
-                  <CardImagePlaceholder>
-                    Không có hình ảnh
-                  </CardImagePlaceholder>
-                )}
+                {currentCard.imageUrl && (
+  <CardImage 
+    src={currentCard.imageUrl} 
+    alt={currentCard.word}
+    onError={(e) => {
+      console.warn('Image failed to load:', currentCard.imageUrl);
+      e.target.style.display = 'none';
+    }}
+  />
+)}
 
                 <CardLabel>Từ vựng</CardLabel>
                 <CardContent>{currentCard.word}</CardContent>
@@ -1516,10 +1493,7 @@ const FlashcardReview = () => {
                   <VolumeUp />
                 </SpeakButton>
 
-                <FlipHint>
-                  <Visibility />
-                  Nhấn để xem nghĩa
-                </FlipHint>
+                
               </CardFront>
 
               <CardBack>
@@ -1538,10 +1512,7 @@ const FlashcardReview = () => {
                   </CardExample>
                 )}
 
-                <FlipHint>
-                  <VisibilityOff />
-                  Nhấn để quay lại
-                </FlipHint>
+                
               </CardBack>
             </FlashcardWrapper>
           </CardContainer>

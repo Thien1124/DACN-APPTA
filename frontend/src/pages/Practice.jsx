@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import LeftSidebar from '../components/LeftSidebar';
@@ -14,6 +14,8 @@ import {
   EmojiEvents,
   Speed
 } from '@mui/icons-material';
+import useToast from '../hooks/useToast'; // ✅ Thêm import này
+import { practiceService } from '../services/practiceService';
 
 // ========== ANIMATIONS ==========
 const fadeIn = keyframes`
@@ -303,7 +305,14 @@ const FeatureItem = styled.div`
 // ========== COMPONENT ==========
 const Practice = () => {
   const navigate = useNavigate();
+  const { showToast } = useToast(); // ✅ Thêm dòng này
   const [selectedType, setSelectedType] = useState(null);
+  const [stats, setStats] = useState({
+    totalExercises: 0,
+    accuracy: 0,
+    highestScore: 0
+  });
+  const [loading, setLoading] = useState(true);
 
   const testTypes = [
   {
@@ -379,25 +388,78 @@ const Practice = () => {
     ]
   };
 
+  // Load stats from backend
+  useEffect(() => {
+    loadStats();
+  }, []);
+
+  const loadStats = async () => {
+    try {
+      setLoading(true);
+      const response = await practiceService.getStats();
+      
+      if (response.success) {
+        setStats({
+          totalExercises: response.stats.totalExercises,
+          accuracy: response.stats.accuracy,
+          highestScore: response.stats.totalXP
+        });
+      }
+    } catch (error) {
+      console.error('Load stats error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleTypeSelect = (typeId) => {
     setSelectedType(typeId);
   };
 
-  const handleStart = () => {
-  if (!selectedType) return;
-  
-  const questions = mockQuestions[selectedType] || [];
-  const selectedTestType = testTypes.find(t => t.id === selectedType);
-  const timeLimit = selectedTestType?.timeLimit || 600; // Default 10 phút
-  
-  navigate(`/practice/${selectedType}`, { 
-    state: { 
-      questions,
-      timeLimit,           // ← Truyền thời gian
-      testTitle: selectedTestType?.title || 'Practice Test'
-    } 
-  });
-};
+  const handleStart = async () => {
+    if (!selectedType) return;
+
+    try {
+      setLoading(true);
+
+      // Load exercises from backend based on type
+      const filters = {};
+      
+      if (selectedType === 'quick') {
+        filters.difficulty = 'easy';
+        filters.limit = 20;
+      } else if (selectedType === 'topic') {
+        filters.category = 'vocabulary'; // Or let user choose
+        filters.limit = 30;
+      } else if (selectedType === 'mock') {
+        filters.limit = 50;
+      } else if (selectedType === 'adaptive') {
+        filters.limit = 30;
+      }
+
+      const response = await practiceService.getExercises(filters);
+      
+      if (response.success && response.data.length > 0) {
+        const selectedTestType = testTypes.find(t => t.id === selectedType);
+        const timeLimit = selectedTestType?.timeLimit || 600;
+
+        navigate(`/practice/${selectedType}`, {
+          state: {
+            questions: response.data,
+            timeLimit,
+            testTitle: selectedTestType?.title || 'Practice Test'
+          }
+        });
+      } else {
+        showToast('warning', 'Thông báo', 'Chưa có bài tập cho loại này');
+      }
+    } catch (error) {
+      console.error('Load exercises error:', error);
+      showToast('error', 'Lỗi', 'Không thể tải bài tập');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <PageWrapper>
@@ -416,16 +478,16 @@ const Practice = () => {
 
           <StatsBar>
             <StatCard>
-              <StatNumber>156</StatNumber>
+              <StatNumber>{stats.totalExercises}</StatNumber>
               <StatLabel>Bài đã làm</StatLabel>
             </StatCard>
             <StatCard>
-              <StatNumber>85%</StatNumber>
+              <StatNumber>{stats.accuracy}%</StatNumber>
               <StatLabel>Độ chính xác</StatLabel>
             </StatCard>
             <StatCard>
-              <StatNumber>42</StatNumber>
-              <StatLabel>Điểm cao nhất</StatLabel>
+              <StatNumber>{stats.highestScore}</StatNumber>
+              <StatLabel>Tổng XP</StatLabel>
             </StatCard>
             
           </StatsBar>

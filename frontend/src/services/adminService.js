@@ -164,6 +164,21 @@ export const adminService = {
       const response = await axiosInstance.delete(`/vocabularies/${id}`);
       return response.data;
     },
+
+    /**
+     * Bulk create vocabulary items
+     * @param {Array} vocabularies - Array of vocabulary objects
+     * @returns {Promise} API response
+     */
+    bulkCreate: async (vocabularies) => {
+      try {
+        const response = await axiosInstance.post('/vocabularies/bulk', vocabularies);
+        return response.data;
+      } catch (error) {
+        console.error('Bulk create vocabularies error:', error);
+        throw error;
+      }
+    },
   },
 
   // ========== EXERCISES ==========
@@ -599,3 +614,5 @@ export const adminService = {
     },
   },
 };
+
+export default adminService;

@@ -64,5 +64,4 @@ router.post('/generate-vocabulary', authorize('admin', 'teacher'), aiController.
 // @access  Private (Admin/Teacher)
 router.post('/batch-create-with-images', authorize('admin', 'teacher'), aiController.batchCreateWithImages);
 
-
 module.exports = router;

@@ -642,6 +642,20 @@ useEffect(() => {
           const lessonsResponse = await lessonService.getLessonsByUnit(unit._id);
           const lessons = lessonsResponse.data || [];
 
+          // 🆕 THÊM: Tự động xác định currentLessonId dựa trên tiến độ
+          let currentLessonId = progress.currentLesson;
+          if (!currentLessonId) {
+            // Nếu backend không cung cấp currentLesson, tìm lesson đầu tiên chưa hoàn thành
+            const sortedLessons = lessons.sort((a, b) => a.order - b.order);
+            for (const lesson of sortedLessons) {
+              if (!progress.completedLessons.includes(lesson._id)) {
+                currentLessonId = lesson._id;
+                break;
+              }
+            }
+            // Nếu tất cả đã hoàn thành, không set current (hoặc set lesson cuối cùng nếu cần)
+          }
+
           const transformedUnit = {
             id: unit._id,
             unitNumber: unit.order,
@@ -659,7 +673,8 @@ useEffect(() => {
                 else if (lesson.type === 'mixed') frontendType = 'trophy';
 
                 const isCompleted = progress.completedLessons.includes(lesson._id);
-                const isCurrent = progress.currentLesson === lesson._id;
+                // 🆕 SỬA: current chỉ dựa trên currentLessonId tự xác định
+                const isCurrent = lesson._id === currentLessonId;
                 
                 // ✅ Logic lock chính xác:
                 let isLocked = false;
@@ -679,7 +694,7 @@ useEffect(() => {
                   icon: getLessonIconByType(frontendType),
                   label: lesson.title,
                   completed: isCompleted,
-                  current: isCurrent || (index === 0 && progress.completedLessons.length === 0), // Lesson đầu là current nếu chưa học gì
+                  current: isCurrent,  // 🆕 Đã sửa, loại bỏ phần || cũ
                   locked: isLocked,
                   stars: isCompleted ? 3 : 0,
                   progress: isCompleted ? '5/5' : isCurrent ? '2/5' : '0/5'

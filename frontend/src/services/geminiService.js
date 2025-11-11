@@ -156,8 +156,15 @@ export const geminiService = {
     }
   },
 
-  // POST /api/ai/generate-vocabulary - Tạo danh sách từ vựng
-  generateVocabulary: async (topic, category, level, count = 10) => {
+  /**
+   * Generate vocabulary using AI — API already returns normalized data
+   * @param {string} topic - Topic for generation
+   * @param {string} category - Category
+   * @param {string} level - Difficulty level
+   * @param {number} count - Number of words
+   * @returns {Promise} API response
+   */
+  generateVocabulary: async (topic, category, level, count) => {
     try {
       const response = await axiosInstance.post('/ai/generate-vocabulary', {
         topic,
@@ -165,7 +172,17 @@ export const geminiService = {
         level,
         count
       });
-      return response.data;
+      
+      if (!response.data.success) {
+        throw new Error(response.data.message);
+      }
+      
+      // API already returns normalized objects with all fields
+      return {
+        success: true,
+        data: response.data.data
+      };
+      
     } catch (error) {
       console.error('Generate vocabulary error:', error);
       throw error;
@@ -186,6 +203,18 @@ export const geminiService = {
       return response.data;
     } catch (error) {
       console.error('Batch create with images error:', error);
+      throw error;
+    }
+  },
+
+  // ✅ RESTORED: POST /api/ai/generate-exercises-for-step - Tạo bài tập cho bước roadmap
+  generateExercisesForStep: async (data) => {
+    try {
+      // This endpoint is now correctly used from the PersonalizedRoadmap page.
+      const response = await axiosInstance.post('/ai/generate-exercises-for-step', data);
+      return response.data;
+    } catch (error) {
+      console.error('Gemini generate exercises for step error:', error);
       throw error;
     }
   },

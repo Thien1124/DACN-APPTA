@@ -82,8 +82,6 @@ exports.startStudySession = async (req, res) => {
         flashcards = dueCards.map(progress => progress.flashcard);
         reviewCardsCount = flashcards.length;
       } else {
-        // ✅ No progress yet, get all cards from deck
-        console.log('⚠️ No due cards, fetching all cards from deck');
         flashcards = await Flashcard.find({ deck: deckId })
           .limit(cardLimit || 20);
         newCardsCount = flashcards.length;

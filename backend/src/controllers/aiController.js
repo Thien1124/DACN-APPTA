@@ -1,10 +1,12 @@
 const geminiService = require('../services/geminiService');
 const Flashcard = require('../models/Flashcard');
 const Deck = require('../models/Deck');
+const Exercise = require('../models/Exercise'); // ✅ Thêm import Exercise
 const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
 const OpenAI = require('openai');
+const Roadmap = require('../models/RoadmapTopic'); // ✅ Sửa từ RoadmapTopic thành LearningPath
 
 // Khởi tạo OpenAI client
 const openai = new OpenAI({
@@ -544,10 +546,22 @@ exports.batchCreateWithImages = async (req, res) => {
       });
     }
 
+    // ✅ CHECK: Kiểm tra DALL-E API key có sẵn không
+    const hasDalleAccess = !!process.env.OPENAI_API_KEY;
+    
+    if (!hasDalleAccess) {
+      console.warn('⚠️ DALL-E API key not configured. Creating flashcards without images.');
+      // ✅ FALLBACK: Tạo flashcards không có ảnh
+      return exports.batchCreateFlashcards(req, res);
+    }
+
     console.log(`🤖 Batch creating ${words.length} flashcards with DALL-E images...`);
 
     const flashcards = [];
     const errors = [];
+    let imageSuccessCount = 0;
+    let imageTotalAttempts = 0;
+    let dalleBillingLimitReached = false; // ✅ Flag để track billing limit
 
     for (let i = 0; i < words.length; i++) {
       try {
@@ -557,32 +571,39 @@ exports.batchCreateWithImages = async (req, res) => {
         
         // Step 1: Analyze word with AI
         const aiData = await geminiService.analyzeWord(word);
-        console.log(`✅ AI analyzed ${word}:`, {
-          word: aiData.word,
-          hasMeaning: !!aiData.meanings?.[0],
-          hasPronunciation: !!aiData.pronunciation
-        });
+        console.log(`✅ AI analyzed ${word}`);
         
-        // Step 2: Generate image with DALL-E (THAY THẾ Unsplash)
+        // Step 2: Try generate image with DALL-E (với error handling)
         let localImageUrl = '';
-        try {
-          console.log(`🎨 Generating DALL-E image for ${word}...`);
-          
-          const dalleUrl = await generateDalleImage(word, aiData.meanings?.[0]?.definition);
-          console.log(`🔗 DALL-E URL for ${word}:`, dalleUrl);
-          
-          if (dalleUrl) {
-            const filename = `flashcard_${word.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}.png`; // DALL-E tạo PNG
-            localImageUrl = await downloadAndSaveImage(dalleUrl, filename);
-            console.log(`✅ Local image URL for ${word}:`, localImageUrl);
-          } else {
-            console.warn(`⚠️ No DALL-E image generated for ${word}`);
+        
+        // ✅ CHỈ THỬ TẠO ẢNH nếu chưa gặp billing limit
+        if (!dalleBillingLimitReached && i < 3) { // Test với 3 từ đầu tiên
+          try {
+            imageTotalAttempts++;
+            console.log(`🎨 Attempting DALL-E image for ${word}...`);
+            
+            const dalleUrl = await generateDalleImage(word, aiData.meanings?.[0]?.definition);
+            
+            if (dalleUrl) {
+              const filename = `flashcard_${word.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}.png`;
+              localImageUrl = await downloadAndSaveImage(dalleUrl, filename);
+              imageSuccessCount++;
+              console.log(`✅ Local image URL for ${word}:`, localImageUrl);
+            } else {
+              console.warn(`⚠️ No DALL-E image generated for ${word} (likely billing issue)`);
+            }
+          } catch (imageError) {
+            console.error(`❌ DALL-E error for ${word}:`, imageError.message);
+            
+            // ✅ Nếu lỗi billing, set flag và skip tạo ảnh cho tất cả từ còn lại
+            if (imageError.message.includes('Billing') || imageError.message.includes('limit')) {
+              console.warn('⚠️ DALL-E billing limit reached. Skipping image generation for all remaining words.');
+              dalleBillingLimitReached = true; // ✅ Set flag
+            }
           }
-        } catch (imageError) {
-          console.error(`❌ Error generating DALL-E image for ${word}:`, imageError.message);
         }
-
-        // Step 3: Create flashcard
+        
+        // Step 3: Create flashcard (LUÔN tạo flashcard dù có ảnh hay không)
         const front = aiData.word;
         const back = aiData.meanings?.[0]?.translation || aiData.word;
 
@@ -597,7 +618,7 @@ exports.batchCreateWithImages = async (req, res) => {
           synonyms: aiData.synonyms,
           antonyms: aiData.antonyms,
           collocations: aiData.collocations,
-          imageUrl: localImageUrl || '', // ✅ Lưu local path
+          imageUrl: localImageUrl || '', // ✅ OK nếu rỗng
           tags: aiData.tags,
           difficulty: aiData.difficulty,
           cefrLevel: aiData.cefrLevel
@@ -619,18 +640,29 @@ exports.batchCreateWithImages = async (req, res) => {
       });
     }
 
-    // Response
+    // ✅ Response với thông tin về ảnh
     const response = {
       success: true,
-      message: `Tạo ${flashcards.length} flashcard với hình ảnh DALL-E thành công${errors.length > 0 ? ` (${errors.length} từ bị lỗi)` : ''}`,
-      data: flashcards
+      message: `Tạo ${flashcards.length} flashcard thành công${errors.length > 0 ? ` (${errors.length} từ bị lỗi)` : ''}`,
+      data: flashcards,
+      imageStats: {
+        attempted: imageTotalAttempts,
+        successful: imageSuccessCount,
+        failed: imageTotalAttempts - imageSuccessCount,
+        billingLimitReached: dalleBillingLimitReached, // ✅ Thêm flag billing
+        note: dalleBillingLimitReached 
+          ? 'DALL-E không khả dụng do hạn mức billing. Flashcards đã được tạo thành công nhưng không có hình ảnh minh họa.'
+          : imageSuccessCount === 0 && imageTotalAttempts > 0 
+          ? 'DALL-E không khả dụng hoặc hết quota. Flashcards đã được tạo thành công nhưng không có hình ảnh minh họa.'
+          : null
+      }
     };
 
     if (errors.length > 0) {
       response.errors = errors;
     }
 
-    console.log(`✅ Batch create with DALL-E images completed: ${flashcards.length} successful, ${errors.length} errors`);
+    console.log(`✅ Batch create completed: ${flashcards.length} successful, ${errors.length} errors, ${imageSuccessCount}/${imageTotalAttempts} images`);
 
     res.status(201).json(response);
 
@@ -644,10 +676,15 @@ exports.batchCreateWithImages = async (req, res) => {
   }
 };
 
-// Helper: Generate image with DALL-E
+// Helper: Generate image with DALL-E (với better error handling)
 async function generateDalleImage(word, context = '') {
   try {
     console.log(`🎨 Generating DALL-E image for "${word}"...`);
+    
+    // ✅ CHECK: API key có sẵn không
+    if (!process.env.OPENAI_API_KEY) {
+      throw new Error('OpenAI API key not configured');
+    }
     
     const prompt = `Create a clean, educational illustration for the English word "${word}". 
     The image should be suitable for language learning flashcards. 
@@ -656,20 +693,22 @@ async function generateDalleImage(word, context = '') {
     No text or words in the image.`;
     
     const response = await openai.images.generate({
-      model: "dall-e-2", // Rẻ hơn
+      model: "dall-e-2",
       prompt: prompt,
-      size: "512x512", // Nhỏ hơn để tiết kiệm
+      size: "512x512",
       n: 1,
     });
 
     const imageUrl = response.data[0].url;
-    console.log(`✅ DALL-E generated image for "${word}":`, imageUrl);
+    console.log(`✅ DALL-E generated image for "${word}"`);
     
     return imageUrl;
     
   } catch (error) {
     console.error('❌ DALL-E generation error:', error.message);
-    return null;
+    
+    // ✅ Throw error để caller biết (không silent fail)
+    throw error;
   }
 }
 

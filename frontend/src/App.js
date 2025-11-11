@@ -42,6 +42,7 @@ import QuizBank from './pages/QuizBank';
 import PersonalizedRoadmap from './pages/PersonalizedRoadmap';
 import FlashcardReview from './pages/FlashcardReview';
 import AIFlashcardGenerator from './pages/AIFlashcardGenerator';
+import RoadmapStepExercises from './pages/RoadmapStepExercises';
 
 // Admin Pages
 import AdminDashboard from './pages/AdminDashboard';
@@ -73,6 +74,7 @@ import AdminSettings from './pages/AdminSettings';
 import AdminFlashcardBulkCreate from './pages/AdminFlashcardBulkCreate';
 import AdminDeckDetail from './pages/AdminDeckDetail';
 import AdminVocabularyBulkCreate from './pages/AdminVocabularyBulkCreate';
+import AdminVocabularyAICreate from './pages/AdminVocabularyAICreate';
 
 // Import Styles
 import './styles/App.css';
@@ -251,6 +253,14 @@ function App() {
           <Route path="/roadmap" element={<PersonalizedRoadmap />} />
           <Route path="/flashcards/review/:deckId" element={<FlashcardReview />} />
           <Route path="/ai-flashcards" element={<AIFlashcardGenerator />} />
+          <Route 
+            path="/roadmap-step/:roadmapId/:stepNumber" 
+            element={
+              <ProtectedRoute>
+                <RoadmapStepExercises />
+              </ProtectedRoute>
+            } 
+          />
           {/* ========== ADMIN DASHBOARD & PAGES ========== */}
           
           {/* Dashboard */}
@@ -292,6 +302,7 @@ function App() {
             </ProtectedRoute>
           } />
           <Route path="/admin/vocabularies/bulk-create" element={<AdminVocabularyBulkCreate />} />
+          <Route path="/admin/vocabularies/ai-create" element={<AdminVocabularyAICreate />} />
 
           <Route path="/admin/exercises" element={
             <ProtectedRoute requireAdmin={true}>

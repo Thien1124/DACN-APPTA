@@ -16,7 +16,8 @@ import {
   Edit,
   Delete,
   NavigateBefore,
-  NavigateNext
+  NavigateNext,
+  AutoAwesome as AiIcon,
 } from '@mui/icons-material';
 
 // ========== STYLED COMPONENTS ==========
@@ -42,7 +43,11 @@ const ButtonGroup = styled.div`
 `;
 
 const CreateButton = styled.button`
-  background: ${props => props.variant === 'bulk' ? '#8b5cf6' : '#58CC02'};
+  background: ${props => {
+    if (props.variant === 'bulk') return '#8b5cf6';
+    if (props.variant === 'ai') return '#1CB0F6';
+    return '#58CC02';
+  }};
   color: white;
   border: none;
   border-radius: 12px;
@@ -56,7 +61,11 @@ const CreateButton = styled.button`
 
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 16px rgba(88, 204, 2, 0.3);
+    box-shadow: ${props => {
+      if (props.variant === 'bulk') return '0 8px 16px rgba(139, 92, 246, 0.3)';
+      if (props.variant === 'ai') return '0 8px 16px rgba(28, 176, 246, 0.3)';
+      return '0 8px 16px rgba(88, 204, 2, 0.3)';
+    }};
   }
 `;
 
@@ -295,6 +304,10 @@ const AdminVocabularies = () => {
     navigate('/admin/vocabularies/bulk-create');
   };
 
+  const handleAICreate = () => {
+    navigate('/admin/vocabularies/ai-create');
+  };
+
   const handleEdit = (vocabId) => {
     navigate(`/admin/vocabularies/edit/${vocabId}`);
   };
@@ -357,6 +370,10 @@ const AdminVocabularies = () => {
           <CreateButton variant="bulk" onClick={handleBulkCreate}>
             <FileCopy />
             Thêm hàng loạt
+          </CreateButton>
+          <CreateButton variant="ai" onClick={handleAICreate}>
+            <AiIcon sx={{ fontSize: 20 }} />
+            Tạo AI từ vựng
           </CreateButton>
         </ButtonGroup>
       </PageHeader>

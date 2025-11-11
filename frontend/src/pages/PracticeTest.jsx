@@ -733,11 +733,55 @@ const PracticeTest = () => {
   const params = useParams();
 
   const passed = location.state?.questions;
-  const questions = useMemo(
-    () => (Array.isArray(passed) && passed.length ? passed : fallbackMock),
-    [passed]
-  );
 
+  // Normalize incoming questions (support different backend shapes)
+  const questions = useMemo(() => {
+    const src = Array.isArray(passed) && passed.length ? passed : fallbackMock;
+    return src.map((raw, idx) => {
+      // id
+      const id = raw.id || raw._id || `q_${idx}`;
+
+      // prompt / question fallback
+      const prompt = raw.prompt || raw.question || raw.title || raw.text || raw.promptText || "";
+
+      // choices: either plain array of strings, or options array of { text, isCorrect, _id }
+      let choices = [];
+      if (Array.isArray(raw.choices) && raw.choices.length && typeof raw.choices[0] === "string") {
+        choices = raw.choices;
+      } else if (Array.isArray(raw.options) && raw.options.length) {
+        choices = raw.options.map(opt => (typeof opt === "string" ? opt : (opt.text || opt.value || String(opt._id || ""))));
+      } else if (Array.isArray(raw.choices) && raw.choices.length && typeof raw.choices[0] === "object") {
+        choices = raw.choices.map(c => c.text || c.value || String(c._id || ""));
+      }
+
+      // left/right for match pairs
+      const left = raw.left || raw.leftColumn || (raw.correctAnswer && typeof raw.correctAnswer === "object" ? Object.keys(raw.correctAnswer) : raw.left || []);
+      const right = raw.right || raw.rightColumn || (raw.correctAnswer && typeof raw.correctAnswer === "object" ? Object.values(raw.correctAnswer) : raw.right || []);
+
+      // audio detection
+      const audio = raw.audio || raw.audioUrl || raw.audioText || raw.sound;
+
+      // correctAnswer: try to unify id/_id/text
+      let correctAnswer = raw.correctAnswer ?? raw.correct_answer ?? raw.answer ?? null;
+      if (!correctAnswer && Array.isArray(raw.options)) {
+        const correctOpt = raw.options.find(o => o.isCorrect || o.is_correct);
+        correctAnswer = correctOpt ? (correctOpt._id || correctOpt.text || null) : null;
+      }
+
+      return {
+        ...raw,
+        id,
+        prompt,
+        choices,
+        left,
+        right,
+        audio,
+        correctAnswer
+      };
+    });
+  }, [passed]);
+
+  // use normalized questions
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState({});
   const [checked, setChecked] = useState({});
@@ -754,21 +798,138 @@ const PracticeTest = () => {
   const timerRef = useRef(null);
   const q = questions[index];
 
-  const speakText = (text) => {
-    if (!text) return;
-    try {
-      if ("speechSynthesis" in window) {
-        window.speechSynthesis.cancel();
-        const u = new SpeechSynthesisUtterance(text);
-        u.lang = "en-US";
-        u.rate = 0.95;
-        u.pitch = 1;
-        window.speechSynthesis.speak(u);
-      }
-    } catch (err) {
-      console.error("speakText error", err);
+const speakText = (text) => {
+  if (!text || !text.toString().trim()) {
+    console.warn('⚠️ Không có text để phát âm');
+    return;
+  }
+
+  // ✅ Cancel bất kỳ speech nào đang chạy
+  if (window.speechSynthesis.speaking) {
+    window.speechSynthesis.cancel();
+  }
+
+  // ✅ Hàm chọn giọng ENGLISH tốt nhất
+  const getEnglishVoice = (voices) => {
+    console.log('📋 Available voices:', voices.map(v => `${v.name} (${v.lang})`));
+
+    // ✅ 1. Ưu tiên Google US English
+    let voice = voices.find(v => 
+      v.lang === 'en-US' && 
+      v.name.toLowerCase().includes('google')
+    );
+    if (voice) {
+      console.log('✅ Chọn Google US:', voice.name);
+      return voice;
     }
+
+    // ✅ 2. Microsoft David/Zira (Windows)
+    voice = voices.find(v => 
+      v.lang === 'en-US' && 
+      (v.name.includes('David') || v.name.includes('Zira'))
+    );
+    if (voice) {
+      console.log('✅ Chọn Microsoft:', voice.name);
+      return voice;
+    }
+
+    // ✅ 3. Samantha (macOS)
+    voice = voices.find(v => 
+      v.lang === 'en-US' && 
+      v.name.includes('Samantha')
+    );
+    if (voice) {
+      console.log('✅ Chọn Samantha:', voice.name);
+      return voice;
+    }
+
+    // ✅ 4. BẤT KỲ giọng en-US nào (KHÔNG phải en-GB)
+    voice = voices.find(v => v.lang === 'en-US');
+    if (voice) {
+      console.log('✅ Chọn en-US:', voice.name);
+      return voice;
+    }
+
+    // ✅ 5. Bất kỳ giọng English nào (en-GB, en-AU...)
+    voice = voices.find(v => v.lang && v.lang.startsWith('en-'));
+    if (voice) {
+      console.log('✅ Chọn English:', voice.name);
+      return voice;
+    }
+
+    // ✅ 6. LOẠI BỎ tất cả giọng Vietnamese
+    voice = voices.find(v => 
+      v.lang && 
+      !v.lang.startsWith('vi') && 
+      !v.name.toLowerCase().includes('vietnam')
+    );
+    if (voice) {
+      console.log('⚠️ Fallback voice:', voice.name);
+      return voice;
+    }
+
+    console.error('❌ Không tìm thấy giọng English!');
+    return null;
   };
+
+  // ✅ Hàm thực hiện speak
+  const doSpeak = (selectedVoice) => {
+    const utterance = new SpeechSynthesisUtterance(text.toString());
+    
+    // ✅ QUAN TRỌNG: Set voice TRƯỚC khi set lang
+    if (selectedVoice) {
+      utterance.voice = selectedVoice;
+    }
+    
+    // ✅ Luôn set lang = en-US
+    utterance.lang = 'en-US';
+    
+    // ✅ Điều chỉnh giọng nói
+    utterance.rate = 0.9;   // Tốc độ (0.1 - 10)
+    utterance.pitch = 1.0;  // Cao độ (0 - 2)
+    utterance.volume = 1.0; // Âm lượng (0 - 1)
+
+    utterance.onstart = () => {
+      console.log(`🔊 Đang đọc: "${text}"`);
+      console.log(`   Voice: ${utterance.voice?.name || 'default'}`);
+      console.log(`   Lang: ${utterance.lang}`);
+    };
+
+    utterance.onend = () => {
+      console.log('✅ Hoàn thành');
+    };
+
+    utterance.onerror = (err) => {
+      if (err.error !== 'canceled') {
+        console.error('❌ Lỗi:', err.error);
+      }
+    };
+
+    window.speechSynthesis.speak(utterance);
+  };
+
+  // ✅ Lấy danh sách voices
+  let voices = window.speechSynthesis.getVoices();
+
+  if (voices.length > 0) {
+    // ✅ Đã có voices, chọn ngay
+    const englishVoice = getEnglishVoice(voices);
+    doSpeak(englishVoice);
+  } else {
+    
+    // ✅ Chỉ set event 1 lần
+    window.speechSynthesis.onvoiceschanged = () => {
+      voices = window.speechSynthesis.getVoices();
+      console.log(`✅ Loaded ${voices.length} voices`);
+      
+      const englishVoice = getEnglishVoice(voices);
+      doSpeak(englishVoice);
+      
+      // ✅ Clear event sau khi dùng xong
+      window.speechSynthesis.onvoiceschanged = null;
+    };
+  }
+};
 
   const isAudioSrc = (src) => {
     if (!src || typeof src !== "string") return false;

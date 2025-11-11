@@ -39,6 +39,7 @@ const shopRoutes = require('./src/routes/shopRoutes');
 const progressRoutes = require('./src/routes/progressRoutes');
 
 
+
 const app = express();
 const PORT = process.env.PORT || 1124;
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:3000';
@@ -112,6 +113,16 @@ app.use('/api/shop', shopRoutes);
 
 // ✅ Vocabulary Bank routes
 app.use('/api/vocabulary-bank', require('./src/routes/vocabularyBankRoutes'));
+
+// ✅ Roadmap Topic routes
+app.use('/api/roadmap-topic', require('./src/routes/roadmapTopicRoutes'));
+
+
+// ✅ Practice routes
+app.use('/api/practice', require('./src/routes/practiceRoutes'));
+
+// Roadmap routes
+app.use('/api/roadmap', require('./src/routes/roadmapRoutes'));
 
 
 // Health root route

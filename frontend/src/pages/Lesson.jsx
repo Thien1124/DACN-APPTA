@@ -623,86 +623,177 @@ const FeedbackIconWrapper = styled.div`
   }
 `;
 
+
 const drawCheckmark = keyframes`
   0% {
-    height: 0;
-    width: 0;
+    stroke-dashoffset: 100;
     opacity: 0;
   }
-  20% {
-    height: 0;
-    width: 8px;
-    opacity: 1;
-  }
-  40% {
-    height: 20px;
-    width: 8px;
+  50% {
     opacity: 1;
   }
   100% {
-    height: 52px;
-    width: 28px;
+    stroke-dashoffset: 0;
     opacity: 1;
   }
 `;
 
+
 const checkmarkPop = keyframes`
-  0%, 100% {
-    transform: rotate(45deg) scale(1);
+  0% {
+    transform: scale(0);
+    opacity: 0;
   }
   50% {
-    transform: rotate(45deg) scale(1.1);
+    transform: scale(1.2);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+`;
+
+const checkmarkGlow = keyframes`
+  0%, 100% {
+    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.8));
+  }
+  50% {
+    filter: drop-shadow(0 0 16px rgba(255, 255, 255, 1));
+  }
+`;
+
+
+const particleBurst = keyframes`
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--tx), var(--ty)) scale(0);
+    opacity: 0;
+  }
+`;
+
+const ripple = keyframes`
+  0% {
+    transform: scale(0.8);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(2);
+    opacity: 0;
   }
 `;
 
 const CheckmarkIcon = styled.div`
   position: relative;
-  width: 28px;
-  height: 52px;
-  transform: rotate(45deg);
-  animation: ${checkmarkPop} 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-  margin-bottom: 10px;
-  margin-left: 5px;
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
-  &::after {
-    content: "";
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    width: 8px;
-    height: 52px;
-    background: white;
-    border-radius: 4px;
-    animation: ${drawCheckmark} 0.4s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+  svg {
+    width: 40px;
+    height: 40px;
+    animation: ${checkmarkPop} 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55),
+               ${checkmarkGlow} 1.5s ease-in-out infinite;
   }
 
-  &::before {
-    content: "";
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    width: 28px;
-    height: 8px;
-    background: white;
-    border-radius: 4px;
-    animation: ${drawCheckmark} 0.4s cubic-bezier(0.65, 0, 0.35, 1) 0.2s
-      forwards;
+  .checkmark-path {
+    stroke: white;
+    stroke-width: 6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    fill: none;
+    stroke-dasharray: 100;
+    stroke-dashoffset: 100;
+    animation: ${drawCheckmark} 0.5s ease-out 0.2s forwards;
   }
 
   @media (max-width: 768px) {
-    width: 24px;
+    width: 48px;
     height: 48px;
 
-    &::after {
-      width: 6px;
-      height: 48px;
+    svg {
+      width: 36px;
+      height: 36px;
     }
 
-    &::before {
-      width: 24px;
-      height: 6px;
+    .checkmark-path {
+      stroke-width: 5;
     }
   }
+`;
+
+const CheckmarkParticles = styled.div`
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+
+  .particle {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: white;
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    animation: ${particleBurst} 0.8s ease-out forwards;
+    opacity: 0;
+  }
+
+  .particle:nth-child(1) {
+    --tx: 30px;
+    --ty: -30px;
+    animation-delay: 0.3s;
+  }
+  .particle:nth-child(2) {
+    --tx: -30px;
+    --ty: -30px;
+    animation-delay: 0.35s;
+  }
+  .particle:nth-child(3) {
+    --tx: 30px;
+    --ty: 30px;
+    animation-delay: 0.4s;
+  }
+  .particle:nth-child(4) {
+    --tx: -30px;
+    --ty: 30px;
+    animation-delay: 0.45s;
+  }
+  .particle:nth-child(5) {
+    --tx: 0px;
+    --ty: -40px;
+    animation-delay: 0.38s;
+  }
+  .particle:nth-child(6) {
+    --tx: 0px;
+    --ty: 40px;
+    animation-delay: 0.42s;
+  }
+  .particle:nth-child(7) {
+    --tx: 40px;
+    --ty: 0px;
+    animation-delay: 0.36s;
+  }
+  .particle:nth-child(8) {
+    --tx: -40px;
+    --ty: 0px;
+    animation-delay: 0.44s;
+  }
+`;
+
+const CheckmarkRipple = styled.div`
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.6);
+  animation: ${ripple} 0.8s ease-out;
 `;
 
 const CrossIcon = styled.div`
@@ -2092,7 +2183,7 @@ const Lesson = () => {
     setSelectedLeft(null);
     setSelectedRight(null);
 
-    // ✅ ĐỌC lại tiếng Anh khi ghép đúng (để confirm)
+    // ✅ ĐỌC tiếng Anh khi ghép đúng (để confirm)
     speakText(rightItem.text);
 
     // Check xem đã hoàn thành hết chưa
@@ -2123,15 +2214,8 @@ const Lesson = () => {
   if (matchedPairs.includes(id) || isChecked) return;
 
   if (column === "left") {
-    // ✅ Click vào cột TRÁI (Tiếng Việt)
+    // ✅ Click vào cột TRÁI (Tiếng Việt) - KHÔNG ĐỌC
     setSelectedLeft(id);
-    
-    // ✅ TÌM và ĐỌC tiếng Anh tương ứng
-    const rightItem = question.rightColumn.find(item => item.matchWith === id);
-    if (rightItem) {
-      speakText(rightItem.text); // Đọc tiếng Anh
-      console.log(`🔊 Click tiếng Việt → Đọc tiếng Anh: "${rightItem.text}"`);
-    }
     
     // Kiểm tra match nếu đã chọn cột phải
     if (selectedRight) {
@@ -2141,7 +2225,7 @@ const Lesson = () => {
     // ✅ Click vào cột PHẢI (Tiếng Anh) - KHÔNG ĐỌC
     setSelectedRight(id);
     
-    // Chỉ check match, KHÔNG phát âm
+    // Kiểm tra match nếu đã chọn cột trái
     if (selectedLeft) {
       checkMatch(selectedLeft, id);
     }
@@ -2862,8 +2946,17 @@ const speakText = (text) => {
                     const input = document.querySelector('input[type="text"]');
                     if (input) input.focus();
                   }, 50);
-                  // Phát âm text cần nghe
-                  speakText(question.audioText || question.correctAnswer);
+
+                  // ✅ Chỉ đọc "từ đáp án" (dùng speakText), không dùng audio import
+                  let textToSpeak = "";
+                  if (typeof question.correctAnswer === "string") {
+                    textToSpeak = question.correctAnswer;
+                  } else if (Array.isArray(question.correctAnswer)) {
+                    textToSpeak = question.correctAnswer.join(" ");
+                  } else if (question.audioText) {
+                    textToSpeak = question.audioText;
+                  }
+                  speakText(textToSpeak);
                 }}
                 title="Phát âm để nghe"
               >
@@ -3128,15 +3221,31 @@ const speakText = (text) => {
             <FeedbackBanner $isCorrect={!isSkipped && isCorrectAnswer()}>
               <FeedbackWrapper>
                 <FeedbackContent>
-                  <FeedbackIconWrapper
-                    $isCorrect={!isSkipped && isCorrectAnswer()}
-                  >
-                    {!isSkipped && isCorrectAnswer() ? (
-                      <CheckmarkIcon />
-                    ) : (
-                      <CrossIcon />
-                    )}
-                  </FeedbackIconWrapper>
+                  <FeedbackIconWrapper $isCorrect={!isSkipped && isCorrectAnswer()}>
+  {!isSkipped && isCorrectAnswer() ? (
+    <CheckmarkIcon>
+      <CheckmarkRipple />
+      <svg viewBox="0 0 52 52">
+        <path
+          className="checkmark-path"
+          d="M14 27l10 10 18-18"
+        />
+      </svg>
+      <CheckmarkParticles>
+        <div className="particle"></div>
+        <div className="particle"></div>
+        <div className="particle"></div>
+        <div className="particle"></div>
+        <div className="particle"></div>
+        <div className="particle"></div>
+        <div className="particle"></div>
+        <div className="particle"></div>
+      </CheckmarkParticles>
+    </CheckmarkIcon>
+  ) : (
+    <CrossIcon />
+  )}
+</FeedbackIconWrapper>
                   <FeedbackTextWrapper>
                     <FeedbackTitle $isCorrect={!isSkipped && isCorrectAnswer()}>
                       {!isSkipped && isCorrectAnswer()
@@ -3283,7 +3392,11 @@ const speakText = (text) => {
                   )}
                   {hasAudio(q) && (
                     <SpeakerIconSmall
-                      onClick={() => speakText(getAudioText(q))}
+                      // ✅ Review: đọc đúng "đáp án đúng" khi bấm nút loa nhỏ (dùng speakText)
+                      onClick={() => {
+                        const answerText = getCorrectAnswerForReview(q);
+                        speakText(answerText);
+                      }}
                     >
                       🔊
                     </SpeakerIconSmall>

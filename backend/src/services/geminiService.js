@@ -439,3 +439,50 @@ DO NOT include any explanations, definitions, or other text. ONLY the JSON array
     throw new Error(`Cannot generate vocabulary: ${error.message}`);
   }
 };
+
+/**
+ * Generate exercises for a specific skill, level, and difficulty
+ * @param {string} skill - Skill type (vocabulary, grammar, etc.)
+ * @param {string} level - CEFR level (A1-C2)
+ * @param {string} topic - Topic
+ * @param {number} count - Number of exercises
+ * @param {string} difficulty - Difficulty level (easy, medium, hard)
+ * @returns {Array} List of exercises
+ */
+exports.generateExercises = async (skill, level, topic, count = 5, difficulty = 'medium') => {
+  try {
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+
+    const skillPrompts = {
+      vocabulary: `Generate ${count} ${difficulty} vocabulary exercises for ${level} level, topic: ${topic}. Each exercise should be a multiple-choice question testing word meaning. Make them ${difficulty === 'easy' ? 'simple and basic' : difficulty === 'medium' ? 'moderately challenging' : 'complex and advanced'}.`,
+      grammar: `Generate ${count} ${difficulty} grammar exercises for ${level} level, topic: ${topic}. Each exercise should test grammar rules with ${difficulty === 'easy' ? 'simple fill-in-the-blank' : difficulty === 'medium' ? 'multiple-choice or fill-in' : 'complex sentence correction'}. Make them ${difficulty === 'easy' ? 'basic' : difficulty === 'medium' ? 'intermediate' : 'advanced'}.`,
+      listening: `Generate ${count} ${difficulty} listening exercises for ${level} level, topic: ${topic}. Include audio descriptions and ${difficulty === 'easy' ? 'simple' : difficulty === 'medium' ? 'moderate' : 'advanced'} comprehension questions.`,
+      reading: `Generate ${count} ${difficulty} reading comprehension exercises for ${level} level, topic: ${topic}. Include passages and ${difficulty === 'easy' ? 'basic' : difficulty === 'medium' ? 'intermediate' : 'advanced'} questions.`,
+      speaking: `Generate ${count} ${difficulty} speaking exercises for ${level} level, topic: ${topic}. Include prompts for ${difficulty === 'easy' ? 'simple' : difficulty === 'medium' ? 'moderate' : 'advanced'} oral practice.`,
+      writing: `Generate ${count} ${difficulty} writing exercises for ${level} level, topic: ${topic}. Include prompts for ${difficulty === 'easy' ? 'short' : difficulty === 'medium' ? 'medium-length' : 'long'} written responses.`,
+      mixed: `Generate ${count} ${difficulty} mixed skill exercises for ${level} level, topic: ${topic}. Combine multiple skills. Make them ${difficulty === 'easy' ? 'simple' : difficulty === 'medium' ? 'balanced' : 'challenging'}.`
+    };
+
+    const prompt = skillPrompts[skill] || skillPrompts.mixed;
+    prompt += `\n\nReturn as JSON array of exercises. Each exercise: { "question": "string", "type": "multiple_choice/fill_blank/etc", "options": ["array"], "correctAnswer": "string", "explanation": "string", "audioUrl": "optional", "imageUrl": "optional" }`;
+
+    const result = await model.generateContent(prompt);
+    const response = result.response;
+    const text = response.text();
+    console.log(`  🤖 Gemini raw response for ${skill} (${difficulty}):\n`, text); // Log phản hồi thô từ Gemini
+    
+    let jsonText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    let exercises = [];
+    try {
+      exercises = JSON.parse(jsonText);
+    } catch (parseError) {
+      console.error('  ❌ JSON parsing error in generateExercises:', parseError);
+      console.error('  ❌ Malformed JSON from Gemini:', jsonText); // Log JSON bị lỗi
+    }
+    
+    return Array.isArray(exercises) ? exercises.slice(0, count) : []; // Đảm bảo trả về mảng
+  } catch (error) {
+    console.error('Error generating exercises:', error);
+    return [];
+  }
+};

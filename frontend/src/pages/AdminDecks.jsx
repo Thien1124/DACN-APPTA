@@ -490,13 +490,13 @@ const AdminDecks = () => {
           <!-- Image Option -->
           <div style="margin-bottom: 1.5rem; padding: 1.25rem; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 2px solid #f59e0b; border-radius: 12px;">
             <label style="display: flex; align-items: center; cursor: pointer;">
-              <input type="checkbox" id="swal-use-images" style="width: 18px; height: 18px; margin-right: 0.75rem; cursor: pointer; accent-color: #10b981;" checked />
+              <input type="checkbox" id="swal-use-images-create" style="width: 18px; height: 18px; margin-right: 0.75rem; cursor: pointer; accent-color: #10b981;" />
               <span style="color: #166534; font-weight: 600; font-size: 0.875rem;">
                 Tự động tạo hình ảnh minh họa bằng AI (DALL-E)
               </span>
             </label>
             <p style="margin: 0.5rem 0 0 2rem; font-size: 0.75rem; color: #15803d;">
-              Sử dụng AI để tạo hình ảnh độc quyền cho flashcards (tốn phí)
+              ⚠️ Yêu cầu OpenAI API key có billing. Nếu không có, flashcards sẽ được tạo không có ảnh.
             </p>
           </div>
 
@@ -737,20 +737,18 @@ const AdminDecks = () => {
         showToast('info', 'Đang xử lý', `🤖 AI đang phân tích ${words.length} từ...`);
 
         // ✅ Option trong form để chọn có muốn thêm hình ảnh không
-        const useImagesCheckbox = document.getElementById('swal-use-images');
+        const useImagesCheckbox = document.getElementById('swal-use-images-create');
+        const useImages = useImagesCheckbox ? useImagesCheckbox.checked : true;
 
-console.log('🎯 Checkbox element:', useImagesCheckbox);
-console.log('🎯 Checkbox checked:', useImages);
-const useImages = useImagesCheckbox ? useImagesCheckbox.checked : true;
         // ✅ Dùng API khác nhau tùy vào có hình ảnh hay không
         let createResult;
         if (useImages) {
-  console.log('🖼️ Calling batchCreateWithImages...');
-  createResult = await geminiService.batchCreateWithImages(newDeckId, words);
-} else {
-  console.log('📝 Calling batchCreate (no images)...');
-  createResult = await geminiService.batchCreate(newDeckId, words);
-}
+          console.log('🖼️ Calling batchCreateWithImages...');
+          createResult = await geminiService.batchCreateWithImages(newDeckId, words);
+        } else {
+          console.log('📝 Calling batchCreate (no images)...');
+          createResult = await geminiService.batchCreate(newDeckId, words);
+        }
 
         console.log('✅ Batch create result:', createResult);
 
@@ -762,14 +760,19 @@ const useImages = useImagesCheckbox ? useImagesCheckbox.checked : true;
           ? createResult.data.length
           : (createResult.data?.count || 0);
 
+        // ✅ Check image generation status
+        const imageStats = createResult.imageStats || {};
+        const hasImageIssue = imageStats.attempted > 0 && imageStats.successful === 0;
+        const billingLimitReached = imageStats.billingLimitReached; // ✅ Check billing flag
+
         // ✅ Kiểm tra có lỗi không
         const hasErrors = createResult.errors && createResult.errors.length > 0;
         const errorCount = hasErrors ? createResult.errors.length : 0;
 
-        // ✅ Success modal with error details
+        // ✅ Success modal với thông tin về ảnh
         await Swal.fire({
-          icon: hasErrors ? 'warning' : 'success',
-          title: `<span style="color: ${hasErrors ? '#f59e0b' : '#10b981'};">${hasErrors ? '⚠️ Hoàn thành với lỗi' : '🎉 Thành công!'}</span>`,
+          icon: hasErrors ? 'warning' : (hasImageIssue ? 'warning' : 'success'),
+          title: `<span style="color: ${hasErrors ? '#f59e0b' : (hasImageIssue ? '#f59e0b' : '#10b981')};">${hasErrors ? '⚠️ Hoàn thành với lỗi' : (billingLimitReached ? '⚠️ Tạo thành công (hết quota DALL-E)' : hasImageIssue ? '⚠️ Tạo thành công (không có ảnh)' : '🎉 Thành công!')}</span>`,
           html: `
             <div style="text-align: center;">
               <p style="font-size: 1.1rem; margin-bottom: 1rem; color: #1e293b;">
@@ -779,6 +782,38 @@ const useImages = useImagesCheckbox ? useImagesCheckbox.checked : true;
                 <p style="font-size: 2.5rem; margin: 0; color: #166534;">${createdCount}</p>
                 <p style="margin: 0.5rem 0 0 0; color: #16a34a; font-weight: 600; font-size: 1.1rem;">flashcards thành công</p>
               </div>
+              
+              ${billingLimitReached ? `
+                <div style="padding: 1rem; background: #fef3c7; border-radius: 8px; border: 1px solid #f59e0b; margin-bottom: 1rem;">
+                  <p style="color: #92400e; font-weight: 600; margin-bottom: 0.5rem;">
+                    💳 DALL-E hết hạn mức thanh toán
+                  </p>
+                  <p style="color: #78350f; font-size: 0.875rem;">
+                    OpenAI API đã hết quota cho tháng này. Flashcards đã được tạo thành công với đầy đủ thông tin nhưng không có hình ảnh minh họa.
+                  </p>
+                  <p style="color: #78350f; font-size: 0.875rem; margin-top: 0.5rem;">
+                    💡 Bạn có thể thêm ảnh thủ công sau hoặc nạp thêm credit cho OpenAI.
+                  </p>
+                </div>
+              ` : hasImageIssue ? `
+                <div style="padding: 1rem; background: #fef3c7; border-radius: 8px; border: 1px solid #f59e0b; margin-bottom: 1rem;">
+                  <p style="color: #92400e; font-weight: 600; margin-bottom: 0.5rem;">
+                    📸 Không thể tạo hình ảnh với DALL-E
+                  </p>
+                  <p style="color: #78350f; font-size: 0.875rem;">
+                    ${imageStats.note || 'DALL-E API không khả dụng hoặc hết quota. Flashcards đã được tạo thành công nhưng không có hình ảnh minh họa.'}
+                  </p>
+                  <p style="color: #78350f; font-size: 0.875rem; margin-top: 0.5rem;">
+                    💡 Bạn có thể thêm ảnh thủ công sau.
+                  </p>
+                </div>
+              ` : imageStats.successful > 0 ? `
+                <div style="padding: 0.75rem; background: #d1fae5; border-radius: 8px; border: 1px solid #10b981; margin-bottom: 1rem;">
+                  <p style="color: #065f46; font-size: 0.875rem; margin: 0;">
+                    ✅ Đã tạo ${imageStats.successful}/${imageStats.attempted} ảnh DALL-E thành công
+                  </p>
+                </div>
+              ` : ''}
               
               ${hasErrors ? `
                 <div style="padding: 1rem; background: #fef3c7; border-radius: 8px; border: 1px solid #f59e0b; margin-bottom: 1rem;">
@@ -804,7 +839,7 @@ const useImages = useImagesCheckbox ? useImagesCheckbox.checked : true;
               </div>
             </div>
           `,
-          confirmButtonColor: hasErrors ? '#f59e0b' : '#10b981',
+          confirmButtonColor: hasErrors || hasImageIssue ? '#f59e0b' : '#10b981',
           confirmButtonText: '👀 Xem deck',
           showCancelButton: true,
           cancelButtonText: 'Đóng',
@@ -979,13 +1014,13 @@ ${JSON.stringify(error.response?.data || error, null, 2)}
             <!--  NEW: Checkbox để thêm hình ảnh -->
             <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #d1fae5;">
               <label style="display: flex; align-items: center; cursor: pointer;">
-                <input type="checkbox" id="swal-use-images" style="width: 18px; height: 18px; margin-right: 0.75rem; cursor: pointer; accent-color: #10b981;" checked />
+                <input type="checkbox" id="swal-use-images-add" style="width: 18px; height: 18px; margin-right: 0.75rem; cursor: pointer; accent-color: #10b981;" checked />
                 <span style="color: #166534; font-weight: 600; font-size: 0.875rem;">
                   Tự động tạo hình ảnh minh họa bằng AI (DALL-E)
                 </span>
               </label>
               <p style="margin: 0.5rem 0 0 2rem; font-size: 0.75rem; color: #15803d;">
-                Sử dụng AI để tạo hình ảnh độc quyền cho flashcards (tốn phí)
+                ⚠️ Yêu cầu OpenAI API key có billing. Nếu không có, flashcards sẽ được tạo không có ảnh.
               </p>
             </div>
           </div>
@@ -1079,7 +1114,8 @@ ${JSON.stringify(error.response?.data || error, null, 2)}
             deck.title, 
             deck.description || '', 
             deck.category || 'GENERAL', 
-            cardCount // ✅ Truyền cardCount từ form
+            deck.level || 'B1', // ✅ Thêm level từ deck
+            cardCount // ✅ Truyền cardCount vào vị trí count
           );
           
           console.log(`✅ Auto generated ${words.length} words for ${cardCount} cards`);
@@ -1113,8 +1149,17 @@ ${JSON.stringify(error.response?.data || error, null, 2)}
         // ✅ Call backend API: POST /api/ai/batch-create
         // Request: { deckId, words: [...] }
         // Response: { success: true, message: "...", data: [...flashcards] }
-        const createResult = await geminiService.batchCreate(deck._id, words);
-        console.log('✅ Add AI flashcards result:', createResult);
+        const useImagesCheckbox = document.getElementById('swal-use-images-add');
+        const useImages = useImagesCheckbox ? useImagesCheckbox.checked : true;
+
+        let createResult;
+        if (useImages) {
+          console.log('🖼️ Calling batchCreateWithImages for existing deck...');
+          createResult = await geminiService.batchCreateWithImages(deck._id, words);
+        } else {
+          console.log('📝 Calling batchCreate (no images) for existing deck...');
+          createResult = await geminiService.batchCreate(deck._id, words);
+        }
 
         // ✅ Validate response
         if (!createResult?.success) {

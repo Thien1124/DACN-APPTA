@@ -3,12 +3,12 @@ const mongoose = require('mongoose');
 const vocabularySchema = new mongoose.Schema({
   word: {
     type: String,
-    required: [true, 'Vui lòng nhập từ vựng'],
+    required: true,
     trim: true
   },
   translation: {
     type: String,
-    required: [true, 'Vui lòng nhập nghĩa của từ'],
+    required: true,
     trim: true
   },
   phonetic: {
@@ -23,21 +23,26 @@ const vocabularySchema = new mongoose.Schema({
     type: String,
     trim: true
   },
-  imageUrl: {
-    type: String
-  },
-  audioUrl: {
-    type: String
-  },
-  lesson: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Lesson',
-    required: [true, 'Từ vựng phải thuộc về một bài học']
-  },
   difficulty: {
     type: String,
     enum: ['easy', 'medium', 'hard'],
     default: 'medium'
+  },
+  partOfSpeech: {
+    type: String,
+    trim: true
+  },
+  imageUrl: {
+    type: String,
+    trim: true
+  },
+  audioUrl: {
+    type: String,
+    trim: true
+  },
+  lesson: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Lesson'
   },
   learnedBy: [{
     user: {

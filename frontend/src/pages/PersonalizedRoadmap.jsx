@@ -14,18 +14,20 @@ import {
   Schedule,
   EmojiEvents,
   Refresh,
-  Edit,
   Add,
   NavigateNext,
   NavigateBefore,
   Today,
   ViewWeek,
   ViewModule,
-  Notifications,
-  NotificationsActive,
-  MoreVert
+  PlayArrow,
+  AutoAwesome
 } from '@mui/icons-material';
 import { useToast } from '../hooks/useToast';
+import { roadmapTopicService } from '../services/roadmapTopicService';
+import { roadmapService } from '../services/roadmapService';
+import { geminiService } from '../services/geminiService'; // Thêm import nếu chưa có
+import Swal from 'sweetalert2';
 
 // ========== ANIMATIONS ==========
 const fadeIn = keyframes`
@@ -56,7 +58,7 @@ const PageWrapper = styled.div`
   background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600"><g fill="%2358CC02" opacity="0.03"><circle cx="120" cy="80" r="120"/><circle cx="560" cy="160" r="100"/><circle cx="400" cy="420" r="140"/></g></svg>');
   background-repeat: no-repeat;
   background-position: right 10% top 10%;
-  position: relative; /* Thêm dòng này */
+  position: relative;
 `;
 
 const MainContent = styled.main`
@@ -65,14 +67,10 @@ const MainContent = styled.main`
   max-width: 1400px;
   margin: 0 auto;
   animation: ${fadeIn} 0.6s ease;
-  
-  /* Đảm bảo không bị che */
   position: relative;
   z-index: 1;
-
-  /* Màn hình > 1400px */
-  margin-left: 300px;  /* 280px + 20px spacing */
-  margin-right: 400px; /* 380px + 20px spacing */
+  margin-left: 300px;
+  margin-right: 400px;
 
   @media (max-width: 1400px) {
     margin-left: 300px;
@@ -155,7 +153,116 @@ const Tab = styled.button`
   }
 `;
 
-// ========== ROADMAP STYLES ==========
+const EmptyState = styled.div`
+  text-align: center;
+  padding: 4rem 2rem;
+  animation: ${fadeIn} 0.6s ease;
+`;
+
+const EmptyIcon = styled.div`
+  font-size: 4rem;
+  margin-bottom: 1.5rem;
+  animation: ${pulse} 2s infinite;
+`;
+
+const EmptyTitle = styled.h2`
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #166a0b;
+  margin: 0 0 0.75rem;
+`;
+
+const EmptyDescription = styled.p`
+  font-size: 1.125rem;
+  color: #6b7280;
+  margin: 0 0 2rem;
+  line-height: 1.6;
+`;
+
+const EmptyButton = styled.button`
+  padding: 1rem 2rem;
+  background: linear-gradient(135deg, #58cc02, #45a302);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 1.125rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(88, 204, 2, 0.3);
+  }
+`;
+
+const RoadmapHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+`;
+
+const RoadmapInfo = styled.div`
+  flex: 1;
+`;
+
+const RoadmapTopicTitle = styled.h2`
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #166a0b;
+  margin: 0 0 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+`;
+
+const RoadmapMeta = styled.div`
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+  color: #6b7280;
+  font-size: 0.95rem;
+  font-weight: 600;
+`;
+
+const MetaItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+`;
+
+const RoadmapActions = styled.div`
+  display: flex;
+  gap: 0.75rem;
+`;
+
+const IconButton = styled.button`
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: ${props => props.danger ? '#fee2e2' : '#e6f7e8'};
+  color: ${props => props.danger ? '#dc2626' : '#166a0b'};
+  border: 2px solid ${props => props.danger ? '#fecaca' : '#e6f3e6'};
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px ${props => props.danger ? 'rgba(220, 38, 38, 0.2)' : 'rgba(88, 204, 2, 0.2)'};
+  }
+`;
+
 const RoadmapSection = styled.div`
   animation: ${fadeIn} 0.5s ease;
 `;
@@ -389,7 +496,42 @@ const ActionButton = styled.button`
   }
 `;
 
-// ========== CALENDAR STYLES ==========
+const CreateRoadmapButton = styled.button`
+  position: fixed;
+  bottom: 2rem;
+  right: 420px;
+  padding: 1rem 1.5rem;
+  background: linear-gradient(135deg, #58cc02, #45a302);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(88, 204, 2, 0.3);
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  z-index: 100;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(88, 204, 2, 0.4);
+  }
+
+  @media (max-width: 1200px) {
+    right: 2rem;
+    bottom: 5rem;
+  }
+
+  @media (max-width: 768px) {
+    padding: 0.875rem 1.25rem;
+    font-size: 0.875rem;
+  }
+`;
+
+// Calendar styles (keep existing calendar styles...)
 const CalendarSection = styled.div`
   animation: ${fadeIn} 0.5s ease;
 `;
@@ -629,69 +771,16 @@ const PersonalizedRoadmap = () => {
   const navigate = useNavigate();
   const { showToast } = useToast();
 
-  const [activeTab, setActiveTab] = useState('roadmap'); // roadmap, calendar
+  const [activeTab, setActiveTab] = useState('roadmap');
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [calendarView, setCalendarView] = useState('month'); // month, week
+  const [calendarView, setCalendarView] = useState('month');
   const [selectedDate, setSelectedDate] = useState(null);
-
-  // Mock roadmap data
-  const [roadmapData, setRoadmapData] = useState({
-    overallProgress: 65,
-    completedMilestones: 8,
-    totalMilestones: 15,
-    currentStreak: 12,
-    estimatedCompletion: '2 tháng nữa'
-  });
-
-  const [milestones, setMilestones] = useState([
-    {
-      id: 1,
-      title: 'Hoàn thành Unit 1: Basics',
-      description: 'Nắm vững các kiến thức cơ bản về ngữ pháp và từ vựng',
-      progress: 100,
-      status: 'completed',
-      lessons: 10,
-      completedLessons: 10,
-      estimatedDays: 7,
-      actualDays: 6
-    },
-    {
-      id: 2,
-      title: 'Đạt 100 điểm trong Practice Test',
-      description: 'Hoàn thành bài kiểm tra với điểm số tối thiểu 100',
-      progress: 85,
-      status: 'current',
-      lessons: 5,
-      completedLessons: 4,
-      estimatedDays: 3,
-      actualDays: 2
-    },
-    {
-      id: 3,
-      title: 'Học thuộc 200 từ vựng mới',
-      description: 'Mở rộng vốn từ vựng với các chủ đề thông dụng',
-      progress: 45,
-      status: 'current',
-      lessons: 8,
-      completedLessons: 3,
-      estimatedDays: 14,
-      actualDays: 6
-    },
-    {
-      id: 4,
-      title: 'Hoàn thành Unit 2: Intermediate',
-      description: 'Nâng cao kỹ năng với các cấu trúc ngữ pháp phức tạp hơn',
-      progress: 0,
-      status: 'locked',
-      lessons: 12,
-      completedLessons: 0,
-      estimatedDays: 10,
-      actualDays: 0
-    }
-  ]);
+  const [roadmapData, setRoadmapData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [milestones, setMilestones] = useState([]);
 
   // Mock calendar events
-  const [events, setEvents] = useState([
+  const [events] = useState([
     {
       id: 1,
       date: new Date(2024, 10, 15),
@@ -707,16 +796,247 @@ const PersonalizedRoadmap = () => {
       time: '20:30',
       color: '#fbbf24',
       type: 'test'
-    },
-    {
-      id: 3,
-      date: new Date(2024, 10, 18),
-      title: 'Ôn tập từ vựng Unit 2',
-      time: '18:00',
-      color: '#3b82f6',
-      type: 'review'
     }
   ]);
+
+  // Thêm state để kiểm tra đăng nhập
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    // Kiểm tra token để xác định đăng nhập
+    const token = localStorage.getItem('token');
+    setIsLoggedIn(!!token);
+    loadRoadmap();
+  }, []);
+
+  const loadRoadmap = async () => {
+    try {
+      setLoading(true);
+      const response = await roadmapTopicService.getCurrent();
+      
+      if (response.success) {
+        const roadmap = response.data;
+        
+        setRoadmapData({
+          topic: roadmap.topic,
+          category: roadmap.category,
+          level: roadmap.level,
+          overallProgress: roadmap.overallProgress,
+          completedMilestones: roadmap.steps.filter(s => s.isCompleted).length,
+          totalMilestones: roadmap.steps.length,
+          currentStreak: 12,
+          estimatedCompletion: new Date(roadmap.estimatedCompletionDate).toLocaleDateString('vi-VN'),
+          totalXP: roadmap.totalXP,
+          startedAt: new Date(roadmap.startedAt).toLocaleDateString('vi-VN')
+        });
+
+        const transformedMilestones = roadmap.steps.map(step => ({
+          id: step._id,
+          title: step.title,
+          description: step.description,
+          progress: step.isCompleted ? 100 : (roadmap.currentStep === step.stepNumber ? 50 : 0),
+          status: step.isCompleted ? 'completed' : (roadmap.currentStep === step.stepNumber ? 'current' : 'locked'),
+          lessons: step.exercises.length,
+          completedLessons: step.isCompleted ? step.exercises.length : 0,
+          difficulty: step.difficulty,
+          minScore: step.minScore,
+          xpReward: step.xpReward,
+          estimatedTime: step.estimatedTime,
+          roadmapId: roadmap._id,
+          stepNumber: step.stepNumber
+        }));
+
+        setMilestones(transformedMilestones);
+      }
+    } catch (error) {
+      console.error('Load roadmap error:', error);
+      if (error.response?.status === 404) {
+        setRoadmapData(null);
+        setMilestones([]);
+      } else {
+        showToast('error', 'Lỗi', 'Không thể tải lộ trình học');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const showCreateRoadmapDialog = async () => {
+    const { value: formValues } = await Swal.fire({
+      title: 'Tạo Lộ trình học toàn diện',
+      html: `
+        <div style="text-align: left; padding: 1rem;">
+          <div style="margin-bottom: 1.5rem;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 700; color: #166a0b; font-size: 1rem;">
+              Chủ đề học tập
+            </label>
+            <input id="swal-topic" class="swal2-input" style="margin: 0; width: 100%; padding: 0.875rem; border: 2px solid #e6f3e6; border-radius: 8px; font-size: 1rem;" placeholder="VD: Tiếng Anh tổng quát" value="General English" />
+          </div>
+          
+          <div style="margin-bottom: 1.5rem;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 700; color: #166a0b; font-size: 1rem;">
+              Trình độ bắt đầu
+            </label>
+            <select id="swal-start-level" class="swal2-select" style="margin: 0; width: 100%; padding: 0.875rem; border: 2px solid #e6f3e6; border-radius: 8px; font-size: 1rem; background: white;">
+              <option value="A1">A1 - Beginner (Mới bắt đầu)</option>
+              <option value="A2">A2 - Elementary (Sơ cấp)</option>
+              <option value="B1">B1 - Intermediate (Trung cấp)</option>
+              <option value="B2">B2 - Upper Intermediate (Trung cấp cao)</option>
+              <option value="C1">C1 - Advanced (Nâng cao)</option>
+              <option value="C2">C2 - Mastery (Thành thạo)</option>
+            </select>
+          </div>
+          
+          <div style="margin-bottom: 1.5rem;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 700; color: #166a0b; font-size: 1rem;">
+              Trình độ kết thúc
+            </label>
+            <select id="swal-end-level" class="swal2-select" style="margin: 0; width: 100%; padding: 0.875rem; border: 2px solid #e6f3e6; border-radius: 8px; font-size: 1rem; background: white;">
+              <option value="A2">A2 - Elementary (Sơ cấp)</option>
+              <option value="B1" selected>B1 - Intermediate (Trung cấp)</option>
+              <option value="B2">B2 - Upper Intermediate (Trung cấp cao)</option>
+              <option value="C1">C1 - Advanced (Nâng cao)</option>
+              <option value="C2">C2 - Mastery (Thành thạo)</option>
+            </select>
+          </div>
+
+          <div style="margin-bottom: 1.5rem;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 700; color: #166a0b; font-size: 1rem;">
+              Số bài tập cho mỗi trình độ
+            </label>
+            <input id="swal-steps-per-level" type="number" class="swal2-input" style="margin: 0; width: 100%; padding: 0.875rem; border: 2px solid #e6f3e6; border-radius: 8px; font-size: 1rem;" placeholder="20" value="20" min="5" max="50" />
+          </div>
+
+          <div style="margin-bottom: 1.5rem;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 700; color: #166a0b; font-size: 1rem;">
+              Tỷ lệ độ khó (Easy/Medium/Hard)
+            </label>
+            <div style="display: flex; gap: 0.5rem;">
+              <input id="swal-easy-ratio" type="number" class="swal2-input" style="flex: 1; padding: 0.875rem; border: 2px solid #e6f3e6; border-radius: 8px; font-size: 1rem;" placeholder="35" value="35" min="0" max="100" />
+              <input id="swal-medium-ratio" type="number" class="swal2-input" style="flex: 1; padding: 0.875rem; border: 2px solid #e6f3e6; border-radius: 8px; font-size: 1rem;" placeholder="35" value="35" min="0" max="100" />
+              <input id="swal-hard-ratio" type="number" class="swal2-input" style="flex: 1; padding: 0.875rem; border: 2px solid #e6f3e6; border-radius: 8px; font-size: 1rem;" placeholder="30" value="30" min="0" max="100" />
+            </div>
+            <small style="color: #6b7280; font-size: 0.875rem;">Tổng tỷ lệ phải bằng 100%</small>
+          </div>
+
+          <div style="background: #e6f7e8; border-left: 4px solid #58cc02; padding: 1rem; border-radius: 8px; margin-top: 1.5rem;">
+            <p style="margin: 0; color: #166a0b; font-size: 0.875rem; line-height: 1.6;">
+              <strong>💡 Lưu ý:</strong> Lộ trình sẽ bao gồm tất cả skills (vocabulary, grammar, listening, reading, speaking, writing, mixed) từ trình độ bắt đầu đến kết thúc. Từ vựng sẽ được tạo riêng cho từng trình độ. Độ khó tăng dần theo tỷ lệ bạn chọn.
+            </p>
+          </div>
+        </div>
+      `,
+      width: '600px',
+      focusConfirm: false,
+      showCancelButton: true,
+      confirmButtonText: 'Tạo lộ trình',
+      cancelButtonText: 'Hủy',
+      confirmButtonColor: '#58cc02',
+      cancelButtonColor: '#6b7280',
+      preConfirm: () => {
+        const topic = document.getElementById('swal-topic').value;
+        const startLevel = document.getElementById('swal-start-level').value;
+        const endLevel = document.getElementById('swal-end-level').value;
+        const stepsPerLevel = parseInt(document.getElementById('swal-steps-per-level').value);
+        const easyRatio = parseInt(document.getElementById('swal-easy-ratio').value);
+        const mediumRatio = parseInt(document.getElementById('swal-medium-ratio').value);
+        const hardRatio = parseInt(document.getElementById('swal-hard-ratio').value);
+        
+        if (!topic || topic.trim().length < 3) {
+          Swal.showValidationMessage('⚠️ Vui lòng nhập chủ đề (tối thiểu 3 ký tự)');
+          return false;
+        }
+        
+        const levels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+
+        // Thêm validation trước khi so sánh
+        if (!levels.includes(startLevel) || !levels.includes(endLevel)) {
+          Swal.showValidationMessage('⚠️ Trình độ bắt đầu và kết thúc phải là A1, A2, B1, B2, C1 hoặc C2');
+          return false;
+        }
+
+        if (levels.indexOf(startLevel) >= levels.indexOf(endLevel)) {
+          Swal.showValidationMessage('⚠️ Trình độ kết thúc phải cao hơn trình độ bắt đầu');
+          return false;
+        }
+
+        if (stepsPerLevel < 5 || stepsPerLevel > 50) {
+          Swal.showValidationMessage('⚠️ Số bài tập cho mỗi trình độ phải từ 5 đến 50');
+          return false;
+        }
+
+        if (easyRatio + mediumRatio + hardRatio !== 100) {
+          Swal.showValidationMessage('⚠️ Tổng tỷ lệ độ khó phải bằng 100%');
+          return false;
+        }
+        
+        return { topic: topic.trim(), startLevel, endLevel, stepsPerLevel, easyRatio, mediumRatio, hardRatio };
+      }
+    });
+
+    if (formValues) {
+      await createRoadmap(formValues.startLevel, formValues.endLevel, formValues.topic, formValues.stepsPerLevel, formValues.easyRatio, formValues.mediumRatio, formValues.hardRatio);
+    }
+  };
+
+  const createRoadmap = async (startLevel, endLevel, topic, stepsPerLevel, easyRatio, mediumRatio, hardRatio) => {
+    try {
+      setLoading(true);
+      const response = await roadmapTopicService.generate(startLevel, endLevel, topic, stepsPerLevel, easyRatio, mediumRatio, hardRatio);
+      
+      if (response.success) {
+        showToast('success', 'Thành công', response.message);
+        await loadRoadmap();
+      }
+    } catch (error) {
+      console.error('Create roadmap error:', error);
+      showToast('error', 'Lỗi', error.response?.data?.message || 'Không thể tạo lộ trình học');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleContinue = async (milestone) => {
+    try {
+      console.log('🚀 Navigate to roadmap step:', {
+        roadmapId: milestone.roadmapId,
+        stepNumber: milestone.stepNumber,
+        milestone
+      });
+
+      // ✅ Kiểm tra có roadmapId và stepNumber không
+      if (!milestone.roadmapId || !milestone.stepNumber) {
+        showToast('error', 'Lỗi', 'Không thể mở bài tập: Thiếu thông tin lộ trình');
+        return;
+      }
+
+      navigate(`/roadmap-step/${milestone.roadmapId}/${milestone.stepNumber}`);
+    } catch (error) {
+      console.error('❌ Navigate error:', error);
+      showToast('error', 'Lỗi', 'Không thể mở bài tập');
+    }
+  };
+
+  const handleGenerateAIExercises = async (milestone) => {
+    try {
+      showToast('info', 'Đang tạo', '🤖 AI đang tạo bài tập...');
+
+      const response = await geminiService.generateExercisesForStep({
+        roadmapId: milestone.roadmapId,
+        stepNumber: milestone.stepNumber,
+        count: 5, // Có thể cho phép người dùng chọn số lượng
+        difficulty: milestone.difficulty || 'medium'
+      });
+
+      if (response.success) {
+        showToast('success', 'Thành công', `✅ Đã tạo ${response.data.length} bài tập cho bước này`);
+        await loadRoadmap(); // Làm mới dữ liệu để hiển thị exercises mới
+      }
+    } catch (error) {
+      console.error('Generate AI exercises error:', error);
+      showToast('error', 'Lỗi', error.response?.data?.message || 'Không thể tạo bài tập AI');
+    }
+  };
 
   const getCalendarDays = () => {
     const year = currentDate.getFullYear();
@@ -782,6 +1102,21 @@ const PersonalizedRoadmap = () => {
     return 'Khóa';
   };
 
+  if (loading) {
+    return (
+      <PageWrapper>
+        <LeftSidebar />
+        <MainContent>
+          <div style={{ textAlign: 'center', padding: '4rem 2rem' }}>
+            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🗺️</div>
+            <p style={{ fontSize: '1.125rem', color: '#6b7280' }}>Đang tải lộ trình học...</p>
+          </div>
+        </MainContent>
+        <RightSidebar />
+      </PageWrapper>
+    );
+  }
+
   return (
     <PageWrapper>
       <LeftSidebar />
@@ -796,17 +1131,11 @@ const PersonalizedRoadmap = () => {
           </Header>
 
           <TabsContainer>
-            <Tab
-              active={activeTab === 'roadmap'}
-              onClick={() => setActiveTab('roadmap')}
-            >
+            <Tab active={activeTab === 'roadmap'} onClick={() => setActiveTab('roadmap')}>
               <Timeline />
               Lộ trình học tập
             </Tab>
-            <Tab
-              active={activeTab === 'calendar'}
-              onClick={() => setActiveTab('calendar')}
-            >
+            <Tab active={activeTab === 'calendar'} onClick={() => setActiveTab('calendar')}>
               <CalendarMonth />
               Lịch học
             </Tab>
@@ -814,92 +1143,142 @@ const PersonalizedRoadmap = () => {
 
           {activeTab === 'roadmap' && (
             <RoadmapSection>
-              <StatsBar>
-                <StatCard>
-                  <StatNumber>{roadmapData.overallProgress}%</StatNumber>
-                  <StatLabel>Tiến độ tổng thể</StatLabel>
-                </StatCard>
-                <StatCard>
-                  <StatNumber>{roadmapData.completedMilestones}/{roadmapData.totalMilestones}</StatNumber>
-                  <StatLabel>Cột mốc hoàn thành</StatLabel>
-                </StatCard>
-                <StatCard>
-                  <StatNumber>{roadmapData.currentStreak}</StatNumber>
-                  <StatLabel>Chuỗi ngày liên tiếp</StatLabel>
-                </StatCard>
-                <StatCard>
-                  <StatNumber>{roadmapData.estimatedCompletion}</StatNumber>
-                  <StatLabel>Dự kiến hoàn thành</StatLabel>
-                </StatCard>
-              </StatsBar>
+              {!roadmapData ? (
+                <EmptyState>
+                  <EmptyIcon>🗺️</EmptyIcon>
+                  <EmptyTitle>Chưa có lộ trình học tập</EmptyTitle>
+                  <EmptyDescription>
+                    Tạo lộ trình học tập cá nhân hóa để bắt đầu hành trình chinh phục tiếng Anh của bạn!
+                    <br />
+                    Hệ thống sẽ tự động tạo các bước học từ DỄ → TRUNG BÌNH → KHÓ.
+                  </EmptyDescription>
+                  <EmptyButton onClick={showCreateRoadmapDialog}>
+                    <Add />
+                    Tạo lộ trình đầu tiên
+                  </EmptyButton>
+                </EmptyState>
+              ) : (
+                <>
+                  <RoadmapHeader>
+                    <RoadmapInfo>
+                      <RoadmapTopicTitle>
+                        <EmojiEvents />
+                        {roadmapData.topic}
+                      </RoadmapTopicTitle>
+                      <RoadmapMeta>
+                        <MetaItem>
+                          <Star sx={{ fontSize: 18, color: '#fbbf24' }} />
+                          {roadmapData.level}
+                        </MetaItem>
+                        <MetaItem>
+                          <Schedule sx={{ fontSize: 18 }} />
+                          Bắt đầu: {roadmapData.startedAt}
+                        </MetaItem>
+                        <MetaItem>
+                          <TrendingUp sx={{ fontSize: 18 }} />
+                          {roadmapData.totalXP} XP
+                        </MetaItem>
+                      </RoadmapMeta>
+                    </RoadmapInfo>
+                    <RoadmapActions>
+                      <IconButton onClick={showCreateRoadmapDialog} title="Tạo lộ trình mới">
+                        <Add />
+                      </IconButton>
+                      <IconButton onClick={loadRoadmap} title="Làm mới">
+                        <Refresh />
+                      </IconButton>
+                    </RoadmapActions>
+                  </RoadmapHeader>
 
-              <ProgressOverview>
-                <ProgressTitle>
-                  <TrendingUp />
-                  Tiến độ tổng thể
-                </ProgressTitle>
-                <ProgressBar>
-                  <ProgressFill width={roadmapData.overallProgress} />
-                </ProgressBar>
-                <ProgressInfo>
-                  <span>{roadmapData.overallProgress}% hoàn thành</span>
-                  <span>{roadmapData.completedMilestones} / {roadmapData.totalMilestones} cột mốc</span>
-                </ProgressInfo>
-              </ProgressOverview>
+                  <StatsBar>
+                    <StatCard>
+                      <StatNumber>{roadmapData.overallProgress}%</StatNumber>
+                      <StatLabel>Tiến độ tổng thể</StatLabel>
+                    </StatCard>
+                    <StatCard>
+                      <StatNumber>{roadmapData.completedMilestones}/{roadmapData.totalMilestones}</StatNumber>
+                      <StatLabel>Cột mốc hoàn thành</StatLabel>
+                    </StatCard>
+                    <StatCard>
+                      <StatNumber>{roadmapData.currentStreak}</StatNumber>
+                      <StatLabel>Chuỗi ngày liên tiếp</StatLabel>
+                    </StatCard>
+                    <StatCard>
+                      <StatNumber>{roadmapData.estimatedCompletion}</StatNumber>
+                      <StatLabel>Dự kiến hoàn thành</StatLabel>
+                    </StatCard>
+                  </StatsBar>
 
-              <MilestoneTimeline>
-                {milestones.map((milestone, index) => (
-                  <MilestoneItem key={milestone.id} delay={index * 0.1}>
-                    <MilestoneMarker
-                      completed={milestone.status === 'completed'}
-                      current={milestone.status === 'current'}
-                    >
-                      {getStatusIcon(milestone.status)}
-                    </MilestoneMarker>
-                    <MilestoneCard
-                      completed={milestone.status === 'completed'}
-                      current={milestone.status === 'current'}
-                    >
-                      <MilestoneHeader>
-                        <MilestoneTitle>{milestone.title}</MilestoneTitle>
-                        <MilestoneBadge
+                  <ProgressOverview>
+                    <ProgressTitle>
+                      <TrendingUp />
+                      Tiến độ tổng thể
+                    </ProgressTitle>
+                    <ProgressBar>
+                      <ProgressFill width={roadmapData.overallProgress} />
+                    </ProgressBar>
+                    <ProgressInfo>
+                      <span>{roadmapData.overallProgress}% hoàn thành</span>
+                      <span>{roadmapData.completedMilestones} / {roadmapData.totalMilestones} cột mốc</span>
+                    </ProgressInfo>
+                  </ProgressOverview>
+
+                  <MilestoneTimeline>
+                    {milestones.map((milestone, index) => (
+                      <MilestoneItem key={milestone.id} delay={index * 0.1}>
+                        <MilestoneMarker
                           completed={milestone.status === 'completed'}
                           current={milestone.status === 'current'}
                         >
-                          {milestone.status === 'completed' && <EmojiEvents />}
-                          {getStatusText(milestone.status)}
-                        </MilestoneBadge>
-                      </MilestoneHeader>
-                      <MilestoneDescription>{milestone.description}</MilestoneDescription>
-                      
-                      <MilestoneProgress>
-                        <MiniProgressBar>
-                          <MiniProgressFill width={milestone.progress} />
-                        </MiniProgressBar>
-                        <span style={{ fontSize: '0.875rem', fontWeight: '600', color: '#6b7280' }}>
-                          {milestone.completedLessons}/{milestone.lessons} bài
-                        </span>
-                      </MilestoneProgress>
+                          {getStatusIcon(milestone.status)}
+                        </MilestoneMarker>
+                        <MilestoneCard
+                          completed={milestone.status === 'completed'}
+                          current={milestone.status === 'current'}
+                        >
+                          <MilestoneHeader>
+                            <MilestoneTitle>{milestone.title}</MilestoneTitle>
+                            <MilestoneBadge
+                              completed={milestone.status === 'completed'}
+                              current={milestone.status === 'current'}
+                            >
+                              {milestone.status === 'completed' && <EmojiEvents />}
+                              {getStatusText(milestone.status)}
+                            </MilestoneBadge>
+                          </MilestoneHeader>
+                          <MilestoneDescription>{milestone.description}</MilestoneDescription>
+                          
+                          <MilestoneProgress>
+                            <MiniProgressBar>
+                              <MiniProgressFill width={milestone.progress} />
+                            </MiniProgressBar>
+                            <span style={{ fontSize: '0.875rem', fontWeight: '600', color: '#6b7280' }}>
+                              {milestone.completedLessons}/{milestone.lessons} bài
+                            </span>
+                          </MilestoneProgress>
 
-                      {milestone.status !== 'locked' && (
-                        <MilestoneActions>
-                          <ActionButton
-                            primary
-                            onClick={() => navigate('/learn')}
-                          >
-                            <NavigateNext />
-                            {milestone.status === 'completed' ? 'Xem lại' : 'Tiếp tục học'}
-                          </ActionButton>
-                          <ActionButton>
-                            <Schedule />
-                            {milestone.actualDays}/{milestone.estimatedDays} ngày
-                          </ActionButton>
-                        </MilestoneActions>
-                      )}
-                    </MilestoneCard>
-                  </MilestoneItem>
-                ))}
-              </MilestoneTimeline>
+                          {milestone.status !== 'locked' && (
+                            <MilestoneActions>
+                              <ActionButton primary onClick={() => handleContinue(milestone)}>
+                                <PlayArrow />
+                                {milestone.status === 'completed' ? 'Xem lại' : 'Bắt đầu học'}
+                              </ActionButton>
+                              
+                              {/* Chỉ hiển thị nếu đăng nhập và milestone không khóa */}
+                              {isLoggedIn && milestone.status !== 'locked' && (
+                                <ActionButton onClick={() => handleGenerateAIExercises(milestone)}>
+                                  <AutoAwesome />
+                                  Tạo bài tập AI
+                                </ActionButton>
+                              )}
+                            </MilestoneActions>
+                          )}
+                        </MilestoneCard>
+                      </MilestoneItem>
+                    ))}
+                  </MilestoneTimeline>
+                </>
+              )}
             </RoadmapSection>
           )}
 
@@ -922,17 +1301,11 @@ const PersonalizedRoadmap = () => {
                 </CalendarNav>
 
                 <ViewToggle>
-                  <ViewButton
-                    active={calendarView === 'month'}
-                    onClick={() => setCalendarView('month')}
-                  >
+                  <ViewButton active={calendarView === 'month'} onClick={() => setCalendarView('month')}>
                     <ViewModule />
                     Tháng
                   </ViewButton>
-                  <ViewButton
-                    active={calendarView === 'week'}
-                    onClick={() => setCalendarView('week')}
-                  >
+                  <ViewButton active={calendarView === 'week'} onClick={() => setCalendarView('week')}>
                     <ViewWeek />
                     Tuần
                   </ViewButton>
@@ -1001,6 +1374,11 @@ const PersonalizedRoadmap = () => {
         </ContentInner>
       </MainContent>
       <RightSidebar />
+
+      <CreateRoadmapButton onClick={showCreateRoadmapDialog}>
+        <Add />
+        Tạo lộ trình mới
+      </CreateRoadmapButton>
     </PageWrapper>
   );
 };
