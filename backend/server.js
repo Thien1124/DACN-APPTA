@@ -52,7 +52,6 @@ const heartRoutes = require('./src/routes/heartRoutes');
 const xpRoutes = require('./src/routes/xpRoutes');
 const missionRoutes = require('./src/routes/missionRoutes');
 const shopRoutes = require('./src/routes/shopRoutes');
-
 const practiceRoutes = require('./src/routes/practiceRoutes');
 const grammarQuizRoutes = require('./src/routes/grammarQuizRoutes');
 const analyticsRoutes = require('./src/routes/analyticsRoutes');
@@ -60,8 +59,6 @@ const friendsRoutes = require('./src/routes/friendsRoutes');
 const roadmapRoutes = require('./src/routes/roadmapRoutes');
 const scheduleRoutes = require('./src/routes/scheduleRoutes');
 const calendarRoutes = require('./src/routes/calendarRoutes');
-
-
 const progressRoutes = require('./src/routes/progressRoutes');
 
 
