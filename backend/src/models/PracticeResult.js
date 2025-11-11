@@ -1,4 +1,4 @@
-// backend/src/models/PracticeResult.js
+
 const mongoose = require('mongoose');
 
 /**
@@ -42,6 +42,7 @@ const practiceResultSchema = new mongoose.Schema({
     type: Number,
     default: 0,
     min: 0
+
   },
 
   // Điểm nhận được
@@ -58,7 +59,8 @@ const practiceResultSchema = new mongoose.Schema({
     min: 0
   },
 
-  // Thời gian hoàn thành
+
+  // Thời gian làm bài
   completedAt: {
     type: Date,
     default: Date.now,

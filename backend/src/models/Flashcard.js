@@ -141,6 +141,54 @@ const flashcardSchema = new mongoose.Schema({
     enum: ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
   },
   
+  // ==================== TASK 24: LEECH, SUSPEND, BURY ====================
+  
+  // Leech detection (thẻ hay quên)
+  isLeech: {
+    type: Boolean,
+    default: false
+  },
+  
+  // Fail count (số lần trả lời sai)
+  failCount: {
+    type: Number,
+    default: 0
+  },
+  
+  // Consecutive fails (số lần sai liên tiếp)
+  consecutiveFails: {
+    type: Number,
+    default: 0
+  },
+  
+  // Leech threshold (ngưỡng để đánh dấu leech)
+  leechThreshold: {
+    type: Number,
+    default: 8 // Anki default
+  },
+  
+  // Card status
+  status: {
+    type: String,
+    enum: ['active', 'suspended', 'buried'],
+    default: 'active'
+  },
+  
+  // Buried until (tự động unbury sau thời gian)
+  buriedUntil: {
+    type: Date
+  },
+  
+  // Suspended at
+  suspendedAt: {
+    type: Date
+  },
+  
+  // Leech detected at
+  leechDetectedAt: {
+    type: Date
+  },
+  
   deck: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Deck',

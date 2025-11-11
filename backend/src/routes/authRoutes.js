@@ -8,6 +8,7 @@ const { authenticate } = require('../middleware/auth');
 // Local authentication routes
 router.post('/register', validateRegistration, authController.register);
 router.post('/login', validateLogin, authController.login);
+router.post('/verify-2fa-login', authController.verify2FAForLogin); // Task 10: 2FA verification for login
 router.post('/logout', authenticate, authController.logout);
 
 // OTP verification routes

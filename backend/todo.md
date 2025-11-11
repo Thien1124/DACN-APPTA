@@ -375,6 +375,74 @@ Body: { "regenerate": false }
 
 ---
 
+## ✅ Task 23: Bulk Edit, Tags & Organization (COMPLETED - Nov 8, 2025)
+
+**Tính năng:** Chỉnh sửa hàng loạt, gắn tag, và tổ chức flashcards hiệu quả
+
+### Đã hoàn thành:
+- ✅ Bulk Update - Cập nhật nhiều flashcards cùng lúc
+- ✅ Bulk Add Tags - Thêm tags cho nhiều flashcards
+- ✅ Bulk Remove Tags - Xóa tags khỏi nhiều flashcards
+- ✅ Bulk Delete - Xóa nhiều flashcards cùng lúc
+- ✅ Filter by Tags - Lọc flashcards theo tags
+- ✅ Filter by Part of Speech - Lọc theo loại từ
+- ✅ Get All Tags - Danh sách tất cả tags unique
+- ✅ Statistics - Thống kê phân bố theo POS, difficulty, CEFR, tags
+- ✅ Permission checks - Student/Teacher/Admin
+- ✅ API Documentation
+
+### Features:
+1. **Bulk Update** - Update tags, difficulty, CEFR, POS, notes (max 100 flashcards)
+2. **Tag Management** - Add/remove tags với $addToSet/$pullAll (avoid duplicates)
+3. **Advanced Filtering** - Filter by tags, POS, difficulty, CEFR level
+4. **Statistics Dashboard** - Distribution by POS, difficulty, CEFR, note type, top 20 tags
+5. **Tag Cloud** - Get all unique tags sorted alphabetically
+6. **Bulk Delete** - Delete multiple flashcards at once
+7. **Multi-criteria Filter** - Combine tags + POS + difficulty + CEFR
+
+### Files tạo mới:
+1. `/src/controllers/bulkFlashcardController.js` - 8 controllers
+2. `/src/routes/bulkFlashcardRoutes.js` - Bulk operations routes
+3. `/docs/TASK_23_BULK_OPERATIONS.md` - Full documentation
+
+### Files đã cập nhật:
+1. `server.js` - Added `/api/flashcards-bulk` routes
+
+### Test Commands:
+```bash
+# Bulk update flashcards
+PUT /api/flashcards-bulk/bulk-update
+Body: { 
+  "flashcardIds": ["id1", "id2"],
+  "updates": { "difficulty": "intermediate", "tags": ["business"] }
+}
+
+# Bulk add tags
+PUT /api/flashcards-bulk/bulk-add-tags
+Body: { 
+  "flashcardIds": ["id1", "id2"],
+  "tags": ["formal", "communication"]
+}
+
+# Filter by tags
+GET /api/flashcards-bulk/by-tags?tags=business,formal&difficulty=intermediate
+
+# Get statistics
+GET /api/flashcards-bulk/statistics?deckId=deck123
+
+# Get all tags
+GET /api/flashcards-bulk/tags/all
+```
+
+### Use Cases:
+- ✅ **Organize Import** - Gắn tags cho batch từ mới import
+- ✅ **Clean Up** - Xóa tags lỗi thời, sửa chính tả
+- ✅ **Filter Review** - Lọc flashcards để ôn tập có chọn lọc
+- ✅ **POS Organization** - Tổ chức theo loại từ (noun, verb, adjective)
+- ✅ **Statistics Dashboard** - Hiển thị overview collection
+
+---
+
 ## ⏳ Task 10: Tích hợp 2FA vào login flow (PENDING)
 
 **Trạng thái:** ✅ 2FA đã hoàn thành (setup/enable/verify/disable)

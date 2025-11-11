@@ -31,13 +31,37 @@ const leaderboardRoutes = require('./src/routes/leaderboardRoutes');
 const studyRoutes = require('./src/routes/studyRoutes');
 const reviewRoutes = require('./src/routes/reviewRoutes');
 const aiRoutes = require('./src/routes/aiRoutes'); // Task 21: AI integration
+
+const bulkFlashcardRoutes = require('./src/routes/bulkFlashcardRoutes'); // Task 23: Bulk operations
+const leechRoutes = require('./src/routes/leechRoutes'); // Task 24: Leech, Suspend, Bury
+const importRoutes = require('./src/routes/importRoutes'); // Task 25: Import CSV/TSV/Google Sheets
+const exportRoutes = require('./src/routes/exportRoutes'); // Task 26: Export/Backup/Restore
+const dictationRoutes = require('./src/routes/dictationRoutes'); // Task 27: Dictation
+const speechRoutes = require('./src/routes/speechRoutes'); // Task 27: Speech Recognition
+const interactiveLearningRoutes = require('./src/routes/interactiveLearningRoutes'); // Task 28: Interactive Learning
+const shadowingRoutes = require('./src/routes/shadowingRoutes'); // Task 29: Shadowing Audio
+const wordbankRoutes = require('./src/routes/wordbankRoutes'); // Task 30: Wordbank
+const aiExplanationRoutes = require('./src/routes/aiExplanationRoutes'); // Task 31: AI Explanation
+const mnemonicRoutes = require('./src/routes/mnemonicRoutes'); // Task 32: Mnemonic & Visualization
+const deviceRoutes = require('./src/routes/deviceRoutes'); // Task 33: Device Management
+const testHistoryRoutes = require('./src/routes/testHistoryRoutes'); // Task 34: Test History
+
 const streakRoutes = require('./src/routes/streakRoutes');
 const heartRoutes = require('./src/routes/heartRoutes');
 const xpRoutes = require('./src/routes/xpRoutes');
 const missionRoutes = require('./src/routes/missionRoutes');
 const shopRoutes = require('./src/routes/shopRoutes');
-const progressRoutes = require('./src/routes/progressRoutes');
 
+const practiceRoutes = require('./src/routes/practiceRoutes');
+const grammarQuizRoutes = require('./src/routes/grammarQuizRoutes');
+const analyticsRoutes = require('./src/routes/analyticsRoutes');
+const friendsRoutes = require('./src/routes/friendsRoutes');
+const roadmapRoutes = require('./src/routes/roadmapRoutes');
+const scheduleRoutes = require('./src/routes/scheduleRoutes');
+const calendarRoutes = require('./src/routes/calendarRoutes');
+
+
+const progressRoutes = require('./src/routes/progressRoutes');
 
 
 const app = express();
@@ -104,12 +128,32 @@ app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/study', studyRoutes);
 app.use('/api/reviews', reviewRoutes); // Task 17: Review actions
 app.use('/api/ai', aiRoutes); // Task 21: AI Gemini integration
+app.use('/api/flashcards-bulk', bulkFlashcardRoutes); // Task 23: Bulk operations
+app.use('/api/leeches', leechRoutes); // Task 24: Leech, Suspend, Bury
+app.use('/api/import', importRoutes); // Task 25: Import CSV/TSV/Google Sheets
+app.use('/api/export', exportRoutes); // Task 26: Export/Backup/Restore
+app.use('/api/dictation', dictationRoutes); // Task 27: Dictation exercises
+app.use('/api/speech', speechRoutes); // Task 27: Speech recognition & pronunciation
+app.use('/api/interactive', interactiveLearningRoutes); // Task 28: Interactive learning games
+app.use('/api/shadowing', shadowingRoutes); // Task 29: Shadowing audio practice
+app.use('/api/wordbank', wordbankRoutes); // Task 30: Worldbank vocabulary notebook
+app.use('/api/ai-explain', aiExplanationRoutes); // Task 31: AI word explanation & synonym comparison
+app.use('/api/mnemonic', mnemonicRoutes); // Task 32: Mnemonic generation & visualization suggestions
+app.use('/api/devices', deviceRoutes); // Task 33: Multi-device management & session tracking
+app.use('/api/test-history', testHistoryRoutes); // Task 34: Test history & progress tracking
 
 app.use('/api/streaks', streakRoutes);
 app.use('/api/hearts', heartRoutes);
 app.use('/api/xp', xpRoutes);
 app.use('/api/missions', missionRoutes);
 app.use('/api/shop', shopRoutes);
+app.use('/api/practice', practiceRoutes); // Task 16: Practice - Collocation/Phrasal Verbs/Word Family
+app.use('/api/grammar-quiz', grammarQuizRoutes); // Task 17: Grammar Quiz gắn với flashcard
+app.use('/api/analytics', analyticsRoutes); // Task 18/19: Error analysis & recommendations
+app.use('/api/friends', friendsRoutes); // Task 22: Friends/Social
+app.use('/api/roadmap', roadmapRoutes); // Task 20: Lộ trình theo mục tiêu
+app.use('/api/schedule', scheduleRoutes); // Task 21: Lịch học tuần/tháng
+app.use('/api/calendar', calendarRoutes); // Task 21: Đồng bộ Google Calendar (stub)
 
 // ✅ Vocabulary Bank routes
 app.use('/api/vocabulary-bank', require('./src/routes/vocabularyBankRoutes'));
