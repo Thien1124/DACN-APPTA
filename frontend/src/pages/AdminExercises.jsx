@@ -17,8 +17,10 @@ import {
   Star,
   School,
   CloudUpload,
-  Download
+  Download,
+  Mic
 } from '@mui/icons-material';
+import SpeakingExerciseModal from '../components/SpeakingExerciseModal';
 
 // ========== STYLED COMPONENTS ==========
 
@@ -255,6 +257,10 @@ const AdminExercises = () => {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef(null);
 
+  // Thêm state
+  const [showSpeakingModal, setShowSpeakingModal] = useState(false);
+  const [selectedExercise, setSelectedExercise] = useState(null);
+
   useEffect(() => {
     fetchLessons();
     fetchExercises();
@@ -445,6 +451,22 @@ const handleDownloadTemplate = async () => {
     return labels[type] || type;
   };
 
+  // Thêm handler
+  const handleTestSpeaking = (exercise) => {
+    setSelectedExercise(exercise);
+    setShowSpeakingModal(true);
+  };
+
+  const handleSpeakingComplete = (result) => {
+    console.log('Speaking result:', result);
+    showToast(
+      result.passed ? 'success' : 'warning',
+      result.passed ? 'Xuất sắc!' : 'Chưa đạt',
+      `Điểm phát âm: ${result.score}% ${result.passed ? '✓' : '✗'}`
+    );
+    setShowSpeakingModal(false);
+  };
+
   if (loading) {
     return (
       <AdminLayout pageTitle="Quản lý Bài tập">
@@ -578,6 +600,18 @@ const handleDownloadTemplate = async () => {
                 <ActionButton variant="view" onClick={() => handleView(exercise._id)}>
                   <Visibility sx={{ fontSize: 18 }} /> Xem
                 </ActionButton>
+                
+                {/* ✅ Thêm nút Test cho speaking */}
+                {exercise.type === 'speaking' && (
+                  <ActionButton 
+                    variant="test" 
+                    onClick={() => handleTestSpeaking(exercise)}
+                    style={{ background: '#8b5cf6' }}
+                  >
+                    <Mic sx={{ fontSize: 18 }} /> Test
+                  </ActionButton>
+                )}
+                
                 <ActionButton variant="edit" onClick={() => handleEdit(exercise._id)}>
                   <Edit sx={{ fontSize: 18 }} /> Sửa
                 </ActionButton>
@@ -588,6 +622,16 @@ const handleDownloadTemplate = async () => {
             </ExerciseCard>
           ))}
         </ExercisesGrid>
+      )}
+
+      {/* Thêm modal ở cuối return */}
+      {showSpeakingModal && selectedExercise && (
+        <SpeakingExerciseModal
+          exercise={selectedExercise}
+          theme={theme}
+          onClose={() => setShowSpeakingModal(false)}
+          onComplete={handleSpeakingComplete}
+        />
       )}
     </AdminLayout>
   );

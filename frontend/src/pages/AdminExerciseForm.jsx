@@ -239,7 +239,10 @@ const AdminExerciseForm = () => {
     correctAnswer: '',
     explanation: '',
     points: 10,
-    difficulty: 'medium'
+    difficulty: 'medium',
+    // ✅ Thêm fields cho speaking
+    targetIPA: '',
+    audioUrl: ''
   });
   const [errors, setErrors] = useState({});
   // ✅ Thêm state cho audio
@@ -266,22 +269,55 @@ const AdminExerciseForm = () => {
     setLoading(true);
     const response = await adminService.exercises.getById(id);
     
-    // Transform từ backend format về frontend format
     const exerciseData = response.data;
+    
+    // ✅ Transform từ backend format về frontend format
     const transformedData = {
-      ...exerciseData,
-      lesson: exerciseData.lesson?._id || exerciseData.lesson
+      lesson: exerciseData.lesson?._id || exerciseData.lesson,
+      type: exerciseData.type,
+      question: exerciseData.question,
+      explanation: exerciseData.explanation || '',
+      points: exerciseData.points || 10,
+      difficulty: exerciseData.difficulty || 'medium',
+      correctAnswer: '',
+      options: ['', '', '', ''],
+      targetIPA: exerciseData.targetIPA || '',
+      audioUrl: exerciseData.audioUrl || ''
     };
 
-    // Transform options cho multiple-choice
-    if (exerciseData.type === 'multiple-choice' && exerciseData.options) {
-      transformedData.options = exerciseData.options.map(opt => opt.text);
-      // Tìm correctOption từ options
-      const correctOption = exerciseData.options.find(opt => opt.isCorrect);
-      transformedData.correctAnswer = correctOption ? correctOption.text : '';
+    // ✅ Transform theo từng loại bài tập
+    switch (exerciseData.type) {
+      case 'multiple-choice':
+        if (exerciseData.options && exerciseData.options.length > 0) {
+          transformedData.options = exerciseData.options.map(opt => opt.text);
+          const correctOption = exerciseData.options.find(opt => opt.isCorrect);
+          transformedData.correctAnswer = correctOption ? correctOption.text : '';
+        }
+        break;
+
+      case 'speaking':
+      case 'listening':
+      case 'fill-in-blank':
+      case 'translation':
+        transformedData.correctAnswer = exerciseData.correctAnswer || '';
+        transformedData.options = [];
+        break;
+
+      case 'matching':
+        transformedData.correctAnswer = typeof exerciseData.correctAnswer === 'string' 
+          ? exerciseData.correctAnswer 
+          : JSON.stringify(exerciseData.correctAnswer);
+        transformedData.options = [];
+        break;
+
+      default:
+        transformedData.correctAnswer = exerciseData.correctAnswer || '';
+        transformedData.options = [];
     }
 
+    console.log('📥 Loaded exercise:', transformedData);
     setFormData(transformedData);
+
   } catch (error) {
     console.error('Error fetching exercise:', error);
     showToast('error', 'Lỗi', 'Không thể tải thông tin bài tập');
@@ -376,17 +412,26 @@ const AdminExerciseForm = () => {
     }
   }
 
-  // ✅ Thêm validation cho fill-in-blank và translation
-  if (formData.type === 'fill-in-blank' || formData.type === 'translation') {
+  // ✅ Validation cho các loại bài tập khác
+  if (['fill-in-blank', 'translation', 'listening', 'speaking'].includes(formData.type)) {
     if (!formData.correctAnswer.trim()) {
       newErrors.correctAnswer = 'Vui lòng nhập đáp án đúng';
     }
   }
 
-  // ✅ Thêm validation cho listening
-  if (formData.type === 'listening') {
+  // ✅ Validation riêng cho matching
+  if (formData.type === 'matching') {
     if (!formData.correctAnswer.trim()) {
-      newErrors.correctAnswer = 'Vui lòng nhập đáp án đúng';
+      newErrors.correctAnswer = 'Vui lòng nhập đáp án';
+    } else {
+      try {
+        const parsed = JSON.parse(formData.correctAnswer);
+        if (typeof parsed !== 'object' || Array.isArray(parsed)) {
+          newErrors.correctAnswer = 'Đáp án phải là JSON object hợp lệ';
+        }
+      } catch (e) {
+        newErrors.correctAnswer = 'Đáp án phải là JSON hợp lệ';
+      }
     }
   }
 
@@ -405,37 +450,75 @@ const AdminExerciseForm = () => {
     setLoading(true);
 
     try {
-      // Transform data cho backend
-      const submitData = { ...formData };
+      // ✅ Transform data theo từng loại bài tập
+      const submitData = {
+        lesson: formData.lesson,
+        type: formData.type,
+        question: formData.question.trim(),
+        explanation: formData.explanation?.trim() || '',
+        points: parseInt(formData.points) || 10,
+        difficulty: formData.difficulty
+      };
 
-      // ✅ XỬ LÝ TỪNG LOẠI BÀI TẬP
-      if (formData.type === 'multiple-choice') {
-        // Multiple choice: Transform options thành array of objects
-        submitData.options = formData.options.map(option => ({
-          text: option,
-          isCorrect: option === formData.correctAnswer
-        }));
-        // Xóa correctAnswer vì backend lưu trong options
-        delete submitData.correctAnswer;
-      } 
-      else if (formData.type === 'fill-in-blank' || formData.type === 'translation') {
-        // Fill-in-blank và Translation: Chỉ cần correctAnswer
-        submitData.options = []; // Xóa options
-        submitData.correctAnswer = formData.correctAnswer.trim();
-      }
-      else if (formData.type === 'listening' || formData.type === 'speaking' || formData.type === 'matching') {
-        // Các loại khác: Giữ nguyên correctAnswer và xóa options nếu không dùng
-        submitData.options = [];
-        submitData.correctAnswer = formData.correctAnswer.trim();
-        
-        // ✅ Thêm audioUrl nếu có (cho listening)
-        if (formData.type === 'listening') {
-          submitData.audioUrl = formData.audioUrl || null; // Có thể thêm field audioUrl sau
-        }
+      // ✅ XỬ LÝ THEO TỪNG LOẠI BÀI TẬP
+      switch (formData.type) {
+        case 'multiple-choice':
+          // Multiple choice: Transform options thành array of objects
+          submitData.options = formData.options
+            .filter(opt => opt.trim()) // Loại bỏ option rỗng
+            .map(option => ({
+              text: option.trim(),
+              isCorrect: option.trim() === formData.correctAnswer.trim()
+            }));
+          
+          // Không cần correctAnswer vì backend lưu trong options
+          break;
+
+        case 'fill-in-blank':
+        case 'translation':
+        case 'listening':
+          // Các loại này chỉ cần correctAnswer (string)
+          submitData.correctAnswer = formData.correctAnswer.trim();
+          submitData.options = []; // Empty array
+          break;
+
+        case 'speaking':
+          // ✅ Speaking: correctAnswer là câu mẫu cần đọc
+          submitData.correctAnswer = formData.correctAnswer.trim();
+          submitData.options = []; // Empty array
+          
+          // ✅ Có thể thêm audioUrl nếu có file âm thanh mẫu
+          if (formData.audioUrl) {
+            submitData.audioUrl = formData.audioUrl;
+          }
+          
+          // ✅ Có thể thêm targetIPA (phiên âm quốc tế) nếu cần
+          if (formData.targetIPA) {
+            submitData.targetIPA = formData.targetIPA;
+          }
+          break;
+
+        case 'matching':
+          // Matching: correctAnswer là JSON object
+          try {
+            const matchingData = JSON.parse(formData.correctAnswer);
+            submitData.correctAnswer = JSON.stringify(matchingData); // Ensure valid JSON string
+            submitData.options = []; // Empty array
+          } catch (e) {
+            showToast('error', 'Lỗi', 'Dữ liệu matching không hợp lệ');
+            setLoading(false);
+            return;
+          }
+          break;
+
+        default:
+          submitData.correctAnswer = formData.correctAnswer.trim();
+          submitData.options = [];
       }
 
       console.log('📤 Submit data:', submitData);
 
+      // ✅ Gửi request
       if (id) {
         await adminService.exercises.update(id, submitData);
         showToast('success', 'Thành công', 'Đã cập nhật bài tập');
@@ -443,11 +526,21 @@ const AdminExerciseForm = () => {
         await adminService.exercises.create(submitData);
         showToast('success', 'Thành công', 'Đã tạo bài tập mới');
       }
-      navigate('/admin/exercises');
+      
+      // Delay 1 giây để user đọc toast
+      setTimeout(() => {
+        navigate('/admin/exercises');
+      }, 1000);
+
     } catch (error) {
       console.error('❌ Error saving exercise:', error);
       console.error('Error response:', error.response?.data);
-      showToast('error', 'Lỗi', error.response?.data?.message || 'Không thể lưu bài tập');
+      
+      const errorMessage = error.response?.data?.message || 
+                          error.response?.data?.error || 
+                          'Không thể lưu bài tập';
+      
+      showToast('error', 'Lỗi', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -649,23 +742,76 @@ const AdminExerciseForm = () => {
               </FormGroup>
             )}
 
-            {/* ✅ Thêm form cho speaking */}
+            {/* ✅ Form cho speaking - Cải thiện UX */}
             {formData.type === 'speaking' && (
-              <FormGroup>
-                <Label theme={theme}>Câu mẫu cần đọc *</Label>
-                <Input
-                  theme={theme}
-                  type="text"
-                  name="correctAnswer"
-                  value={formData.correctAnswer}
-                  onChange={handleChange}
-                  placeholder="VD: Hello, how are you?"
-                />
-                {errors.correctAnswer && <ErrorText>{errors.correctAnswer}</ErrorText>}
-                <HelpText theme={theme}>
-                  Câu mẫu để hệ thống so sánh với audio của người dùng
-                </HelpText>
-              </FormGroup>
+              <>
+                <FormGroup>
+                  <Label theme={theme}>Câu mẫu cần phát âm *</Label>
+                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start', flexDirection: 'column' }}>
+                    <div style={{ display: 'flex', gap: '0.5rem', width: '100%' }}>
+                      <Input
+                        theme={theme}
+                        type="text"
+                        name="correctAnswer"
+                        value={formData.correctAnswer}
+                        onChange={handleChange}
+                        placeholder="VD: Hello, how are you?"
+                        style={{ flex: 1 }}
+                      />
+                      <PlayButton
+                        type="button"
+                        onClick={() => speakText(formData.correctAnswer)}
+                        disabled={audioPlaying || !formData.correctAnswer.trim()}
+                        theme={theme}
+                        title="Nghe phát âm mẫu"
+                      >
+                        <VolumeUp sx={{ fontSize: 20 }} />
+                        {audioPlaying ? 'Đang phát...' : ''}
+                      </PlayButton>
+                    </div>
+                    
+                    {errors.correctAnswer && <ErrorText>{errors.correctAnswer}</ErrorText>}
+                    
+                    <HelpText theme={theme}>
+                      💡 Câu mẫu để học sinh luyện phát âm. Hệ thống sẽ so sánh âm thanh của học sinh với câu này.
+                      <br />
+                      📊 Điểm phát âm ≥ 50% là đạt yêu cầu.
+                    </HelpText>
+                  </div>
+                </FormGroup>
+
+                {/* ✅ Thêm field IPA (optional) */}
+                <FormGroup>
+                  <Label theme={theme}>Phiên âm IPA (tùy chọn)</Label>
+                  <Input
+                    theme={theme}
+                    type="text"
+                    name="targetIPA"
+                    value={formData.targetIPA || ''}
+                    onChange={handleChange}
+                    placeholder="VD: /həˈloʊ, haʊ ɑːr juː/"
+                  />
+                  <HelpText theme={theme}>
+                    Phiên âm quốc tế (IPA) để hỗ trợ học sinh phát âm chính xác hơn
+                  </HelpText>
+                </FormGroup>
+
+                {/* ✅ Thêm field audioUrl (optional - nếu muốn upload file) */}
+                <FormGroup>
+                  <Label theme={theme}>Link audio mẫu (tùy chọn)</Label>
+                  <Input
+                    theme={theme}
+                    type="url"
+                    name="audioUrl"
+                    value={formData.audioUrl || ''}
+                    onChange={handleChange}
+                    placeholder="https://example.com/audio.mp3"
+                  />
+                  <HelpText theme={theme}>
+                    Link file âm thanh mẫu (nếu không có, hệ thống sẽ dùng Text-to-Speech)
+                  </HelpText>
+                </FormGroup>
+              </>
             )}
 
             {/* ✅ Thêm form cho matching */}
@@ -727,10 +873,10 @@ const AdminExerciseForm = () => {
 
 // ✅ Thêm styled component cho PlayButton
 const PlayButton = styled.button`
-  padding: 0.75rem;
+  padding: 0.75rem 1rem;
   background: ${props => props.disabled 
     ? (props.theme === 'dark' ? '#374151' : '#e5e7eb')
-    : '#58CC02'
+    : '#3b82f6' // Đổi màu thành xanh dương
   };
   color: ${props => props.disabled 
     ? (props.theme === 'dark' ? '#6b7280' : '#9ca3af')
@@ -743,15 +889,20 @@ const PlayButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 50px;
+  gap: 0.5rem;
+  min-width: ${props => props.disabled ? '50px' : 'auto'};
+  white-space: nowrap;
+  font-weight: 600;
+  font-size: 0.875rem;
 
   &:hover:not(:disabled) {
     opacity: 0.9;
-    transform: scale(1.05);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
   }
 
   &:active:not(:disabled) {
-    transform: scale(0.95);
+    transform: translateY(0);
   }
 `;
 export default AdminExerciseForm;

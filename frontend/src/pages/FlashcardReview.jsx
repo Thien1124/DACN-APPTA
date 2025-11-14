@@ -24,7 +24,8 @@ import {
   FullscreenExit,
   Fullscreen,
   BookmarkBorder,
-  Bookmark
+  Bookmark,
+  Mic // Thêm Mic icon
 } from '@mui/icons-material';
 import { useToast } from '../hooks/useToast';
 import { flashcardService } from '../services/flashcardServices';

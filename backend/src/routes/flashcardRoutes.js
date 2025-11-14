@@ -4,6 +4,11 @@ const flashcardController = require('../controllers/flashcardController');
 const noteTypeController = require('../controllers/noteTypeController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
+
+router.get('/', protect, flashcardController.getUserFlashcards); // ✅ Thay getAllFlashcards thành getUserFlashcards
+
+
+
 // Tất cả routes đều yêu cầu đăng nhập và quyền admin
 router.use(protect);
 router.use(authorize('admin'));

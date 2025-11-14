@@ -30,6 +30,18 @@ export const flashcardService = {
       throw error;
     }
   },
+  getByDeck1: async (deckId) => {
+  try {
+    const response = await axios.get(`${API_URL}/flashcards/deck/${deckId}`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      }
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Không thể tải flashcards' };
+  }
+},
 
   // ✅ Get all flashcards by deck ID
   getAllByDeck: async (deckId) => {

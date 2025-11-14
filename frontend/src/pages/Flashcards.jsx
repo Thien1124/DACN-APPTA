@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowBack, ArrowForward, Refresh, Edit, School } from '@mui/icons-material';
+import { ArrowBack, ArrowForward, Refresh, Edit, School, CardMembership } from '@mui/icons-material';
 import LeftSidebar from '../components/LeftSidebar';
 import RightSidebar from '../components/RightSidebar';
 
-// Import icons from Material-UI
-import { Apple, Cake, Home, Pets } from '@mui/icons-material';
+
+// ========== STYLED COMPONENTS ==========
 
 const PageWrapper = styled.div`
   display: flex;
@@ -15,13 +15,33 @@ const PageWrapper = styled.div`
 `;
 
 const MainContent = styled.div`
-  flex: 1;
-  margin-left: 280px;
-  margin-right: 380px;
+  /* reserve exact space for left and right sidebars so content never sits under them */
+  margin-left: 280px;           /* left sidebar width */
+  margin-right: 380px;         /* right sidebar width (must match RightSidebar) */
+  width: calc(100% - 280px - 380px); /* force content area to the middle */
   padding: 2rem;
-  
+  display: flex;
+  flex-direction: column;
+  align-items: center;         /* center inner container */
+  min-height: 100vh;
+  box-sizing: border-box;
+
   @media (max-width: 1400px) {
     margin-right: 320px;
+    width: calc(100% - 280px - 320px);
+  }
+
+  @media (max-width: 1200px) {
+    /* hide right sidebar on smaller screens — main content can use full width */
+    margin-right: 0;
+    width: calc(100% - 280px);
+  }
+
+  @media (max-width: 1024px) {
+    margin-left: 80px;         /* collapsed left space on smaller screens */
+    margin-right: 24px;
+    width: calc(100% - 80px - 24px);
+    padding: 1rem;
   }
 `;
 
@@ -39,93 +59,171 @@ const Title = styled.h1`
   margin-bottom: 1rem;
 `;
 
-const StudyButton = styled.button`
-  padding: 0.75rem 1.5rem;
-  background: #58CC02;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
+const FlashcardsContainer = styled.div`
+  max-width: 1100px;           /* center column width */
+  width: 100%;
+  margin: 0 auto;              /* center in MainContent */
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 2rem;
-  
+`;
+
+/* tighten grid so cards appear centered and consistent */
+const FlashcardsGrid = styled.div`
+  display: grid;
+  /* make each card at least 280px so grid doesn't stretch under sidebar area */
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+  width: 100%;
+  justify-items: center;
+`;
+
+/* ensure each card has a max width so grid stays centered and not under sidebar */
+const FlashcardCard = styled.div`
+  width: 100%;
+  max-width: 360px;            /* card width */
+  background: ${props => props.theme === 'dark' 
+    ? 'rgba(31, 41, 55, 0.95)' 
+    : 'rgba(255, 255, 255, 0.95)'
+  };
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  padding: 2rem;
+  border: 2px solid ${props => props.theme === 'dark' 
+    ? 'rgba(75, 85, 99, 0.4)' 
+    : 'rgba(229, 231, 235, 0.6)'
+  };
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  min-height: 280px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(88, 204, 2, 0.06), transparent);
+    transition: left 0.6s;
+  }
+
   &:hover {
-    background: #45a302;
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+    border-color: #58CC02;
+    
+    &::before {
+      left: 100%;
+    }
   }
 `;
 
-const Container = styled.div`
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem;
-`;
-
-const FlashcardContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2rem;
-`;
-
-const Card = styled(motion.div)`
-  width: 600px;
-  height: 400px;
-  perspective: 1000px;
-  cursor: pointer;
-`;
-
-const CardInner = styled(motion.div)`
-  position: relative;
-  width: 100%;
-  height: 100%;
+const CardFront = styled.div`
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: ${props => props.theme === 'dark' ? '#f9fafb' : '#1a1a1a'};
   text-align: center;
-  transition: transform 0.8s;
-  transform-style: preserve-3d;
-  transform: ${props => props.isFlipped ? 'rotateY(180deg)' : 'rotateY(0)'};
+  margin-bottom: 1.5rem;
+  padding: 1.5rem;
+  background: ${props => props.theme === 'dark' ? '#1f2937' : '#f9fafb'};
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  border: 1px solid ${props => props.theme === 'dark' ? '#374151' : '#e5e7eb'};
 `;
 
-const CardFace = styled.div`
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  backface-visibility: hidden;
+const CardBack = styled.div`
+  font-size: 1.25rem;
+  color: ${props => props.theme === 'dark' ? '#d1d5db' : '#374151'};
+  text-align: center;
+  padding: 1.5rem;
+  background: ${props => props.theme === 'dark' ? '#111827' : '#ffffff'};
+  border-radius: 12px;
+  margin-bottom: 1rem;
+  transition: all 0.3s ease;
+  border: 1px solid ${props => props.theme === 'dark' ? '#374151' : '#e5e7eb'};
+  flex-grow: 1;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1rem;
-  font-size: 2rem;
-  padding: 2rem;
-  border-radius: 16px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  background: white;
-
-  .icon-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1rem;
-  }
-
-  .icon-label {
-    font-size: 1.2rem;
-    color: #666;
-    margin-top: 1rem;
-  }
 `;
 
-const CardBack = styled(CardFace)`
-  transform: rotateY(180deg);
-  background: #f8f9fa;
+const CardInfo = styled.div`
+  font-size: 0.875rem;
+  color: ${props => props.theme === 'dark' ? '#9ca3af' : '#6b7280'};
+  text-align: center;
+  padding: 0.75rem;
+  background: ${props => props.theme === 'dark' ? '#1f2937' : '#f9fafb'};
+  border-radius: 8px;
+  border: 1px solid ${props => props.theme === 'dark' ? '#374151' : '#e5e7eb'};
+  font-style: italic;
 `;
 
-const Controls = styled.div`
+const Pagination = styled.div`
   display: flex;
-  gap: 1rem;
-  margin-top: 2rem;
+  justify-content: center;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 3rem;
+  padding: 1rem;
+  background: ${props => props.theme === 'dark' 
+    ? 'rgba(31, 41, 55, 0.8)' 
+    : 'rgba(255, 255, 255, 0.9)'
+  };
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  border: 1px solid ${props => props.theme === 'dark' 
+    ? 'rgba(75, 85, 99, 0.3)' 
+    : 'rgba(229, 231, 235, 0.5)'
+  };
+`;
+
+const PageButton = styled.button`
+  padding: 0.75rem 1.25rem;
+  border: 2px solid ${props => props.active ? '#58CC02' : 'transparent'};
+  background: ${props => props.active 
+    ? 'linear-gradient(135deg, #58CC02, #45a302)' 
+    : 'transparent'
+  };
+  color: ${props => props.active ? 'white' : '#6b7280'};
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-weight: 600;
+  font-size: 0.875rem;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(88, 204, 2, 0.3);
+    border-color: #58CC02;
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+`;
+
+const LoadingText = styled.div`
+  text-align: center;
+  padding: 2rem;
+  color: ${props => props.theme === 'dark' ? '#9ca3af' : '#6b7280'};
+`;
+
+const EmptyState = styled.div`
+  text-align: center;
+  padding: 4rem 2rem;
+  color: ${props => props.theme === 'dark' ? '#9ca3af' : '#6b7280'};
 `;
 
 const Button = styled.button`
@@ -150,104 +248,129 @@ const Button = styled.button`
   }
 `;
 
-const TypeInContainer = styled.div`
-  width: 100%;
-  max-width: 600px;
-  margin-top: 2rem;
-`;
-
-const Input = styled.input`
-  width: 100%;
-  padding: 1rem;
-  border: 2px solid #e5e7eb;
-  border-radius: 8px;
-  font-size: 1.1rem;
-  margin-bottom: 1rem;
-  
-  &:focus {
-    border-color: #58CC02;
-    outline: none;
-  }
-`;
-
-// Mock data
-const mockFlashcards = [
-  { 
-    id: 1, 
-    front: <Apple sx={{ fontSize: 100, color: "#ff0000" }} />, 
-    back: "Quả táo", 
-    example: "This is an apple" 
-  },
-  { 
-    id: 2, 
-    front: <Cake sx={{ fontSize: 100, color: "#ff69b4" }} />, 
-    back: "Bánh kem", 
-    example: "The birthday cake looks delicious" 
-  },
-  { 
-    id: 3, 
-    front: "Car", 
-    back: "Xe hơi", 
-    example: "I drive a car to work" 
-  },
-  { 
-    id: 4, 
-    front: <Home sx={{ fontSize: 100, color: "#8b4513" }} />, 
-    back: "Ngôi nhà", 
-    example: "This is my home" 
-  },
-  { 
-    id: 5, 
-    front: <Pets sx={{ fontSize: 100, color: "#a0522d" }} />, 
-    back: "Thú cưng", 
-    example: "I love my pet" 
-  }
-];
+// ========== COMPONENT ==========
 
 const Flashcards = () => {
   const [theme] = useState('light');
-  const [isStudyMode, setIsStudyMode] = useState(false);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isFlipped, setIsFlipped] = useState(false);
-  const [isTypeMode, setIsTypeMode] = useState(false);
-  const [userInput, setUserInput] = useState('');
-  const [showResult, setShowResult] = useState(false);
+  const [flashcards, setFlashcards] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0); // total flashcards from API
+  const itemsPerPage = 12;
 
-  const currentCard = mockFlashcards[currentIndex];
+  const fetchFlashcards = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      if (!token) throw new Error('Bạn chưa đăng nhập. Vui lòng đăng nhập để tiếp tục.');
 
-  const handleNext = () => {
-    if (currentIndex < mockFlashcards.length - 1) {
-      setIsFlipped(false);
-      setCurrentIndex(prev => prev + 1);
-      resetTypeMode();
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/flashcards`, {
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) throw new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+        if (response.status === 403) throw new Error('Bạn không có quyền truy cập flashcards này.');
+        if (response.status === 404) throw new Error('Không tìm thấy flashcards. Vui lòng liên hệ admin.');
+        throw new Error(`Lỗi server: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data.success && data.flashcards) {
+        const allFlashcards = data.flashcards;
+        const total = data.count ?? allFlashcards.length;
+        setTotalItems(total);
+        const pages = Math.max(1, Math.ceil(total / itemsPerPage));
+        setTotalPages(pages);
+
+        // slice for current page
+        const start = (currentPage - 1) * itemsPerPage;
+        const end = start + itemsPerPage;
+        setFlashcards(allFlashcards.slice(start, end));
+      } else {
+        throw new Error(data.message || 'Không thể tải flashcards');
+      }
+    } catch (err) {
+      console.error('❌ Error fetching flashcards:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handlePrevious = () => {
-    if (currentIndex > 0) {
-      setIsFlipped(false);
-      setCurrentIndex(prev => prev - 1);
-      resetTypeMode();
-    }
-  };
+  useEffect(() => {
+    fetchFlashcards();
+  }, [currentPage]);
 
-  const handleFlip = () => {
-    if (!isTypeMode) {
-      setIsFlipped(!isFlipped);
-    }
-  };
+  // ✅ THÊM: Loading state
+  if (loading) {
+    return (
+      <PageWrapper>
+        <LeftSidebar />
+        <MainContent>
+          <LoadingText theme={theme}>Đang tải flashcards...</LoadingText>
+        </MainContent>
+        <RightSidebar
+          lessonsToUnlock={8}
+          dailyGoal={{
+            current: 10,
+            target: 10,
+            label: 'Kiếm 10 KN'
+          }}
+          streak={1}
+          showProfile={true}
+        />
+      </PageWrapper>
+    );
+  }
 
-  const resetTypeMode = () => {
-    setUserInput('');
-    setShowResult(false);
-  };
-
-  const handleTypeSubmit = (e) => {
-    e.preventDefault();
-    setShowResult(true);
-  };
-
-  const isCorrect = userInput.toLowerCase().trim() === currentCard.back.toLowerCase().trim();
+  // ✅ THÊM: Error state
+  if (error) {
+    return (
+      <PageWrapper>
+        <LeftSidebar />
+        <MainContent>
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'center', 
+            alignItems: 'center', 
+            height: '50vh',
+            flexDirection: 'column',
+            gap: '1rem',
+            textAlign: 'center',
+            padding: '2rem'
+          }}>
+            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>⚠️</div>
+            <h2 style={{ color: '#ef4444', marginBottom: '1rem' }}>Không thể tải flashcards</h2>
+            <p style={{ color: '#6b7280', marginBottom: '2rem', lineHeight: '1.6' }}>
+              {error}
+            </p>
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <Button onClick={() => window.location.reload()}>
+                <Refresh /> Thử lại
+              </Button>
+              <Button onClick={() => window.location.href = '/login'}>
+                Đăng nhập lại
+              </Button>
+            </div>
+          </div>
+        </MainContent>
+        <RightSidebar
+          lessonsToUnlock={8}
+          dailyGoal={{
+            current: 10,
+            target: 10,
+            label: 'Kiếm 10 KN'
+          }}
+          streak={1}
+          showProfile={true}
+        />
+      </PageWrapper>
+    );
+  }
 
   return (
     <PageWrapper>
@@ -256,95 +379,92 @@ const Flashcards = () => {
       <MainContent>
         <Header>
           <Title theme={theme}>
-            <School /> Flashcards
+            <School /> Flashcards 
           </Title>
-          
-          <StudyButton onClick={() => setIsStudyMode(!isStudyMode)}>
-            {isStudyMode ? 'Thoát ôn tập' : 'Bắt đầu ôn tập'}
-          </StudyButton>
         </Header>
 
-        {isStudyMode ? (
-          <FlashcardContainer>
-            {!isTypeMode ? (
-              <Card onClick={handleFlip}>
-                <CardInner isFlipped={isFlipped}>
-                  <CardFace>
-                    <div className="icon-container">
-                      {currentCard.front}
-                      <p className="icon-label">Click to flip</p>
-                    </div>
-                  </CardFace>
-                  <CardBack>
-                    <div className="icon-container">
-                      <h2>{currentCard.back}</h2>
-                      <p className="icon-label">{currentCard.example}</p>
-                    </div>
-                  </CardBack>
-                </CardInner>
-              </Card>
-            ) : (
-              <TypeInContainer>
-                <div className="icon-container" style={{ marginBottom: '2rem' }}>
-                  {currentCard.front}
-                </div>
-                <form onSubmit={handleTypeSubmit}>
-                  <Input
-                    type="text"
-                    value={userInput}
-                    onChange={(e) => setUserInput(e.target.value)}
-                    placeholder="Nhập nghĩa tiếng Việt..."
-                    disabled={showResult}
-                  />
-                  {!showResult ? (
-                    <Button type="submit">Kiểm tra</Button>
-                  ) : (
-                    <div style={{ 
-                      padding: '1rem', 
-                      borderRadius: '8px',
-                      backgroundColor: isCorrect ? '#deffde' : '#ffe6e6',
-                      marginBottom: '1rem'
-                    }}>
-                      {isCorrect ? 
-                        'Chính xác! 🎉' : 
-                        `Chưa chính xác. Đáp án đúng là: ${currentCard.back}`
-                      }
-                    </div>
-                  )}
-                </form>
-              </TypeInContainer>
-            )}
-
-            <Controls>
-              <Button onClick={handlePrevious} disabled={currentIndex === 0}>
-                <ArrowBack /> Previous
-              </Button>
-              <Button onClick={() => setIsTypeMode(!isTypeMode)}>
-                <Edit /> {isTypeMode ? 'Flip Mode' : 'Type Mode'}
-              </Button>
-              <Button onClick={() => {
-                setCurrentIndex(0);
-                setIsFlipped(false);
-                resetTypeMode();
-              }}>
-                <Refresh /> Reset
-              </Button>
-              <Button 
-                onClick={handleNext} 
-                disabled={currentIndex === mockFlashcards.length - 1}
-              >
-                Next <ArrowForward />
-              </Button>
-            </Controls>
-
-            <div style={{ marginTop: '1rem', color: '#666' }}>
-              Card {currentIndex + 1} of {mockFlashcards.length}
+        {flashcards.length === 0 ? (
+          <EmptyState theme={theme}>
+            <CardMembership sx={{ fontSize: 48, mb: 2, color: theme === 'dark' ? '#9ca3af' : '#6b7280' }} />
+            <div>Chưa có flashcard nào</div>
+            <div style={{ fontSize: '0.875rem', marginTop: '0.5rem' }}>
+              Vui lòng liên hệ admin để thêm flashcards
             </div>
-          </FlashcardContainer>
+          </EmptyState>
         ) : (
-          <div style={{ textAlign: 'center', color: '#666', marginTop: '2rem' }}>
-            Nhấn "Bắt đầu ôn tập" để luyện tập với flashcards
-          </div>
+          <>
+            <FlashcardsContainer>
+              <FlashcardsGrid>
+                {flashcards.map((flashcard) => (
+                  <FlashcardCard key={flashcard._id} theme={theme}>
+                    <CardFront theme={theme}>
+                      {flashcard.front}
+                    </CardFront>
+                    <CardBack theme={theme}>
+                      {flashcard.back}
+                    </CardBack>
+                    <CardInfo theme={theme}>
+                      {flashcard.example && `Ví dụ: ${flashcard.example}`}
+                      {flashcard.pronunciation && ` | Phát âm: ${flashcard.pronunciation}`}
+                      {flashcard.ipa && ` | IPA: /${flashcard.ipa}/`}
+                    </CardInfo>
+                  </FlashcardCard>
+                ))}
+              </FlashcardsGrid>
+
+              {totalPages > 1 && (
+                <Pagination>
+                  <PageButton
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    <ArrowBack /> Trước
+                  </PageButton>
+
+                  {/* show windowed page buttons when many pages */}
+                  {(() => {
+                    const maxButtons = 7;
+                    const pages = [];
+                    let start = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+                    let end = start + maxButtons - 1;
+                    if (end > totalPages) {
+                      end = totalPages;
+                      start = Math.max(1, end - maxButtons + 1);
+                    }
+                    for (let p = start; p <= end; p++) pages.push(p);
+                    return (
+                      <>
+                        {start > 1 && (
+                          <>
+                            <PageButton onClick={() => setCurrentPage(1)}>1</PageButton>
+                            {start > 2 && <PageButton disabled>…</PageButton>}
+                          </>
+                        )}
+                        {pages.map(p => (
+                          <PageButton key={p} active={currentPage === p} onClick={() => setCurrentPage(p)}>
+                            {p}
+                          </PageButton>
+                        ))}
+                        {end < totalPages && (
+                          <>
+                            {end < totalPages - 1 && <PageButton disabled>…</PageButton>}
+                            <PageButton onClick={() => setCurrentPage(totalPages)}>{totalPages}</PageButton>
+                          </>
+                        )}
+                      </>
+                    );
+                  })()}
+
+                  <PageButton
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                  >
+                    Sau <ArrowForward />
+                  </PageButton>
+                </Pagination>
+              )}
+            </FlashcardsContainer>
+          </>
         )}
       </MainContent>
 

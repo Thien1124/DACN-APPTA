@@ -78,6 +78,8 @@ import AdminVocabularyAICreate from './pages/AdminVocabularyAICreate';
 
 // Import Styles
 import './styles/App.css';
+import PronunciationChecker from './pages/PronunciationChecker';
+import PronunciationCheckerPage from './pages/PronunciationCheckerPage';
 
 function App() {
   return (
@@ -482,7 +484,18 @@ function App() {
 
           {/* Thêm route cho OAuth success */}
           <Route path="/oauth/success" element={<OAuthSuccess />} />
+<Route path="/pronunciation-practice/:deckId" element={
+            <ProtectedRoute>
+              <PronunciationCheckerPage />
+            </ProtectedRoute>
+          } />
 
+          {/* Optional: Single flashcard pronunciation */}
+          <Route path="/pronunciation/:flashcardId" element={
+            <ProtectedRoute>
+              <PronunciationCheckerPage />
+            </ProtectedRoute>
+          } />
           {/* ========== 404 NOT FOUND ========== */}
           <Route path="*" element={
             <div style={{
@@ -490,10 +503,13 @@ function App() {
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              height: '100vh',
-              fontFamily: 'system-ui'
+              minHeight: '100vh',
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              color: 'white',
+              textAlign: 'center',
+              padding: '2rem'
             }}>
-              <h1 style={{ fontSize: '4rem', margin: 0 }}>404</h1>
+              <h1 style={{ fontSize: '8rem', margin: 0 }}>404</h1>
               <p style={{ fontSize: '1.5rem', marginTop: '1rem' }}>Trang không tồn tại</p>
               <button
                 onClick={() => window.location.href = '/'}

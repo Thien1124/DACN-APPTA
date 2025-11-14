@@ -33,6 +33,7 @@ import { deckService } from "../services/deckService";
 import { deckPreviewService } from "../services/deckPreviewService";
 import { deckManagementService } from "../services/deckManagementService";
 import { geminiService } from "../services/geminiService";
+import { Mic } from "@mui/icons-material";
 
 // Update PageWrapper and add FormWrapper
 const PageWrapper = styled.div`
@@ -1294,6 +1295,20 @@ const Decks = () => {
                           }}
                         >
                           <Delete sx={{ fontSize: 18 }} /> Xóa
+                        </ActionButton>
+                      )}
+
+                      {/* ✅ Luyện phát âm - Hiển thị khi deck có flashcards */}
+                      {deck.totalCards > 0 && (
+                        <ActionButton 
+                          variant="ai"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/pronunciation-practice/${deck._id}`);
+                          }}
+                        >
+                          <Mic sx={{ fontSize: 18 }} />
+                          Luyện phát âm
                         </ActionButton>
                       )}
                     </TopicActions>

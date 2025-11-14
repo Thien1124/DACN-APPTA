@@ -55,7 +55,6 @@ exports.getSpeechExercise = async (req, res) => {
 /**
  * Submit speech for analysis
  * POST /api/speech/analyze/:flashcardId
- * Body: audio file (multipart/form-data)
  */
 exports.analyzeSpeech = async (req, res) => {
   try {
@@ -69,7 +68,7 @@ exports.analyzeSpeech = async (req, res) => {
       });
     }
     
-    // Verify flashcard and access
+    // Verify flashcard
     const flashcard = await Flashcard.findById(flashcardId).populate('deck');
     if (!flashcard) {
       return res.status(404).json({
@@ -78,13 +77,7 @@ exports.analyzeSpeech = async (req, res) => {
       });
     }
     
-    if (!flashcard.deck) {
-      return res.status(404).json({
-        success: false,
-        message: 'Deck không tồn tại'
-      });
-    }
-    
+    // Check access
     const deck = flashcard.deck;
     if (deck.createdBy && deck.createdBy.toString() !== req.user._id.toString() && !deck.isPublic) {
       return res.status(403).json({
@@ -93,7 +86,6 @@ exports.analyzeSpeech = async (req, res) => {
       });
     }
     
-    // Get audio buffer from uploaded file
     const audioBuffer = req.file.buffer;
     
     // Save audio file
@@ -111,11 +103,11 @@ exports.analyzeSpeech = async (req, res) => {
       audioBuffer,
       flashcard.front,
       {
-        targetIPA: flashcard.ipa,
+        targetIPA: flashcard.pronunciation || flashcard.ipa,
         language,
         userId: req.user._id,
         flashcardId,
-        deckId: flashcard.deck
+        deckId: flashcard.deck._id
       }
     );
     
@@ -123,31 +115,44 @@ exports.analyzeSpeech = async (req, res) => {
     const attempt = await speechService.saveSpeechAttempt(
       req.user._id,
       flashcardId,
-      flashcard.deck,
+      flashcard.deck._id,
       userAudioUrl,
       analysisResult
     );
     
+    // ✅ Trả về format khớp với frontend
     res.json({
       success: true,
-      data: {
-        attempt: {
-          _id: attempt._id,
-          pronunciationScore: attempt.pronunciationScore,
-          fluencyScore: attempt.fluencyScore,
-          accuracyScore: attempt.accuracyScore,
-          completenessScore: attempt.completenessScore,
-          passed: attempt.passed,
-          transcription: attempt.transcription,
-          confidence: attempt.confidence,
-          overallFeedback: attempt.overallFeedback,
-          detailedFeedback: attempt.detailedFeedback,
-          wordAnalysis: attempt.wordAnalysis,
-          intonation: attempt.intonation,
-          userAudioUrl: attempt.userAudioUrl
-        }
+      analysis: {
+        // Basic scores
+        pronunciationScore: analysisResult.pronunciationScore,
+        accuracyScore: analysisResult.accuracyScore,
+        fluencyScore: analysisResult.fluencyScore,
+        completenessScore: analysisResult.completenessScore,
+        passed: analysisResult.passed,
+        
+        // Transcription
+        transcription: analysisResult.transcription,
+        expectedText: analysisResult.expectedText || flashcard.front,
+        confidence: analysisResult.confidence,
+        match: analysisResult.match,
+        
+        // ✅ Advanced analysis
+        wordAnalysis: analysisResult.wordAnalysis || [],
+        ipaComparison: analysisResult.ipaComparison || null,
+        intonation: analysisResult.intonation || null,
+        detailedFeedback: analysisResult.detailedFeedback || [],
+        
+        // Audio URLs
+        userAudioUrl: userAudioUrl,
+        referenceAudioUrl: flashcard.audioUrl,
+        
+        // Metadata
+        attemptId: attempt._id,
+        timestamp: attempt.completedAt || new Date()
       }
     });
+    
   } catch (error) {
     console.error('Analyze speech error:', error);
     res.status(500).json({

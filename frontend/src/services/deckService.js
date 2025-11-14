@@ -83,6 +83,19 @@ export const deckService = {
       throw new Error(error.response?.data?.message || 'Could not fetch decks');
     }
   },
+  // Get deck by ID
+getById: async (deckId) => {
+  try {
+    const response = await axios.get(`${API_URL}/decks/${deckId}`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      }
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Không thể tải thông tin bộ thẻ' };
+  }
+},
 
   // Create new deck
   create: async (data) => {

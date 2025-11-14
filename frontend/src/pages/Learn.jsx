@@ -666,11 +666,22 @@ useEffect(() => {
               .filter(l => l.isPublished)
               .sort((a, b) => a.order - b.order)
               .map((lesson, index) => {
-                let frontendType = 'lesson';
-                if (lesson.type === 'vocabulary') frontendType = 'lesson';
-                else if (lesson.type === 'grammar' || lesson.type === 'reading') frontendType = 'practice';
-                else if (lesson.type === 'listening') frontendType = 'story';
-                else if (lesson.type === 'mixed') frontendType = 'trophy';
+                // ✅ MAPPING ĐÚNG TYPE
+                let frontendType = 'lesson'; // Mặc định là lesson
+                
+                if (lesson.type === 'vocabulary') {
+                  frontendType = 'lesson';
+                } else if (lesson.type === 'grammar') {
+                  frontendType = 'lesson'; // ✅ Sửa: grammar cũng là lesson, không phải practice
+                } else if (lesson.type === 'reading') {
+                  frontendType = 'lesson'; // ✅ Sửa: reading cũng là lesson
+                } else if (lesson.type === 'listening') {
+                  frontendType = 'lesson';
+                } else if (lesson.type === 'mixed') {
+                  frontendType = 'lesson';
+                } else {
+                  frontendType = 'lesson'; // Default fallback
+                }
 
                 const isCompleted = progress.completedLessons.includes(lesson._id);
                 // 🆕 SỬA: current chỉ dựa trên currentLessonId tự xác định
@@ -694,7 +705,7 @@ useEffect(() => {
                   icon: getLessonIconByType(frontendType),
                   label: lesson.title,
                   completed: isCompleted,
-                  current: isCurrent,  // 🆕 Đã sửa, loại bỏ phần || cũ
+                  current: isCurrent,
                   locked: isLocked,
                   stars: isCompleted ? 3 : 0,
                   progress: isCompleted ? '5/5' : isCurrent ? '2/5' : '0/5'
@@ -800,14 +811,39 @@ useEffect(() => {
 
   // ========== EVENT HANDLERS ==========
   const handleLessonClick = (lesson, unitId) => {
-    if (lesson.locked) return;
+    if (lesson.locked) {
+      console.warn('Lesson is locked:', lesson);
+      return;
+    }
     
-    if (lesson.type === 'lesson' || lesson.type === 'practice') {
-      navigate(`/lesson/${lesson.id}`); // Sửa: chỉ cần lessonId
-    } else if (lesson.type === 'story') {
-      navigate(`/story/${lesson.id}`);
-    } else if (lesson.type === 'trophy') {
-      navigate(`/unit-review/${unitId}`);
+    console.log('🎯 Navigating to lesson:', {
+      lessonId: lesson.id,
+      type: lesson.type,
+      label: lesson.label
+    });
+
+    // ✅ ROUTING LOGIC CHÍNH XÁC
+    switch (lesson.type) {
+      case 'lesson':
+      case 'practice':
+        // Tất cả các lesson thường và practice đều dùng /lesson/:id
+        navigate(`/lesson/${lesson.id}`);
+        break;
+        
+      case 'story':
+        // Story/listening lessons dùng /story/:id
+        navigate(`/story/${lesson.id}`);
+        break;
+        
+      case 'trophy':
+        // Trophy/review lessons dùng /unit-review/:unitId
+        navigate(`/unit-review/${unitId}`);
+        break;
+        
+      default:
+        // Fallback: mặc định đều vào /lesson/:id
+        console.warn('Unknown lesson type:', lesson.type, 'using default route');
+        navigate(`/lesson/${lesson.id}`);
     }
   };
 
@@ -823,52 +859,45 @@ useEffect(() => {
   };
 
   const renderLessonButton = (lesson, unitId) => {
+    const commonProps = {
+      locked: lesson.locked,
+      completed: lesson.completed,
+      current: lesson.current,
+      onClick: () => handleLessonClick(lesson, unitId), // ✅ Đảm bảo onClick đúng
+      disabled: lesson.locked
+    };
+
+    // ✅ Icon hiển thị
+    const icon = getLessonIcon(lesson);
+
     if (lesson.type === 'trophy') {
       return (
-        <TrophyButton
-          locked={lesson.locked}
-          onClick={() => handleLessonClick(lesson, unitId)}
-          disabled={lesson.locked}
-        >
-          {getLessonIcon(lesson)}
+        <TrophyButton {...commonProps}>
+          {icon}
         </TrophyButton>
       );
     }
 
     if (lesson.type === 'story') {
       return (
-        <StoryButton
-          locked={lesson.locked}
-          onClick={() => handleLessonClick(lesson, unitId)}
-          disabled={lesson.locked}
-        >
-          {getLessonIcon(lesson)}
+        <StoryButton {...commonProps}>
+          {icon}
         </StoryButton>
       );
     }
 
     if (lesson.type === 'practice') {
       return (
-        <PracticeButton
-          locked={lesson.locked}
-          completed={lesson.completed}
-          onClick={() => handleLessonClick(lesson, unitId)}
-          disabled={lesson.locked}
-        >
-          {getLessonIcon(lesson)}
+        <PracticeButton {...commonProps}>
+          {icon}
         </PracticeButton>
       );
     }
 
+    // Default: lesson button
     return (
-      <LessonButton
-        completed={lesson.completed}
-        current={lesson.current}
-        locked={lesson.locked}
-        onClick={() => handleLessonClick(lesson, unitId)}
-        disabled={lesson.locked}
-      >
-        {getLessonIcon(lesson)}
+      <LessonButton {...commonProps}>
+        {icon}
         {lesson.completed && lesson.stars > 0 && (
           <StarBadge>⭐</StarBadge>
         )}

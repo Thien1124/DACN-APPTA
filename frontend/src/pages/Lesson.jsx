@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react"; // ✅ THÊM useRef
 import { useNavigate, useParams } from "react-router-dom";
 import styled, { keyframes } from "styled-components";
 import coffee from "../assets/coffee.png";
@@ -11,7 +11,6 @@ import horse from "../assets/horse.png";
 import Toast from "../components/Toast";
 import useToast from "../hooks/useToast";
 import Swal from "sweetalert2";
-import successSound from "../assets/success.mp3";
 import correctSound from "../assets/correct.mp3";
 import wrongSound from "../assets/wrong.mp3";
 import successGif from "../assets/success.gif";
@@ -19,12 +18,11 @@ import happyGif from "../assets/happy.gif";
 import sadGif from "../assets/sad.gif";
 import LinhThuTini from "../assets/LinhThuTini.gif";
 import { heartService } from "../services/heartService";
-import { Favorite } from "@mui/icons-material";
+import { Favorite, VolumeUp, Mic } from "@mui/icons-material"; // ✅ Thêm Mic, Stop
 import { lessonService } from "../services/lessonService";
 import { vocabularyService } from "../services/vocabularyService";
 import { exerciseService } from "../services/exerciseService";
 import progressService from "../services/progressService";
-import { VolumeUp } from '@mui/icons-material'; // ✅ Thêm import icon loa
 
 // ========== ANIMATIONS ==========
 const fadeIn = keyframes`
@@ -54,17 +52,7 @@ const slideUp = keyframes`
   }
 `;
 
-const checkmark = keyframes`
-  0% {
-    transform: scale(0) rotate(45deg);
-  }
-  50% {
-    transform: scale(1.2) rotate(45deg);
-  }
-  100% {
-    transform: scale(1) rotate(45deg);
-  }
-`;
+
 
 const modalFadeIn = keyframes`
   from { opacity: 0; }
@@ -119,13 +107,7 @@ const PageWrapper = styled.div`
   display: flex;
   flex-direction: column;
 `;
-const HorseImage = styled.img`
-  width: 200px;
-  height: 200px;
-  object-fit: contain;
-  margin: 1rem auto;
-  animation: ${bounce} 1s ease infinite;
-`;
+
 const Header = styled.div`
   position: fixed;
   top: 0;
@@ -401,7 +383,7 @@ const ChoiceText = styled.span`
 `;
 
 const SpeakerButton = styled.button`
-  background: #1CB0F6;
+  background: #1cb0f6;
   border: none;
   color: white;
   width: 40px;
@@ -623,7 +605,6 @@ const FeedbackIconWrapper = styled.div`
   }
 `;
 
-
 const drawCheckmark = keyframes`
   0% {
     stroke-dashoffset: 100;
@@ -637,7 +618,6 @@ const drawCheckmark = keyframes`
     opacity: 1;
   }
 `;
-
 
 const checkmarkPop = keyframes`
   0% {
@@ -665,7 +645,6 @@ const checkmarkGlow = keyframes`
   }
 `;
 
-
 const particleBurst = keyframes`
   0% {
     transform: translate(0, 0) scale(1);
@@ -676,7 +655,17 @@ const particleBurst = keyframes`
     opacity: 0;
   }
 `;
-
+const pulseRing = keyframes`
+  0% {
+    box-shadow: 0 0 0 0 rgba(28,176,246,0.45);
+  }
+  70% {
+    box-shadow: 0 0 0 18px rgba(28,176,246,0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(28,176,246,0);
+  }
+`;
 const ripple = keyframes`
   0% {
     transform: scale(0.8);
@@ -700,7 +689,7 @@ const CheckmarkIcon = styled.div`
     width: 40px;
     height: 40px;
     animation: ${checkmarkPop} 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55),
-               ${checkmarkGlow} 1.5s ease-in-out infinite;
+      ${checkmarkGlow} 1.5s ease-in-out infinite;
   }
 
   .checkmark-path {
@@ -900,58 +889,6 @@ const ContinueButton = styled.button`
   }
 `;
 
-// Thêm styled components mới cho các loại câu hỏi khác
-const SpeechBubble = styled.div`
-  background: white;
-  border: 3px solid #e5e7eb;
-  border-radius: 16px;
-  padding: 1rem 1.5rem;
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #1f2937;
-  position: relative;
-  margin: 2rem 0;
-  display: inline-block;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-
-  &::before {
-    content: "";
-    position: absolute;
-    bottom: -10px;
-    left: 30px;
-    width: 0;
-    height: 0;
-    border-left: 10px solid transparent;
-    border-right: 10px solid transparent;
-    border-top: 10px solid white;
-  }
-
-  &::after {
-    content: "";
-    position: absolute;
-    bottom: -14px;
-    left: 27px;
-    width: 0;
-    height: 0;
-    border-left: 13px solid transparent;
-    border-right: 13px solid transparent;
-    border-top: 14px solid #e5e7eb;
-    z-index: -1;
-  }
-`;
-
-const CharacterImage = styled.img`
-  width: 180px;
-  height: 180px;
-  object-fit: contain;
-  margin-bottom: 1rem;
-
-  @media (max-width: 768px) {
-    width: 150px;
-    height: 150px;
-  }
-`;
-
 const AudioButton = styled.button`
   background: #1cb0f6;
   border: none;
@@ -1085,17 +1022,7 @@ const StreakBadge = styled.div`
   }
 `;
 
-const ConversationContainer = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 2rem;
-  margin-bottom: 2rem;
 
-  @media (max-width: 768px) {
-    flex-direction: column;
-    gap: 1.5rem;
-  }
-`;
 
 const ConversationBubble = styled.div`
   background: white;
@@ -1686,8 +1613,11 @@ const ReviewNoticeCount = styled.span`
   font-weight: 700;
   margin: 0 0.25rem;
 `;
-// ========== COMPONENT ==========
 
+
+// ========COMPONENT=========
+
+// Thêm states cho Speaking
 const Lesson = () => {
   const navigate = useNavigate();
   const { lessonId } = useParams();
@@ -1730,6 +1660,367 @@ const Lesson = () => {
   const [isLoadingLesson, setIsLoadingLesson] = useState(true);
   const [lessonData, setLessonData] = useState(null);
 
+  // ✅ THÊM STATE CHO SPEECH
+  const [pronunciationScore, setPronunciationScore] = useState(0);
+  const [transcription, setTranscription] = useState('');
+  const [recording, setRecording] = useState(false);
+  const [audioBlob, setAudioBlob] = useState(null);
+  const [analyzing, setAnalyzing] = useState(false); // ✅ THÊM STATE NÀY
+  const [useWebSpeech, setUseWebSpeech] = useState(true); // Default dùng Web Speech API
+  const [isListening, setIsListening] = useState(false);
+
+  const mediaRecorderRef = useRef(null);
+  const chunksRef = useRef([]);
+  const recognitionRef = useRef(null);
+
+  const startRecording = async () => {
+    // ✅ Check nếu browser hỗ trợ Web Speech API
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    
+    if (useWebSpeech && SpeechRecognition) {
+      // ✅ Dùng Web Speech API (miễn phí, nhanh)
+      console.log('🎤 Using Web Speech API');
+      
+      try {
+        const recognition = new SpeechRecognition();
+        recognition.lang = 'en-US';
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+        
+        recognitionRef.current = recognition;
+        
+        recognition.onstart = () => {
+          setRecording(true);
+          setIsListening(true);
+          console.log('🎤 Speech recognition started');
+        };
+        
+        recognition.onresult = (event) => {
+          const transcript = event.results[0][0].transcript;
+          const confidence = event.results[0][0].confidence;
+          
+          console.log('📝 Transcript:', transcript);
+          console.log('📊 Confidence:', confidence);
+          
+          // ✅ Phân tích pronunciation ngay trên browser
+          analyzePronunciationLocal(transcript, confidence);
+        };
+        
+        recognition.onerror = (event) => {
+          console.error('❌ Speech recognition error:', event.error);
+          
+          if (event.error === 'not-allowed') {
+            showToast('error', 'Lỗi', 'Bạn chưa cho phép truy cập microphone. Vui lòng bật microphone trong cài đặt trình duyệt.');
+          } else if (event.error === 'no-speech') {
+            showToast('warning', 'Thông báo', 'Không nghe thấy giọng nói. Vui lòng thử lại.');
+          } else {
+            showToast('error', 'Lỗi', 'Không thể nhận dạng giọng nói');
+          }
+          
+          setRecording(false);
+          setIsListening(false);
+        };
+        
+        recognition.onend = () => {
+          setRecording(false);
+          setIsListening(false);
+          console.log('✅ Speech recognition ended');
+        };
+        
+        recognition.start();
+        
+      } catch (err) {
+        console.error('❌ Web Speech API error:', err);
+        showToast('error', 'Lỗi', 'Không thể bắt đầu nhận dạng giọng nói');
+        
+        // ✅ Fallback: Chuyển sang MediaRecorder + API
+        setUseWebSpeech(false);
+        startRecordingWithMediaRecorder();
+      }
+    } else {
+      // ✅ Fallback: Dùng MediaRecorder + Backend API
+      console.log('🎤 Using MediaRecorder + Backend API');
+      startRecordingWithMediaRecorder();
+    }
+  };
+
+  // ✅ THÊM: Hàm startRecording với MediaRecorder (backup)
+  const startRecordingWithMediaRecorder = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      
+      // ✅ Auto-detect supported format
+      let mimeType = 'audio/webm';
+      if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+        mimeType = 'audio/webm;codecs=opus';
+      } else if (MediaRecorder.isTypeSupported('audio/webm')) {
+        mimeType = 'audio/webm';
+      } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+        mimeType = 'audio/mp4';
+      } else if (MediaRecorder.isTypeSupported('audio/ogg;codecs=opus')) {
+        mimeType = 'audio/ogg;codecs=opus';
+      } else {
+        mimeType = '';
+      }
+      
+      console.log('🎤 Using mimeType:', mimeType || 'default');
+      
+      mediaRecorderRef.current = new MediaRecorder(stream, mimeType ? { mimeType } : {});
+      chunksRef.current = [];
+      
+      mediaRecorderRef.current.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          chunksRef.current.push(event.data);
+        }
+      };
+      
+      mediaRecorderRef.current.onstop = async () => {
+        const blobType = mimeType || 'audio/webm';
+        const blob = new Blob(chunksRef.current, { type: blobType });
+        
+        setAudioBlob(blob);
+        stream.getTracks().forEach(track => track.stop());
+        
+        console.log('🎤 Recording stopped:', {
+          blobSize: blob.size,
+          blobType: blob.type
+        });
+        
+        // ✅ Tự động gọi Backend API analyze
+        await autoAnalyzePronunciation(blob);
+      };
+      
+      mediaRecorderRef.current.start();
+      setRecording(true);
+      
+    } catch (err) {
+      console.error('❌ MediaRecorder error:', err);
+      
+      if (err.name === 'NotAllowedError') {
+        showToast('error', 'Lỗi', 'Bạn chưa cho phép truy cập microphone. Vui lòng bật microphone trong cài đặt trình duyệt.');
+      } else if (err.name === 'NotFoundError') {
+        showToast('error', 'Lỗi', 'Không tìm thấy microphone. Vui lòng kiểm tra thiết bị.');
+      } else if (err.name === 'NotSupportedError') {
+        showToast('error', 'Lỗi', 'Trình duyệt không hỗ trợ ghi âm. Vui lòng dùng Chrome/Firefox.');
+      } else {
+        showToast('error', 'Lỗi', 'Không thể truy cập microphone');
+      }
+    }
+  };
+
+  // ✅ SỬA: stopRecording
+  const stopRecording = () => {
+    if (recognitionRef.current && isListening) {
+      // Stop Web Speech API
+      recognitionRef.current.stop();
+      setRecording(false);
+      setIsListening(false);
+    } else if (mediaRecorderRef.current && recording) {
+      // Stop MediaRecorder
+      mediaRecorderRef.current.stop();
+      setRecording(false);
+    }
+  };
+
+  // ✅ THÊM: Hàm phân tích pronunciation trên browser (miễn phí)
+  const analyzePronunciationLocal = (transcript, confidence) => {
+    const targetText = (question.correctAnswer || question.question).toLowerCase().trim();
+    const transcribedText = transcript.toLowerCase().trim();
+    
+    console.log('📊 Analyzing locally:', { targetText, transcribedText });
+    
+    // ✅ Calculate similarity
+    const similarity = calculateSimilarity(transcribedText, targetText);
+    const score = Math.round(similarity * 100);
+    const passed = score >= 80; // 80% trở lên = pass
+    
+    console.log('✅ Local analysis result:', {
+      score,
+      similarity,
+      passed,
+      confidence
+    });
+    
+    // ✅ Update UI
+    setPronunciationScore(score);
+    setTranscription(transcript);
+    setIsChecked(true);
+    setShowFeedback(true);
+    setSelectedAnswer(passed ? 'correct' : 'wrong');
+    
+    if (passed) {
+      playSound('correct');
+      setCorrectAnswers(prev => prev + 1);
+      setConsecutiveCorrect(prev => prev + 1);
+    } else {
+      playSound('wrong');
+      setConsecutiveCorrect(0);
+      setHearts(prev => Math.max(0, prev - 1));
+      syncUseHeart();
+      
+      if (!wrongQuestions.find(q => q.id === question.id)) {
+        setWrongQuestions([...wrongQuestions, question]);
+      }
+    }
+  };
+
+  // ✅ THÊM: Helper functions cho similarity calculation
+  function calculateSimilarity(str1, str2) {
+    const distance = levenshteinDistance(str1, str2);
+    const maxLen = Math.max(str1.length, str2.length);
+    return maxLen === 0 ? 1 : 1 - distance / maxLen;
+  }
+
+  function levenshteinDistance(str1, str2) {
+    const m = str1.length;
+    const n = str2.length;
+    const dp = Array(m + 1).fill(null).map(() => Array(n + 1).fill(0));
+    
+    for (let i = 0; i <= m; i++) dp[i][0] = i;
+    for (let j = 0; j <= n; j++) dp[0][j] = j;
+    
+    for (let i = 1; i <= m; i++) {
+      for (let j = 1; j <= n; j++) {
+        if (str1[i - 1] === str2[j - 1]) {
+          dp[i][j] = dp[i - 1][j - 1];
+        } else {
+          dp[i][j] = 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]);
+        }
+      }
+    }
+    
+    return dp[m][n];
+  }
+
+  // Hàm mock analyze pronunciation
+  const mockAnalyzePronunciation = async (audioBlob) => {
+    console.log('🧪 Frontend Mock: Analyzing pronunciation');
+    
+    // Giả lập delay
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    // Mock result
+    const score = Math.floor(Math.random() * 40) + 60;
+    const passed = score >= 50;
+    
+    const mockTranscriptions = [
+      question.correctAnswer,
+      question.correctAnswer.replace('are', 'is'),
+      question.correctAnswer.split(' ').slice(0, -1).join(' ')
+    ];
+    const transcription = mockTranscriptions[Math.floor(Math.random() * mockTranscriptions.length)];
+    
+    // Update state
+    setPronunciationScore(score);
+    setTranscription(transcription);
+    setIsChecked(true);
+    setShowFeedback(true);
+    setSelectedAnswer(passed ? 'correct' : 'wrong');
+    
+    if (passed) {
+      playSound('correct');
+      setCorrectAnswers(prev => prev + 1);
+      setConsecutiveCorrect(prev => prev + 1);
+    } else {
+      playSound('wrong');
+      setConsecutiveCorrect(0);
+      setHearts(prev => Math.max(0, prev - 1));
+      await syncUseHeart();
+    }
+    
+    console.log('🧪 Mock result:', { score, passed, transcription });
+  };
+
+  const autoAnalyzePronunciation = async (blob) => {
+    if (!blob || blob.size === 0) {
+      console.error('❌ No audio blob available');
+      showToast('warning', 'Thông báo', 'Vui lòng ghi âm trước khi kiểm tra');
+      return;
+    }
+
+    console.log('🔍 Starting analysis with blob:', {
+      size: blob.size,
+      type: blob.type,
+      targetText: question.correctAnswer
+    });
+    
+    setAnalyzing(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('audio', blob, 'recording.webm');
+      formData.append('targetText', question.correctAnswer);
+      
+      const token = localStorage.getItem('token');
+      
+      console.log('📤 Sending to API:', {
+        url: `${process.env.REACT_APP_API_URL}/speech/analyze-speaking`,
+        targetText: question.correctAnswer,
+        blobSize: blob.size,
+        hasToken: !!token
+      });
+      
+      // ✅ ĐÚNG: Gọi API thật
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/speech/analyze-speaking`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      const result = await response.json();
+      console.log('🔍 Full API Response:', result);
+  console.log('📊 Analysis:', result.analysis);
+  console.log('💯 Score:', result.analysis?.pronunciationScore);
+  console.log('✅ Passed:', result.analysis?.pronunciationScore >= 50);
+  
+      if (result.success) {
+        const analysis = result.analysis;
+        const passed = analysis.pronunciationScore >= 50;
+        
+        // ✅ Lưu score và transcription
+        setPronunciationScore(analysis.pronunciationScore);
+        setTranscription(analysis.transcription || '');
+        
+        // Set state để hiển thị feedback
+        setIsChecked(true);
+        setShowFeedback(true);
+        setSelectedAnswer(passed ? 'correct' : 'wrong');
+        
+        if (passed) {
+          playSound('correct');
+          setCorrectAnswers(prev => prev + 1);
+          setConsecutiveCorrect(prev => prev + 1);
+        } else {
+          playSound('wrong');
+          setConsecutiveCorrect(0);
+          setHearts(prev => Math.max(0, prev - 1));
+          await syncUseHeart();
+          
+          if (!wrongQuestions.find(q => q.id === question.id)) {
+            setWrongQuestions([...wrongQuestions, question]);
+          }
+        }
+        
+        console.log('✅ Analysis complete:', {
+          score: analysis.pronunciationScore,
+          passed,
+          transcription: analysis.transcription
+        });
+        
+      } else {
+        console.error('❌ API error:', result);
+        showToast('error', 'Lỗi', result.message || 'Không thể phân tích phát âm');
+      }
+    } catch (err) {
+      console.error('❌ Analysis error:', err);
+      showToast('error', 'Lỗi', 'Đã xảy ra lỗi khi phân tích');
+    } finally {
+      setAnalyzing(false);
+    }
+  };
 
   const reportReasons = [
     "Câu hỏi không rõ ràng",
@@ -1821,7 +2112,7 @@ const Lesson = () => {
   useEffect(() => {
     setOriginalQuestionsCount(allQuestions.length);
   }, []);
-/*
+  /*
   // Check first time reminder
   useEffect(() => {
     try {
@@ -1835,69 +2126,69 @@ const Lesson = () => {
     }
   }, [lessonId]);
 */
- // ========== FETCH LESSON DATA FROM API ==========
+  // ========== FETCH LESSON DATA FROM API ==========
   useEffect(() => {
     const fetchLessonData = async () => {
       if (!lessonId) {
-        console.error('❌ No lessonId provided');
-        showToast('error', 'Lỗi', 'Không tìm thấy ID bài học');
-        navigate('/learn');
+        console.error("❌ No lessonId provided");
+        showToast("error", "Lỗi", "Không tìm thấy ID bài học");
+        navigate("/learn");
         return;
       }
 
       try {
         setIsLoadingLesson(true);
-        console.log('📚 Fetching lesson:', lessonId);
+        console.log("📚 Fetching lesson:", lessonId);
 
         // 1. Lấy lesson details
         const lessonResponse = await lessonService.getLessonById(lessonId);
-        console.log('✅ Lesson response:', lessonResponse);
+        console.log("✅ Lesson response:", lessonResponse);
         const lesson = lessonResponse.data;
-        
+
         if (!lesson) {
-          throw new Error('Lesson data is empty');
+          throw new Error("Lesson data is empty");
         }
-        
+
         setLessonData(lesson);
 
         // 2. Lấy vocabularies
         const vocabResponse = await vocabularyService.getByLesson(lessonId);
-        console.log('📖 Vocabularies:', vocabResponse.data?.length || 0);
+        console.log("📖 Vocabularies:", vocabResponse.data?.length || 0);
         const vocabularies = vocabResponse.data || [];
 
         // 3. Lấy exercises
         const exerciseResponse = await exerciseService.getByLesson(lessonId);
-        console.log('✏️ Exercises:', exerciseResponse.data?.length || 0);
+        console.log("✏️ Exercises:", exerciseResponse.data?.length || 0);
         const exercises = exerciseResponse.data || [];
 
         // ✅ Kiểm tra nếu không có vocab và exercise
         if (vocabularies.length === 0 && exercises.length === 0) {
-          console.warn('⚠️ No content in this lesson');
-          showToast('warning', 'Thông báo', 'Bài học này chưa có nội dung');
+          console.warn("⚠️ No content in this lesson");
+          showToast("warning", "Thông báo", "Bài học này chưa có nội dung");
         }
 
         // ✅ 4. Transform vocabularies thành vocabulary questions
         const vocabQuestions = vocabularies.map((vocab) => {
           // Tạo 2 wrong choices từ vocabularies khác (không trùng lặp)
           const wrongChoices = vocabularies
-            .filter(v => v._id !== vocab._id) // Loại bỏ vocab hiện tại
+            .filter((v) => v._id !== vocab._id) // Loại bỏ vocab hiện tại
             .sort(() => Math.random() - 0.5) // Shuffle
             .slice(0, 2); // Lấy 2 cái
-        
+
           // ✅ Đảm bảo có đủ 3 choices (1 đúng + 2 sai)
           const allChoices = [
             {
               id: vocab._id,
               text: vocab.word,
               image: vocab.imageUrl || coffee, // ✅ Dùng imageUrl từ backend
-              audio: vocab.word
+              audio: vocab.word,
             },
-            ...wrongChoices.map(v => ({
+            ...wrongChoices.map((v) => ({
               id: v._id,
               text: v.word,
               image: v.imageUrl || milk, // ✅ Dùng imageUrl từ backend
-              audio: v.word
-            }))
+              audio: v.word,
+            })),
           ];
 
           // ✅ Shuffle để đáp án đúng không luôn ở vị trí đầu
@@ -1905,36 +2196,41 @@ const Lesson = () => {
 
           return {
             id: `vocab-${vocab._id}`,
-            type: 'vocabulary',
+            type: "vocabulary",
             question: `Đâu là "${vocab.meaning || vocab.word}"?`, // ✅ Hiển thị nghĩa tiếng Việt
             choices: shuffledChoices,
             correctAnswer: vocab._id, // ✅ Dùng _id thay vì word để so sánh chính xác
-            vocab: vocab
+            vocab: vocab,
           };
         });
 
         // 5. Transform exercises thành câu hỏi
         const exerciseQuestions = exercises.map((exercise) => {
-          let questionType = 'multiple_choice';
-          
+          let questionType = "multiple_choice";
+
           // ✅ Map backend type sang frontend type
-          if (exercise.type === 'multiple-choice') questionType = 'multiple_choice';
-          else if (exercise.type === 'fill-in-blank') questionType = 'fill_in_blank'; // ✅ Sửa type
-          else if (exercise.type === 'translation') questionType = 'translation'; // ✅ Sửa type
-          else if (exercise.type === 'listening') questionType = 'listen_write';
-          else if (exercise.type === 'speaking') questionType = 'conversation';
-          else if (exercise.type === 'matching') questionType = 'match_pairs';
+          if (exercise.type === "multiple-choice")
+            questionType = "multiple_choice";
+          else if (exercise.type === "fill-in-blank")
+            questionType = "fill_in_blank"; // ✅ Sửa type
+          else if (exercise.type === "translation")
+            questionType = "translation"; // ✅ Sửa type
+          else if (exercise.type === "listening") questionType = "listen_write";
+          else if (exercise.type === "speaking") questionType = "speaking";
+          else if (exercise.type === "matching") questionType = "match_pairs";
 
           // ✅ Transform options
-          const choices = exercise.options?.map((opt, idx) => ({
-            id: opt._id || String(idx + 1),
-            text: opt.text
-          })) || [];
+          const choices =
+            exercise.options?.map((opt, idx) => ({
+              id: opt._id || String(idx + 1),
+              text: opt.text,
+            })) || [];
 
           // ✅ Tìm correct answer
-          const correctOption = exercise.options?.find(opt => opt.isCorrect);
-          const correctAnswer = correctOption 
-            ? correctOption._id || String(exercise.options.indexOf(correctOption) + 1)
+          const correctOption = exercise.options?.find((opt) => opt.isCorrect);
+          const correctAnswer = correctOption
+            ? correctOption._id ||
+              String(exercise.options.indexOf(correctOption) + 1)
             : exercise.correctAnswer;
 
           // ✅ Tạo base question object
@@ -1946,33 +2242,38 @@ const Lesson = () => {
             choices: choices,
             correctAnswer: correctAnswer,
             explanation: exercise.explanation,
-            exercise: exercise
+            exercise: exercise,
           };
 
           // ✅ Xử lý đặc biệt cho match_pairs
-          if (questionType === 'match_pairs') {
+          if (questionType === "match_pairs") {
             // Parse correctAnswer JSON để tạo leftColumn và rightColumn
             try {
-              const pairs = typeof exercise.correctAnswer === 'string' 
-                ? JSON.parse(exercise.correctAnswer) 
-                : exercise.correctAnswer || {};
+              const pairs =
+                typeof exercise.correctAnswer === "string"
+                  ? JSON.parse(exercise.correctAnswer)
+                  : exercise.correctAnswer || {};
 
               const leftColumn = Object.keys(pairs).map((leftText, index) => ({
                 id: `left-${index}`,
-                text: leftText
+                text: leftText,
               }));
 
-              const rightColumn = Object.values(pairs).map((rightText, index) => ({
-                id: `right-${index}`,
-                text: rightText,
-                matchWith: `left-${Object.keys(pairs).findIndex(key => pairs[key] === rightText)}`
-              }));
+              const rightColumn = Object.values(pairs).map(
+                (rightText, index) => ({
+                  id: `right-${index}`,
+                  text: rightText,
+                  matchWith: `left-${Object.keys(pairs).findIndex(
+                    (key) => pairs[key] === rightText
+                  )}`,
+                })
+              );
 
               questionObj.leftColumn = leftColumn;
               questionObj.rightColumn = rightColumn;
-              questionObj.correctAnswer = 'All pairs matched'; // Placeholder
+              questionObj.correctAnswer = "All pairs matched"; // Placeholder
             } catch (error) {
-              console.error('Error parsing matching pairs:', error);
+              console.error("Error parsing matching pairs:", error);
               // Fallback: tạo empty columns
               questionObj.leftColumn = [];
               questionObj.rightColumn = [];
@@ -1980,28 +2281,33 @@ const Lesson = () => {
           }
 
           // ✅ Xử lý đặc biệt cho translate_build và listen_write
-          if (questionType === 'translate_build' || questionType === 'listen_write') {
+          if (
+            questionType === "translate_build" ||
+            questionType === "listen_write"
+          ) {
             // Parse correctAnswer để tạo wordBank
             try {
               let wordBank = [];
-              
-              if (typeof exercise.correctAnswer === 'string') {
+
+              if (typeof exercise.correctAnswer === "string") {
                 // Nếu là string, split thành array
-                wordBank = exercise.correctAnswer.split(',').map(word => word.trim());
+                wordBank = exercise.correctAnswer
+                  .split(",")
+                  .map((word) => word.trim());
               } else if (Array.isArray(exercise.correctAnswer)) {
                 // Nếu đã là array
                 wordBank = exercise.correctAnswer;
               } else {
                 // Fallback: tạo wordBank từ question text
-                wordBank = exercise.question.split(' ').slice(0, 10); // Lấy 10 từ đầu
+                wordBank = exercise.question.split(" ").slice(0, 10); // Lấy 10 từ đầu
               }
 
               questionObj.wordBank = wordBank;
               questionObj.audioText = exercise.question; // Sử dụng question làm audio text
             } catch (error) {
-              console.error('Error creating wordBank:', error);
+              console.error("Error creating wordBank:", error);
               // Fallback: tạo wordBank từ question
-              questionObj.wordBank = exercise.question.split(' ').slice(0, 10);
+              questionObj.wordBank = exercise.question.split(" ").slice(0, 10);
               questionObj.audioText = exercise.question;
             }
           }
@@ -2010,27 +2316,30 @@ const Lesson = () => {
         });
 
         const transformedQuestions = [...vocabQuestions, ...exerciseQuestions];
-        
-        console.log('🎯 Total questions:', transformedQuestions.length);
-        console.log('📋 Sample question:', transformedQuestions[0]);
-        
+
+        console.log("🎯 Total questions:", transformedQuestions.length);
+        console.log("📋 Sample question:", transformedQuestions[0]);
+
         // ✅ Set questions
         if (transformedQuestions.length > 0) {
           setQuestions(transformedQuestions);
           setOriginalQuestionsCount(transformedQuestions.length);
         } else {
-          console.warn('⚠️ Using mock data as fallback');
+          console.warn("⚠️ Using mock data as fallback");
           setQuestions(allQuestions);
           setOriginalQuestionsCount(allQuestions.length);
         }
-
       } catch (error) {
-        console.error('❌ Error fetching lesson data:', error);
-        console.error('Error details:', error.response?.data || error.message);
-        showToast('error', 'Lỗi', error.response?.data?.message || 'Không thể tải dữ liệu bài học');
-        
+        console.error("❌ Error fetching lesson data:", error);
+        console.error("Error details:", error.response?.data || error.message);
+        showToast(
+          "error",
+          "Lỗi",
+          error.response?.data?.message || "Không thể tải dữ liệu bài học"
+        );
+
         setTimeout(() => {
-          navigate('/learn');
+          navigate("/learn");
         }, 2000);
       } finally {
         setIsLoadingLesson(false);
@@ -2173,204 +2482,208 @@ const Lesson = () => {
   }, []);
 
   const checkMatch = (leftId, rightId) => {
-  const rightItem = question.rightColumn.find((item) => item.id === rightId);
+    const rightItem = question.rightColumn.find((item) => item.id === rightId);
 
-  if (rightItem && rightItem.matchWith === leftId) {
-    // ✅ Ghép đúng
-    playSound("correct");
-    const newMatchedPairs = [...matchedPairs, leftId, rightId];
-    setMatchedPairs(newMatchedPairs);
-    setSelectedLeft(null);
-    setSelectedRight(null);
-
-    // ✅ ĐỌC tiếng Anh khi ghép đúng (để confirm)
-    speakText(rightItem.text);
-
-    // Check xem đã hoàn thành hết chưa
-    if (
-      newMatchedPairs.length ===
-      question.leftColumn.length + question.rightColumn.length
-    ) {
-      setTimeout(() => {
-        setIsChecked(true);
-        setShowFeedback(true);
-        setCorrectAnswers((prev) => prev + 1);
-        setConsecutiveCorrect((prev) => prev + 1);
-      }, 500);
-    }
-  } else {
-    // ✅ Ghép sai
-    playSound("wrong");
-    setHearts((prev) => Math.max(0, prev - 1));
-
-    setTimeout(() => {
+    if (rightItem && rightItem.matchWith === leftId) {
+      // ✅ Ghép đúng
+      playSound("correct");
+      const newMatchedPairs = [...matchedPairs, leftId, rightId];
+      setMatchedPairs(newMatchedPairs);
       setSelectedLeft(null);
       setSelectedRight(null);
-    }, 500);
-  }
-};
+
+      // ✅ ĐỌC tiếng Anh khi ghép đúng (để confirm)
+      speakText(rightItem.text);
+
+      // Check xem đã hoàn thành hết chưa
+      if (
+        newMatchedPairs.length ===
+        question.leftColumn.length + question.rightColumn.length
+      ) {
+        setTimeout(() => {
+          setIsChecked(true);
+          setShowFeedback(true);
+          setCorrectAnswers((prev) => prev + 1);
+          setConsecutiveCorrect((prev) => prev + 1);
+        }, 500);
+      }
+    } else {
+      // ✅ Ghép sai
+      playSound("wrong");
+      setHearts((prev) => Math.max(0, prev - 1));
+
+      setTimeout(() => {
+        setSelectedLeft(null);
+        setSelectedRight(null);
+      }, 500);
+    }
+  };
 
   const handlePairClick = (id, column) => {
-  if (matchedPairs.includes(id) || isChecked) return;
+    if (matchedPairs.includes(id) || isChecked) return;
 
-  if (column === "left") {
-    // ✅ Click vào cột TRÁI (Tiếng Việt) - KHÔNG ĐỌC
-    setSelectedLeft(id);
-    
-    // Kiểm tra match nếu đã chọn cột phải
-    if (selectedRight) {
-      checkMatch(id, selectedRight);
-    }
-  } else {
-    // ✅ Click vào cột PHẢI (Tiếng Anh) - KHÔNG ĐỌC
-    setSelectedRight(id);
-    
-    // Kiểm tra match nếu đã chọn cột trái
-    if (selectedLeft) {
-      checkMatch(selectedLeft, id);
-    }
-  }
-};
+    if (column === "left") {
+      // ✅ Click vào cột TRÁI (Tiếng Việt) - KHÔNG ĐỌC
+      setSelectedLeft(id);
 
-
-const speakText = (text) => {
-  if (!text || !text.toString().trim()) {
-    console.warn('⚠️ Không có text để phát âm');
-    return;
-  }
-
-  // ✅ Cancel bất kỳ speech nào đang chạy
-  if (window.speechSynthesis.speaking) {
-    window.speechSynthesis.cancel();
-  }
-
-  // ✅ Hàm chọn giọng ENGLISH tốt nhất
-  const getEnglishVoice = (voices) => {
-    console.log('📋 Available voices:', voices.map(v => `${v.name} (${v.lang})`));
-
-    // ✅ 1. Ưu tiên Google US English
-    let voice = voices.find(v => 
-      v.lang === 'en-US' && 
-      v.name.toLowerCase().includes('google')
-    );
-    if (voice) {
-      console.log('✅ Chọn Google US:', voice.name);
-      return voice;
-    }
-
-    // ✅ 2. Microsoft David/Zira (Windows)
-    voice = voices.find(v => 
-      v.lang === 'en-US' && 
-      (v.name.includes('David') || v.name.includes('Zira'))
-    );
-    if (voice) {
-      console.log('✅ Chọn Microsoft:', voice.name);
-      return voice;
-    }
-
-    // ✅ 3. Samantha (macOS)
-    voice = voices.find(v => 
-      v.lang === 'en-US' && 
-      v.name.includes('Samantha')
-    );
-    if (voice) {
-      console.log('✅ Chọn Samantha:', voice.name);
-      return voice;
-    }
-
-    // ✅ 4. BẤT KỲ giọng en-US nào (KHÔNG phải en-GB)
-    voice = voices.find(v => v.lang === 'en-US');
-    if (voice) {
-      console.log('✅ Chọn en-US:', voice.name);
-      return voice;
-    }
-
-    // ✅ 5. Bất kỳ giọng English nào (en-GB, en-AU...)
-    voice = voices.find(v => v.lang && v.lang.startsWith('en-'));
-    if (voice) {
-      console.log('✅ Chọn English:', voice.name);
-      return voice;
-    }
-
-    // ✅ 6. LOẠI BỎ tất cả giọng Vietnamese
-    voice = voices.find(v => 
-      v.lang && 
-      !v.lang.startsWith('vi') && 
-      !v.name.toLowerCase().includes('vietnam')
-    );
-    if (voice) {
-      console.log('⚠️ Fallback voice:', voice.name);
-      return voice;
-    }
-
-    console.error('❌ Không tìm thấy giọng English!');
-    return null;
-  };
-
-  // ✅ Hàm thực hiện speak
-  const doSpeak = (selectedVoice) => {
-    const utterance = new SpeechSynthesisUtterance(text.toString());
-    
-    // ✅ QUAN TRỌNG: Set voice TRƯỚC khi set lang
-    if (selectedVoice) {
-      utterance.voice = selectedVoice;
-    }
-    
-    // ✅ Luôn set lang = en-US
-    utterance.lang = 'en-US';
-    
-    // ✅ Điều chỉnh giọng nói
-    utterance.rate = 0.9;   // Tốc độ (0.1 - 10)
-    utterance.pitch = 1.0;  // Cao độ (0 - 2)
-    utterance.volume = 1.0; // Âm lượng (0 - 1)
-
-    utterance.onstart = () => {
-      console.log(`🔊 Đang đọc: "${text}"`);
-      console.log(`   Voice: ${utterance.voice?.name || 'default'}`);
-      console.log(`   Lang: ${utterance.lang}`);
-    };
-
-    utterance.onend = () => {
-      console.log('✅ Hoàn thành');
-    };
-
-    utterance.onerror = (err) => {
-      if (err.error !== 'canceled') {
-        console.error('❌ Lỗi:', err.error);
+      // Kiểm tra match nếu đã chọn cột phải
+      if (selectedRight) {
+        checkMatch(id, selectedRight);
       }
-    };
+    } else {
+      // ✅ Click vào cột PHẢI (Tiếng Anh) - KHÔNG ĐỌC
+      setSelectedRight(id);
 
-    window.speechSynthesis.speak(utterance);
+      // Kiểm tra match nếu đã chọn cột trái
+      if (selectedLeft) {
+        checkMatch(selectedLeft, id);
+      }
+    }
   };
 
-  // ✅ Lấy danh sách voices
-  let voices = window.speechSynthesis.getVoices();
+  const speakText = (text, options = {}) => {
+    if (!text || !text.toString().trim()) {
+      console.warn("⚠️ Không có text để phát âm");
+      return;
+    }
 
-  if (voices.length > 0) {
-    // ✅ Đã có voices, chọn ngay
-    const englishVoice = getEnglishVoice(voices);
-    doSpeak(englishVoice);
-  } else {
-    
-    // ✅ Chỉ set event 1 lần
-    window.speechSynthesis.onvoiceschanged = () => {
-      voices = window.speechSynthesis.getVoices();
-      console.log(`✅ Loaded ${voices.length} voices`);
-      
+    // ✅ Cancel bất kỳ speech nào đang chạy
+    if (window.speechSynthesis.speaking) {
+      window.speechSynthesis.cancel();
+    }
+
+    // ✅ Hàm chọn giọng ENGLISH tốt nhất (giữ nguyên)
+    const getEnglishVoice = (voices) => {
+      console.log(
+        "📋 Available voices:",
+        voices.map((v) => `${v.name} (${v.lang})`)
+      );
+
+      let voice = voices.find(
+        (v) => v.lang === "en-US" && v.name.toLowerCase().includes("google")
+      );
+      if (voice) {
+        console.log("✅ Chọn Google US:", voice.name);
+        return voice;
+      }
+
+      voice = voices.find(
+        (v) =>
+          v.lang === "en-US" &&
+          (v.name.includes("David") || v.name.includes("Zira"))
+      );
+      if (voice) {
+        console.log("✅ Chọn Microsoft:", voice.name);
+        return voice;
+      }
+
+      voice = voices.find(
+        (v) => v.lang === "en-US" && v.name.includes("Samantha")
+      );
+      if (voice) {
+        console.log("✅ Chọn Samantha:", voice.name);
+        return voice;
+      }
+
+      voice = voices.find((v) => v.lang === "en-US");
+      if (voice) {
+        console.log("✅ Chọn en-US:", voice.name);
+        return voice;
+      }
+
+      voice = voices.find((v) => v.lang && v.lang.startsWith("en-"));
+      if (voice) {
+        console.log("✅ Chọn English:", voice.name);
+        return voice;
+      }
+
+      voice = voices.find(
+        (v) =>
+          v.lang &&
+          !v.lang.startsWith("vi") &&
+          !v.name.toLowerCase().includes("vietnam")
+      );
+      if (voice) {
+        console.log("⚠️ Fallback voice:", voice.name);
+        return voice;
+      }
+
+      console.error("❌ Không tìm thấy giọng English!");
+      return null;
+    };
+
+    // ✅ Hàm thực hiện speak
+    const doSpeak = (selectedVoice) => {
+      const utterance = new SpeechSynthesisUtterance(text.toString());
+
+      if (selectedVoice) {
+        utterance.voice = selectedVoice;
+      }
+
+      utterance.lang = "en-US";
+      utterance.rate = 0.9;
+      utterance.pitch = 1.0;
+      utterance.volume = 1.0;
+
+      utterance.onstart = () => {
+        console.log(`🔊 Đang đọc: "${text}"`);
+        console.log(`   Voice: ${utterance.voice?.name || "default"}`);
+        console.log(`   Lang: ${utterance.lang}`);
+      };
+
+      utterance.onend = () => {
+        console.log("✅ Hoàn thành phát âm");
+
+        // ✅ THÊM: Tự động bật ghi âm nếu đang ở câu hỏi speaking
+        if (options.autoRecord && question.type === "speaking") {
+          console.log("🎤 Tự động bắt đầu ghi âm...");
+          setTimeout(() => {
+            startRecording();
+          }, 500); // Đợi 0.5s sau khi đọc xong
+        }
+      };
+
+      utterance.onerror = (err) => {
+        if (err.error !== "canceled") {
+          console.error("❌ Lỗi:", err.error);
+        }
+      };
+
+      window.speechSynthesis.speak(utterance);
+    };
+
+    // ✅ Lấy danh sách voices
+    let voices = window.speechSynthesis.getVoices();
+
+    if (voices.length > 0) {
       const englishVoice = getEnglishVoice(voices);
       doSpeak(englishVoice);
-      
-      // ✅ Clear event sau khi dùng xong
-      window.speechSynthesis.onvoiceschanged = null;
-    };
-  }
-};
+    } else {
+      window.speechSynthesis.onvoiceschanged = () => {
+        voices = window.speechSynthesis.getVoices();
+        console.log(`✅ Loaded ${voices.length} voices`);
+
+        const englishVoice = getEnglishVoice(voices);
+        doSpeak(englishVoice);
+
+        window.speechSynthesis.onvoiceschanged = null;
+      };
+    }
+  };
 
   useEffect(() => {
     if (!question) return;
 
     const timer = setTimeout(() => {
-      if (question.type === "conversation" && question.conversation[0].text) {
+      // ✅ SỬA: Thêm check cho speaking type
+      if (question.type === "speaking" && question.question) {
+        // Speaking: đọc câu hỏi (hướng dẫn)
+        speakText(question.question);
+      } else if (
+        question.type === "conversation" &&
+        question.conversation?.[0]?.text
+      ) {
+        // Conversation: đọc dialog
         speakText(question.conversation[0].text);
       } else if (question.type === "translate_build" && question.audioText) {
         speakText(question.audioText);
@@ -2402,6 +2715,37 @@ const speakText = (text) => {
 
   // ✅ Sửa handleCheck để so sánh đúng
   const handleCheck = async () => {
+    // ✅ THÊM: Xử lý speaking type
+    if (question.type === "speaking") {
+    // Nếu đã analyze rồi (có pronunciationScore), chỉ cần show feedback
+    if (pronunciationScore > 0) {
+      setIsChecked(true);
+      setShowFeedback(true);
+      const passed = pronunciationScore >= 50;
+      setSelectedAnswer(passed ? 'correct' : 'wrong');
+      
+      if (passed) {
+        playSound('correct');
+        setCorrectAnswers(prev => prev + 1);
+        setConsecutiveCorrect(prev => prev + 1);
+      } else {
+        playSound('wrong');
+        setConsecutiveCorrect(0);
+        setHearts(prev => Math.max(0, prev - 1));
+        await syncUseHeart();
+        
+        if (!wrongQuestions.find(q => q.id === question.id)) {
+          setWrongQuestions([...wrongQuestions, question]);
+        }
+      }
+    } else {
+      // Chưa ghi âm/analyze
+      showToast('warning', 'Thông báo', 'Vui lòng ghi âm trước khi kiểm tra');
+    }
+    return;
+  }
+
+    // ✅ Xử lý match_pairs
     if (question.type === "match_pairs") {
       const allMatched =
         matchedPairs.length ===
@@ -2453,7 +2797,11 @@ const speakText = (text) => {
       isCorrect = answer === question.correctAnswer;
     }
 
-    console.log('🔍 Check answer:', { answer, correctAnswer: question.correctAnswer, isCorrect });
+    console.log("🔍 Check answer:", {
+      answer,
+      correctAnswer: question.correctAnswer,
+      isCorrect,
+    });
 
     const answeredQ = {
       ...question,
@@ -2491,47 +2839,60 @@ const speakText = (text) => {
   };
 
   const handleContinue = () => {
-    if (currentQuestion < questions.length - 1) {
-      setCurrentQuestion((prev) => prev + 1);
-      setSelectedAnswer(null);
-      setSelectedWords([]);
-      setSelectedLeft(null);
-      setSelectedRight(null);
-      setMatchedPairs([]);
-      setIsChecked(false);
-      setShowFeedback(false);
-      setIsSkipped(false);
-    } else {
-      if (wrongQuestions.length > 0) {
-        setReviewCount(wrongQuestions.length);
-        setShowReviewNotice(true);
-        setQuestions((prevQuestions) => [...prevQuestions, ...wrongQuestions]);
+  const isLastQuestion = currentQuestion === questions.length - 1;
+
+  if (!isLastQuestion) {
+    // Reset states chung
+    setSelectedAnswer(null);
+    setIsChecked(false);
+    setShowFeedback(false);
+    setIsSkipped(false);
+    setSelectedWords([]);
+    setMatchedPairs([]);
+    setSelectedLeft(null);
+    setSelectedRight(null);
+
+    // ✅ THÊM: Reset states cho speaking
+    setPronunciationScore(0);
+    setTranscription('');
+    setAudioBlob(null);
+    setRecording(false);
+    setAnalyzing(false);
+
+    setCurrentQuestion(currentQuestion + 1);
+  } else {
+    // Nếu là câu cuối và có wrongQuestions
+    if (wrongQuestions.length > 0 && !showReviewNotice) {
+      setReviewCount(wrongQuestions.length);
+      setShowReviewNotice(true);
+
+      setTimeout(() => {
+        setShowReviewNotice(false);
+        const reviewQuestions = wrongQuestions.map((q) => ({ ...q }));
+        setQuestions([...questions, ...reviewQuestions]);
         setWrongQuestions([]);
 
-        setTimeout(() => {
-          setShowReviewNotice(false);
-        }, 3000);
+        // ✅ THÊM: Reset speaking states khi bắt đầu review
+        setPronunciationScore(0);
+        setTranscription('');
+        setAudioBlob(null);
+        setRecording(false);
+        setAnalyzing(false);
 
-        setTimeout(() => {
-          setCurrentQuestion((prev) => prev + 1);
-          setSelectedAnswer(null);
-          setSelectedWords([]);
-          setSelectedLeft(null);
-          setSelectedRight(null);
-          setMatchedPairs([]);
-          setIsChecked(false);
-          setShowFeedback(false);
-          setIsSkipped(false);
-        }, 500);
-      } else {
-        setShowCompletion(true);
-        const audio = new Audio(successSound);
-        audio
-          .play()
-          .catch((err) => console.log("Không thể phát âm thanh:", err));
-      }
+        setCurrentQuestion(currentQuestion + 1);
+        setSelectedAnswer(null);
+        setIsChecked(false);
+        setShowFeedback(false);
+        setSelectedWords([]);
+        setMatchedPairs([]);
+        setSelectedLeft(null);
+        setSelectedRight(null);
+      }, 3000);
+    } else {
+      handleCompleteLessonSuccess();
     }
-  };
+  }
+};
 
   const handleSkip = async () => {
     if (hearts === 1) {
@@ -2621,41 +2982,44 @@ const speakText = (text) => {
   // Thêm function để update progress khi hoàn thành lesson
   const handleCompleteLessonSuccess = async () => {
     try {
-      console.log('🎉 Completing lesson:', lessonId);
-      
+      console.log("🎉 Completing lesson:", lessonId);
+
       const progressData = {
         completed: true,
         score: calculateAccuracy(),
-        timeSpent: Math.floor((Date.now() - lessonStartTime) / 1000) // seconds
+        timeSpent: Math.floor((Date.now() - lessonStartTime) / 1000), // seconds
       };
-      
-      console.log('📊 Progress data:', progressData);
-      
+
+      console.log("📊 Progress data:", progressData);
+
       // ✅ Update progress: mark lesson as completed
-      const response = await progressService.updateLessonProgress(lessonId, progressData);
-      
-      console.log('✅ Progress updated:', response);
-      
+      const response = await progressService.updateLessonProgress(
+        lessonId,
+        progressData
+      );
+
+      console.log("✅ Progress updated:", response);
+
       // Show success toast
-      showToast('success', 'Thành công', 'Đã lưu tiến độ học tập!');
-      
+      showToast("success", "Thành công", "Đã lưu tiến độ học tập!");
+
       // Wait a bit for toast to show
       setTimeout(() => {
         // Navigate về /learn để thấy lesson tiếp theo unlock
-        navigate('/learn');
+        navigate("/learn");
       }, 1500);
-      
     } catch (error) {
-      console.error('❌ Error updating progress:', error);
-      console.error('Error details:', error.response?.data);
-      
+      console.error("❌ Error updating progress:", error);
+      console.error("Error details:", error.response?.data);
+
       // ✅ Hiển thị lỗi cụ thể
-      const errorMessage = error.response?.data?.message || 'Không thể lưu tiến độ học tập';
-      showToast('error', 'Lỗi', errorMessage);
-      
+      const errorMessage =
+        error.response?.data?.message || "Không thể lưu tiến độ học tập";
+      showToast("error", "Lỗi", errorMessage);
+
       // Still navigate even if error
       setTimeout(() => {
-        navigate('/learn');
+        navigate("/learn");
       }, 1500);
     }
   };
@@ -2688,6 +3052,9 @@ const speakText = (text) => {
   };
 
   const isCorrectAnswer = () => {
+  if (question.type === "speaking") {
+    return pronunciationScore >= 50; // Pass nếu >= 50%
+  }
     if (question.type === "match_pairs") {
       return (
         matchedPairs.length ===
@@ -2703,6 +3070,13 @@ const speakText = (text) => {
   };
 
   const getCorrectAnswerText = () => {
+  if (question.type === "speaking") {
+    if (pronunciationScore >= 50) {
+      return "Bạn đã phát âm tốt!"; // Hiển thị khen ngợi nếu pass
+    } else {
+      return question.correctAnswer; // Hiển thị đáp án đúng nếu fail
+    }
+  }
     if (question.type === "match_pairs") {
       return "Đã hoàn thành tất cả các cặp";
     }
@@ -2839,8 +3213,8 @@ const speakText = (text) => {
                   disabled={isChecked}
                   onClick={() => handleChoiceClick(choice.id, choice.text)}
                 >
-                  <ChoiceImage 
-                    src={choice.image || coffee} 
+                  <ChoiceImage
+                    src={choice.image || coffee}
                     alt={choice.text}
                     onError={(e) => {
                       e.target.src = coffee;
@@ -2937,7 +3311,7 @@ const speakText = (text) => {
         case "listen_write":
           return (
             <>
-              <AudioButton 
+              <AudioButton
                 onClick={() => {
                   // ✅ Clear input và focus khi ấn nút loa
                   setSelectedAnswer("");
@@ -3015,21 +3389,108 @@ const speakText = (text) => {
           return (
             <InputContainer>
               <InputLabel>
-                {question.type === 'fill_in_blank' 
-                  ? 'Điền vào chỗ trống:' 
-                  : 'Dịch câu sau:'}
+                {question.type === "fill_in_blank"
+                  ? "Điền vào chỗ trống:"
+                  : "Dịch câu sau:"}
               </InputLabel>
               <InputField
                 theme="light"
                 type="text"
-                value={selectedAnswer || ''}
+                value={selectedAnswer || ""}
                 onChange={(e) => setSelectedAnswer(e.target.value)}
                 placeholder="Nhập câu trả lời..."
                 disabled={isChecked}
               />
             </InputContainer>
           );
+        case "speaking":
+  return (
+    <SpeakingContainer>
+      {/* ✅ Hiển thị câu cần đọc */}
+      
 
+      {/* ✅ Nút phát âm mẫu */}
+      <PlaySampleButton
+        onClick={() => {
+          console.log('🔊 Playing sample:', question.correctAnswer);
+          speakText(question.correctAnswer || question.question);
+        }}
+        disabled={recording || analyzing}
+      >
+        <VolumeUp sx={{ fontSize: 20 }} />
+        
+      </PlaySampleButton>
+        
+      {/* ✅ THÊM: Chỉ hiển thị MIC nếu CHƯA check hoặc đã check nhưng sai */}
+      {!isChecked && (
+        <MicContainer>
+          {!recording && !analyzing && (
+  <>
+    <MicButton onClick={startRecording}>
+      <Mic sx={{ fontSize: 24 }} />
+    </MicButton>
+    <MicHint>Bấm để bắt đầu ghi âm</MicHint>
+  </>
+)}
+
+          {recording && (
+            <>
+              <MicButton recording={true} onClick={stopRecording}>
+                <Mic sx={{ fontSize: 48 }} />
+                <WaveformAnimation>
+                  <WaveDot delay="0s" />
+                  <WaveDot delay="0.1s" />
+                  <WaveDot delay="0.2s" />
+                  <WaveDot delay="0.3s" />
+                  <WaveDot delay="0.4s" />
+                </WaveformAnimation>
+              </MicButton>
+              <MicHint recording={true}>Nhấn để dừng ghi âm</MicHint>
+            </>
+          )}
+
+          {analyzing && (
+            <>
+              <AnalyzingSpinner />
+              <MicHint>Đang chấm điểm...</MicHint>
+            </>
+          )}
+        </MicContainer>
+      )}
+
+      {/* ✅ Kết quả sau khi chấm điểm */}
+      {isChecked && pronunciationScore > 0 && (
+        <SpeakingResult passed={pronunciationScore >= 50}>
+          <ResultEmoji>
+            {pronunciationScore >= 50 ? '🎉' : '😕'}
+          </ResultEmoji>
+          <ResultScore passed={pronunciationScore >= 50}>
+            {pronunciationScore}%
+          </ResultScore>
+          <ResultText>
+            {pronunciationScore >= 50 
+              ? 'Phát âm tốt!' 
+              : 'Cần luyện tập thêm'}
+          </ResultText>
+          
+          {/* ✅ THÊM: Hiển thị transcription */}
+          <TranscriptionBox>
+            <TranscriptionLabel>Bạn đã nói:</TranscriptionLabel>
+            <TranscriptionText>
+              {transcription || 'Không nhận diện được'}
+            </TranscriptionText>
+          </TranscriptionBox>
+
+          <TranscriptionBox>
+            <TranscriptionLabel>Cần nói:</TranscriptionLabel>
+            <TranscriptionText>
+              {question.correctAnswer}
+            </TranscriptionText>
+          </TranscriptionBox>
+        </SpeakingResult>
+      )}
+    </SpeakingContainer>
+  );
         default:
           return null;
       }
@@ -3063,11 +3524,11 @@ const speakText = (text) => {
       </PageWrapper>
     );
   }
-   // ========== RENDER ==========
+  // ========== RENDER ==========
   if (isLoadingLesson) {
     return (
       <PageWrapper>
-        <Container style={{ textAlign: 'center', padding: '4rem 2rem' }}>
+        <Container style={{ textAlign: "center", padding: "4rem 2rem" }}>
           <LoadingSpinner />
           <LoadingText>Đang tải bài học...</LoadingText>
         </Container>
@@ -3078,9 +3539,9 @@ const speakText = (text) => {
   if (!question || questions.length === 0) {
     return (
       <PageWrapper>
-        <Container style={{ textAlign: 'center', padding: '4rem 2rem' }}>
+        <Container style={{ textAlign: "center", padding: "4rem 2rem" }}>
           <h2>Bài học này chưa có câu hỏi</h2>
-          <CompletionButton onClick={() => navigate('/learn')}>
+          <CompletionButton onClick={() => navigate("/learn")}>
             Quay về
           </CompletionButton>
         </Container>
@@ -3221,42 +3682,45 @@ const speakText = (text) => {
             <FeedbackBanner $isCorrect={!isSkipped && isCorrectAnswer()}>
               <FeedbackWrapper>
                 <FeedbackContent>
-                  <FeedbackIconWrapper $isCorrect={!isSkipped && isCorrectAnswer()}>
-  {!isSkipped && isCorrectAnswer() ? (
-    <CheckmarkIcon>
-      <CheckmarkRipple />
-      <svg viewBox="0 0 52 52">
-        <path
-          className="checkmark-path"
-          d="M14 27l10 10 18-18"
-        />
-      </svg>
-      <CheckmarkParticles>
-        <div className="particle"></div>
-        <div className="particle"></div>
-        <div className="particle"></div>
-        <div className="particle"></div>
-        <div className="particle"></div>
-        <div className="particle"></div>
-        <div className="particle"></div>
-        <div className="particle"></div>
-      </CheckmarkParticles>
-    </CheckmarkIcon>
-  ) : (
-    <CrossIcon />
-  )}
-</FeedbackIconWrapper>
+                  <FeedbackIconWrapper
+                    $isCorrect={!isSkipped && isCorrectAnswer()}
+                  >
+                    {!isSkipped && isCorrectAnswer() ? (
+                      <CheckmarkIcon>
+                        <CheckmarkRipple />
+                        <svg viewBox="0 0 52 52">
+                          <path
+                            className="checkmark-path"
+                            d="M14 27l10 10 18-18"
+                          />
+                        </svg>
+                        <CheckmarkParticles>
+                          <div className="particle"></div>
+                          <div className="particle"></div>
+                          <div className="particle"></div>
+                          <div className="particle"></div>
+                          <div className="particle"></div>
+                          <div className="particle"></div>
+                          <div className="particle"></div>
+                          <div className="particle"></div>
+                        </CheckmarkParticles>
+                      </CheckmarkIcon>
+                    ) : (
+                      <CrossIcon />
+                    )}
+                  </FeedbackIconWrapper>
                   <FeedbackTextWrapper>
                     <FeedbackTitle $isCorrect={!isSkipped && isCorrectAnswer()}>
                       {!isSkipped && isCorrectAnswer()
                         ? "Tuyệt vời!"
                         : "Đáp án đúng:"}
                     </FeedbackTitle>
-                    {((!isSkipped && !isCorrectAnswer()) || isSkipped) && (
-                      <FeedbackSubtext>
-                        {getCorrectAnswerText()}
-                      </FeedbackSubtext>
-                    )}
+                    {((!isSkipped && !isCorrectAnswer()) || isSkipped) && 
+  question.type !== "speaking" && ( // ✅ THÊM: Không hiển thị cho speaking nếu pass
+  <FeedbackSubtext>
+    {getCorrectAnswerText()}
+  </FeedbackSubtext>
+)}
                     <ReportLink onClick={handleOpenReportModal}>
                       <ReportIcon src={reportIcon} alt="Report" />
                       BÁO CÁO
@@ -3419,6 +3883,384 @@ const speakText = (text) => {
   );
 };
 
+const SpeakingContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+  padding: 2rem;
+  max-width: 600px;
+  margin: 0 auto;
+`;
+
+const SpeakingPrompt = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem;
+  background: white;
+  border: 3px solid #e5e7eb;
+  border-radius: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  width: 100%;
+`;
+
+const SpeakingIcon = styled.div`
+  font-size: 3rem;
+`;
+
+const SpeakingText = styled.div`
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1f2937;
+  text-align: center;
+  line-height: 1.4;
+
+  @media (max-width: 768px) {
+    font-size: 1.5rem;
+  }
+`;
+
+
+const PlaySampleButton = styled.button`
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #5fd3ff 0%, #1cb0f6 40%, #0d9ed8 100%);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.6rem;
+  box-shadow: 0 12px 30px rgba(13,158,216,0.25);
+  position: relative;
+  margin: 1.25rem auto; /* center horizontally */
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  z-index: 2;
+  overflow: visible;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-6px) scale(1.03);
+    box-shadow: 0 18px 40px rgba(13,158,216,0.32);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(-2px) scale(0.99);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  /* outer subtle ring (animated) */
+  &::after {
+    content: '';
+    position: absolute;
+    inset: -14px;
+    border-radius: 50%;
+    border: 6px solid rgba(28,176,246,0.10);
+    pointer-events: none;
+    animation: ${pulseRing} 2.2s infinite;
+  }
+
+  svg {
+    font-size: 32px;
+  }
+
+  @media (max-width: 768px) {
+    width: 88px;
+    height: 88px;
+    font-size: 1.25rem;
+
+    &::after {
+      inset: -10px;
+      border-width: 5px;
+    }
+
+    svg {
+      font-size: 24px;
+    }
+  }
+`;
+
+const MicContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  min-height: 120px; // ✅ Giảm từ 200px xuống 120px vì button nhỏ hơn
+  justify-content: center;
+`;
+
+const MicButton = styled.button`
+  width: 70px; // ✅ Thay đổi từ 120px thành 160px như CheckButton
+  height: 70px; // ✅ Thay đổi từ 120px thành 60px để thành rectangle
+  border-radius: 16px; // ✅ Giống CheckButton (16px)
+  border: none;
+  background: ${props => props.recording 
+    ? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'
+    : 'linear-gradient(135deg, #53e236ff 0%, #53e236ff 100%)'
+  };
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem; // ✅ Thêm gap cho icon và text
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: ${props => props.recording 
+    ? '0 4px 0 #dc2626' // ✅ Thêm shadow dưới giống CheckButton
+    : '0 4px 0 #53e236ff'
+  };
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+
+  &:hover {
+    transform: translateY(-2px); // ✅ Giống CheckButton hover
+    box-shadow: ${props => props.recording 
+      ? '0 6px 0 #dc2626'
+      : '0 6px 0 #53e236ff'
+    };
+  }
+
+  &:active {
+    transform: translateY(2px); // ✅ Giống CheckButton active
+    box-shadow: ${props => props.recording 
+      ? '0 2px 0 #dc2626'
+      : '0 2px 0 #53e236ff'
+    };
+  }
+
+  &:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  @media (max-width: 768px) {
+    width: 100%; // ✅ Responsive như CheckButton
+    padding: 1rem 2rem;
+    font-size: 1rem;
+    min-width: unset;
+  }
+`;
+
+const WaveformAnimation = styled.div`
+  position: absolute;
+  bottom: -30px;
+  display: flex;
+  gap: 4px;
+  align-items: flex-end;
+  height: 20px;
+`;
+
+const WaveDot = styled.div`
+  width: 4px;
+  background: #ef4444;
+  border-radius: 2px;
+  animation: wave 0.6s ease-in-out infinite;
+  animation-delay: ${props => props.delay};
+
+  @keyframes wave {
+    0%, 100% {
+      height: 4px;
+    }
+    50% {
+      height: 20px;
+    }
+  }
+`;
+
+const MicHint = styled.div`
+  font-size: 1rem;
+  font-weight: 600;
+  color: ${props => props.recording ? '#ef4444' : '#6b7280'};
+  text-align: center;
+`;
+
+const AnalyzingSpinner = styled.div`
+  width: 60px;
+  height: 60x;
+  border: 8px solid #e5e7eb;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  @media (max-width: 768px) {
+    width: 100px;
+    height: 100px;
+  }
+`;
+
+const AudioPlayback = styled.div`
+  width: 100%;
+  max-width: 400px;
+
+  audio {
+    width: 100%;
+    height: 48px;
+    border-radius: 12px;
+  }
+`;
+
+const SpeakingResult = styled.div`
+  width: 100%;
+  padding: 2rem;
+  background: ${props => props.passed 
+    ? 'linear-gradient(135deg, #d7ffb8 0%, #b8f0a0 100%)'
+    : 'linear-gradient(135deg, #ffdfe0 0%, #ffcdd2 100%)'
+  };
+  border: 3px solid ${props => props.passed ? '#58CC02' : '#ef4444'};
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  animation: ${scaleIn} 0.5s ease;
+`;
+
+const ResultEmoji = styled.div`
+  font-size: 4rem;
+  animation: ${bounce} 0.6s ease;
+`;
+
+const ResultScore = styled.div`
+  font-size: 3rem;
+  font-weight: 700;
+  color: ${props => props.passed ? '#58CC02' : '#ef4444'};
+`;
+
+const ResultText = styled.div`
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+  text-align: center;
+`;
+
+const TranscriptionBox = styled.div`
+  width: 100%;
+  padding: 1rem 1.5rem;
+  background: white;
+  border-radius: 12px;
+  margin-top: 1rem;
+`;
+
+const TranscriptionLabel = styled.div`
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #6b7280;
+  margin-bottom: 0.5rem;
+`;
+
+const TranscriptionText = styled.div`
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1f2937;
+`;
+const InstructionText = styled.div`
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+  text-align: center;
+  margin-bottom: 2rem;
+  padding: 1rem 1.5rem;
+  background: #f3f4f6;
+  border-radius: 12px;
+  border-left: 4px solid #1cb0f6;
+
+  strong {
+    color: #1cb0f6;
+  }
+
+  @media (max-width: 768px) {
+    font-size: 1.125rem;
+    padding: 0.875rem 1.25rem;
+  }
+`;
+
+const ButtonGroup = styled.div`
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 1rem;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+  }
+`;
+
+const RetryButton = styled.button`
+  flex: 1;
+  padding: 0.75rem 1.5rem;
+  background: #6b7280;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    background: #4b5563;
+    transform: translateY(-2px);
+  }
+
+  @media (max-width: 768px) {
+    padding: 0.625rem 1.25rem;
+  }
+`;
+
+const AnalyzeButton = styled.button`
+  flex: 1;
+  padding: 0.75rem 1.5rem;
+  background: #58cc02;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 0 #46a302;
+
+  &:hover {
+    background: #46a302;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 0 #46a302;
+  }
+
+  &:active {
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 #46a302;
+  }
+
+  @media (max-width: 768px) {
+    padding: 0.625rem 1.25rem;
+  }
+`;
+
+const AnalyzingContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem;
+`;
 const MatchPairsContainer = styled.div`
   display: flex;
   gap: 2rem;
@@ -3550,18 +4392,19 @@ const ReportIcon = styled.img`
   }
 `;
 
-
 const LoadingSpinner = styled.div`
   width: 60px;
   height: 60px;
   border: 4px solid #e5e7eb;
-  border-top-color: #58CC02;
+  border-top-color: #58cc02;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
   margin: 0 auto 1rem;
 
   @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+      transform: rotate(360deg);
+    }
   }
 `;
 
@@ -3918,7 +4761,7 @@ const InputLabel = styled.div`
 const InputField = styled.input`
   width: 100%;
   padding: 1rem 1.5rem;
-  border: 3px solid ${props => props.disabled ? '#e5e7eb' : '#1CB0F6'};
+  border: 3px solid ${(props) => (props.disabled ? "#e5e7eb" : "#1CB0F6")};
   border-radius: 12px;
   font-size: 1.125rem;
   font-weight: 600;
@@ -3928,7 +4771,7 @@ const InputField = styled.input`
 
   &:focus {
     outline: none;
-    border-color: #1CB0F6;
+    border-color: #1cb0f6;
     box-shadow: 0 0 0 3px rgba(28, 176, 246, 0.1);
   }
 
@@ -3946,4 +4789,5 @@ const InputField = styled.input`
     padding: 0.875rem 1.25rem;
   }
 `;
+
 export default Lesson;

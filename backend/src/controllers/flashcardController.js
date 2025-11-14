@@ -1,8 +1,9 @@
 const Flashcard = require('../models/Flashcard');
 const Deck = require('../models/Deck');
+const asyncHandler = require('express-async-handler');
 
-// Lấy tất cả flashcard
-exports.getAllFlashcards = async (req, res) => {
+// ✅ SỬA: Dùng const thay vì exports.
+const getAllFlashcards = async (req, res) => {
   try {
     const flashcards = await Flashcard.find()
       .populate('deck', 'title');
@@ -21,8 +22,8 @@ exports.getAllFlashcards = async (req, res) => {
   }
 };
 
-// Lấy flashcard theo ID
-exports.getFlashcardById = async (req, res) => {
+// ✅ SỬA: Các functions khác cũng dùng const
+const getFlashcardById = async (req, res) => {
   try {
     const flashcard = await Flashcard.findById(req.params.id)
       .populate('deck', 'title');
@@ -48,7 +49,7 @@ exports.getFlashcardById = async (req, res) => {
 };
 
 // Lấy flashcard theo deck
-exports.getFlashcardsByDeck = async (req, res) => {
+const getFlashcardsByDeck = async (req, res) => {
   try {
     const flashcards = await Flashcard.find({ deck: req.params.deckId })
       .populate('deck', 'title');
@@ -68,7 +69,7 @@ exports.getFlashcardsByDeck = async (req, res) => {
 };
 
 // Tạo flashcard mới
-exports.createFlashcard = async (req, res) => {
+const createFlashcard = async (req, res) => {
   try {
     // Kiểm tra xem deck có tồn tại không
     const deck = await Deck.findById(req.body.deck);
@@ -95,7 +96,7 @@ exports.createFlashcard = async (req, res) => {
 };
 
 // Tạo nhiều flashcard cùng lúc
-exports.createBulkFlashcards = async (req, res) => {
+const createBulkFlashcards = async (req, res) => {
   try {
     const { deckId, flashcards } = req.body;
     
@@ -140,7 +141,7 @@ exports.createBulkFlashcards = async (req, res) => {
 };
 
 // Cập nhật flashcard
-exports.updateFlashcard = async (req, res) => {
+const updateFlashcard = async (req, res) => {
   try {
     const flashcard = await Flashcard.findByIdAndUpdate(
       req.params.id,
@@ -172,7 +173,7 @@ exports.updateFlashcard = async (req, res) => {
 };
 
 // Xóa flashcard
-exports.deleteFlashcard = async (req, res) => {
+const deleteFlashcard = async (req, res) => {
   try {
     const flashcard = await Flashcard.findById(req.params.id);
     
@@ -196,4 +197,57 @@ exports.deleteFlashcard = async (req, res) => {
       error: error.message
     });
   }
+};
+
+/**
+ * Get all flashcards for current user (from all decks)
+ * @route   GET /api/flashcards
+ * @access  Private (Student can read)
+ */
+const getUserFlashcards = asyncHandler(async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    // Lấy tất cả flashcards từ các decks mà user có quyền truy cập
+    // Giả sử user có thể truy cập flashcards từ decks public hoặc của họ
+    const flashcards = await Flashcard.find()
+      .populate('deck', 'name')
+      .select('front back example audioUrl pronunciation ipa deck createdAt')
+      .sort({ createdAt: -1 })
+      .limit(1000); // Giới hạn để tránh quá nhiều data
+    
+    res.status(200).json({
+      success: true,
+      count: flashcards.length,
+      flashcards: flashcards.map(card => ({
+        _id: card._id,
+        front: card.front,
+        back: card.back,
+        example: card.example,
+        audioUrl: card.audioUrl,
+        pronunciation: card.pronunciation,
+        ipa: card.ipa,
+        deck: card.deck
+      }))
+    });
+    
+  } catch (error) {
+    console.error('❌ Get user flashcards error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Không thể lấy flashcards'
+    });
+  }
+});
+
+// ✅ SỬA: module.exports export các const variables
+module.exports = {
+  getAllFlashcards,
+  getUserFlashcards, 
+  getFlashcardById,
+  getFlashcardsByDeck,
+  createFlashcard,
+  updateFlashcard,
+  deleteFlashcard,
+  createBulkFlashcards
 };

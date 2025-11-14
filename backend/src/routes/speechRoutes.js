@@ -1,86 +1,106 @@
 const express = require('express');
 const router = express.Router();
-const speechController = require('../controllers/speechController');
 const { protect } = require('../middleware/auth');
-const { audioUpload } = require('../middleware/upload');
+const multer = require('multer');
+const speechService = require('../services/speechService');
 
-// ===== Speech Exercises =====
+// ✅ Config multer để upload audio
+const storage = multer.memoryStorage();
+const audioUpload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 10MB
+  },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('audio/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only audio files are allowed'));
+    }
+  }
+});
 
 /**
- * @route   GET /api/speech/exercise/:flashcardId
- * @desc    Get speech exercise for a specific flashcard
+ * @route   POST /api/speech/analyze-speaking
+ * @desc    Analyze pronunciation for speaking exercise
  * @access  Private
- */
-router.get('/exercise/:flashcardId', protect, speechController.getSpeechExercise);
-
-/**
- * @route   GET /api/speech/deck/:deckId/exercises
- * @desc    Get batch of speech exercises for a deck
- * @access  Private
- */
-router.get('/deck/:deckId/exercises', protect, speechController.getDeckSpeechExercises);
-
-// ===== Speech Analysis =====
-
-/**
- * @route   POST /api/speech/analyze/:flashcardId
- * @desc    Analyze user's speech recording
- * @access  Private
- * @body    multipart/form-data with audio file
  */
 router.post(
-  '/analyze/:flashcardId',
+  '/analyze-speaking',
   protect,
   audioUpload.single('audio'),
-  speechController.analyzeSpeech
+  async (req, res) => {
+    try {
+      const { targetText } = req.body;
+      
+      if (!req.file) {
+        return res.status(400).json({
+          success: false,
+          message: 'Vui lòng upload file audio'
+        });
+      }
+      
+      if (!targetText) {
+        return res.status(400).json({
+          success: false,
+          message: 'Thiếu targetText'
+        });
+      }
+      
+      const audioBuffer = req.file.buffer;
+      
+      console.log('🎤 Analyzing speech:', {
+        userId: req.user._id,
+        targetText,
+        audioSize: audioBuffer.length,
+        mimeType: req.file.mimetype
+      });
+      
+      // ✅ Gọi service để phân tích
+      const result = await speechService.analyzeSpeaking(
+        audioBuffer,
+        targetText,
+        {
+          userId: req.user._id,
+          language: 'en-US'
+        }
+      );
+      
+      console.log('📊 Analysis result:', result);
+      
+      res.json({
+        success: true,
+        analysis: {
+          pronunciationScore: result.pronunciationScore,
+          accuracyScore: result.accuracyScore,
+          fluencyScore: result.fluencyScore,
+          completenessScore: result.completenessScore,
+          passed: result.pronunciationScore >= 50,
+          transcription: result.transcription,
+          expectedText: targetText,
+          confidence: result.confidence,
+          match: result.match,
+          overallFeedback: generateFeedback(result.pronunciationScore),
+          detailedFeedback: result.detailedFeedback || []
+        }
+      });
+      
+    } catch (error) {
+      console.error('❌ Analyze speaking error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Lỗi khi phân tích giọng nói: ' + error.message
+      });
+    }
+  }
 );
 
-/**
- * @route   POST /api/speech/compare/:flashcardId
- * @desc    Compare pronunciation with reference
- * @access  Private
- * @body    multipart/form-data with audio file
- */
-router.post(
-  '/compare/:flashcardId',
-  protect,
-  audioUpload.single('audio'),
-  speechController.comparePronunciation
-);
-
-// ===== Text-to-Speech =====
-
-/**
- * @route   POST /api/speech/generate-audio
- * @desc    Generate TTS audio from text
- * @access  Private
- * @body    { text, language }
- */
-router.post('/generate-audio', protect, speechController.generateAudio);
-
-// ===== History & Stats =====
-
-/**
- * @route   GET /api/speech/history
- * @desc    Get user's speech attempt history
- * @access  Private
- * @query   ?deckId=xxx&page=1&limit=20&sortBy=completedAt&sortOrder=desc
- */
-router.get('/history', protect, speechController.getSpeechHistory);
-
-/**
- * @route   GET /api/speech/stats
- * @desc    Get user's speech statistics
- * @access  Private
- * @query   ?deckId=xxx&startDate=2024-01-01&endDate=2024-12-31
- */
-router.get('/stats', protect, speechController.getSpeechStats);
-
-/**
- * @route   GET /api/speech/attempt/:attemptId
- * @desc    Get specific speech attempt details
- * @access  Private
- */
-router.get('/attempt/:attemptId', protect, speechController.getSpeechAttempt);
+// Helper function
+function generateFeedback(score) {
+  if (score >= 90) return 'Xuất sắc! Phát âm rất tốt! 🎉';
+  if (score >= 70) return 'Tốt lắm! Tiếp tục luyện tập. 👍';
+  if (score >= 50) return 'Khá tốt, nhưng vẫn cần cải thiện. 💪';
+  return 'Cần luyện tập thêm. Hãy nghe kỹ và phát âm lại. 📚';
+}
 
 module.exports = router;
