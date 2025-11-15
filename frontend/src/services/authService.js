@@ -43,6 +43,12 @@ export const authService = {
         }
         return response.data;
       } else {
+        // ✅ Special case: 2FA required - don't throw error, return data for component to handle
+        if (response.data.requires2FA) {
+          return response.data;
+        }
+        
+        // Normal error case
         throw new Error(response.data.message || 'Đăng nhập thất bại');
       }
     } catch (error) {
@@ -270,6 +276,32 @@ export const authService = {
     } catch (error) {
       throw new Error(error.response?.data?.message || 'Không thể lấy trạng thái 2FA');
     }
-  }
+  },
+
+  // ========== 2FA LOGIN VERIFICATION ==========
+  verify2FALogin: async (userId, email, twoFactorCode) => {
+    try {
+      const response = await api.post('/auth/verify-2fa-login', {
+        userId,
+        email,
+        twoFactorCode
+      });
+      
+      if (response.data.success) {
+        // Save token and user to localStorage
+        localStorage.setItem('token', response.data.data.token);
+        localStorage.setItem('user', JSON.stringify(response.data.data.user));
+      }
+      
+      return response.data;
+    } catch (error) {
+      console.error('2FA Login Verification Error:', error);
+      throw new Error(
+        error.response?.data?.messageVietnamese || 
+        error.response?.data?.message || 
+        'Xác thực 2FA thất bại'
+      );
+    }
+  },
 };
 

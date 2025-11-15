@@ -543,147 +543,166 @@ const Login = () => {
 
   // Handle submit
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    e.stopPropagation(); // Ngăn event bubbling
+  e.preventDefault();
+  e.stopPropagation();
 
+  // Validation
+  const newErrors = {};
+  if (!formData.email) {
+    newErrors.email = 'Email không được để trống';
+  } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+    newErrors.email = 'Email không hợp lệ';
+  }
+  if (!formData.password) {
+    newErrors.password = 'Mật khẩu không được để trống';
+  }
 
-    if (!validateForm()) {
-      showToast('error', 'Lỗi!', 'Vui lòng kiểm tra lại thông tin đăng nhập');
+  if (Object.keys(newErrors).length > 0) {
+    setErrors(newErrors);
+    return;
+  }
+
+  setLoading(true);
+  setErrors({});
+
+  try {
+    const response = await authService.login({
+      email: formData.email,
+      password: formData.password
+    });
+
+    // ✅ CHECK 1: Nếu user có 2FA enabled (kiểm tra TRƯỚC)
+    if (response.requires2FA) {
+      console.log('🔐 2FA Required - Redirecting to verification page');
+      
+      navigate('/verify-2fa', {
+        state: {
+          userData: {
+            userId: response.data.userId,
+            email: response.data.email
+          }
+        }
+      });
       return;
     }
 
-    setLoading(true);
+    // ✅ CHECK 2: Chỉ khi KHÔNG có 2FA, mới lấy user info
+    const user = response.data?.user;
 
-    try {
-      
-      const response = await authService.login({
-        email: formData.email.trim(),
-        password: formData.password,
-      });
-
-      
-      const user = response.data?.user;
-      
-      if (!user) {
-        throw new Error('Không nhận được thông tin người dùng');
-      }
-
-      // Kiểm tra tài khoản đã kích hoạt chưa
-      if (!user.isActive) {
-        setLoading(false);
-        
-        await Swal.fire({
-          icon: 'warning',
-          title: 'Tài khoản chưa kích hoạt',
-          html: `
-            <p>Vui lòng kiểm tra email <strong>${user.email}</strong> để kích hoạt tài khoản.</p>
-            <p style="margin-top: 1rem; font-size: 0.875rem; color: #6b7280;">
-              Chưa nhận được email? 
-            </p>
-          `,
-          showCancelButton: true,
-          confirmButtonText: 'Gửi lại OTP',
-          cancelButtonText: 'Đóng',
-          confirmButtonColor: '#58CC02',
-          cancelButtonColor: '#6b7280'
-        }).then(async (result) => {
-          if (result.isConfirmed) {
-            try {
-              await authService.resendOTP(user.email);
-              showToast('success', 'Đã gửi!', 'Vui lòng kiểm tra email của bạn');
-            } catch (error) {
-              showToast('error', 'Lỗi!', error.message || 'Không thể gửi lại OTP');
-            }
-          }
-        });
-        
-        authService.logout();
-        return;
-      }
-
-      showToast('success', 'Thành công!', 'Đăng nhập thành công!');
-      
-      setTimeout(() => {
-        if (user.role === 'admin') {
-          navigate('/admin');
-        } else {
-          navigate('/learn');
-        }
-      }, 1000);
-      
-    } catch (error) {
-      console.error('❌ Login error:', error); // Debug
-      console.error('📋 Error details:', {
-        response: error.response,
-        message: error.message,
-        status: error.response?.status,
-        data: error.response?.data
-      }); // Debug chi tiết
-
-      setLoading(false);
-      
-      let errorMessage = 'Đăng nhập thất bại. Vui lòng thử lại!';
-      let fieldErrors = {};
-      
-      if (error.response) {
-        const status = error.response.status;
-        const data = error.response.data;
-        
-       
-        switch (status) {
-          case 400:
-            errorMessage = data.message || 'Thông tin đăng nhập không hợp lệ';
-            break;
-            
-          case 401:
-            errorMessage = 'Email hoặc mật khẩu không chính xác!';
-            fieldErrors = {
-              password: 'Email hoặc mật khẩu không đúng'
-            };
-            break;
-            
-          case 403:
-            if (data.data?.needsVerification) {
-              return; // Đã xử lý ở trên
-            }
-            errorMessage = data.message || 'Tài khoản của bạn đã bị khóa!';
-            break;
-            
-          case 404:
-            errorMessage = 'Tài khoản không tồn tại!';
-            fieldErrors = { email: 'Tài khoản không tồn tại' };
-            break;
-            
-          case 500:
-            errorMessage = 'Lỗi server. Vui lòng thử lại sau!';
-            break;
-            
-          default:
-            errorMessage = data.message || errorMessage;
-        }
-        
-        // Set field errors nếu có
-        if (Object.keys(fieldErrors).length > 0) {
-          setErrors(fieldErrors);
-        }
-        
-      } else if (error.request) {
-        // Request được gửi nhưng không nhận được response
-        errorMessage = 'Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng!';
-        console.error('🌐 No response received:', error.request);
-        
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-      
-     
-      // Hiển thị toast error
-      showToast('error', 'Đăng nhập thất bại!', errorMessage);
-      
-    } finally {
-      setLoading(false);
+    if (!user) {
+      throw new Error('Không nhận được thông tin người dùng');
     }
-  };
+    
+    // ✅ CHECK 3: Tài khoản chưa kích hoạt
+    if (!user.isActive) {
+      setLoading(false);
+      await Swal.fire({
+        icon: 'warning',
+        title: 'Tài khoản chưa được kích hoạt',
+        html: `
+          <p>Vui lòng kiểm tra email <strong>${user.email}</strong> để kích hoạt tài khoản.</p>
+          <p style="margin-top: 1rem; font-size: 0.875rem; color: #6b7280;">
+            Chưa nhận được email?
+          </p>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Gửi lại OTP',
+        cancelButtonText: 'Đóng',
+        confirmButtonColor: '#58CC02',
+        cancelButtonColor: '#6b7280',
+      }).then(async (result) => {
+        if (result.isConfirmed) {
+          try {
+            await authService.resendOTP(user.email);
+            showToast('success', 'OTP đã được gửi lại!', `Vui lòng kiểm tra email ${user.email}`);
+          } catch (resendError) {
+            console.error('❌ Error resending OTP:', resendError);
+            showToast('error', 'Gửi lại OTP thất bại', resendError.message);
+          }
+        }
+      });
+      return; // ⚠️ QUAN TRỌNG: Dừng flow ở đây
+    }
+    
+    // ✅ Normal login flow (no 2FA)
+    showToast('success', 'Đăng nhập thành công!', 'Chào mừng bạn trở lại');
+    
+    setTimeout(() => {
+      if (user.role === 'admin') {
+        navigate('/admin');
+      } else {
+        navigate('/learn');
+      }
+    }, 1000);
+
+  } catch (error) {
+    console.error('❌ Login error:', error);
+    console.error('📋 Error details:', {
+      response: error.response,
+      message: error.message,
+      status: error.response?.status,
+      data: error.response?.data
+    });
+
+    setLoading(false);
+    
+    let errorMessage = 'Đăng nhập thất bại. Vui lòng thử lại!';
+    let fieldErrors = {};
+    
+    if (error.response) {
+      const status = error.response.status;
+      const data = error.response.data;
+      
+      switch (status) {
+        case 400:
+          errorMessage = data.message || 'Thông tin đăng nhập không hợp lệ';
+          break;
+          
+        case 401:
+          errorMessage = 'Email hoặc mật khẩu không chính xác!';
+          fieldErrors = {
+            password: 'Email hoặc mật khẩu không đúng'
+          };
+          break;
+          
+        case 403:
+          if (data.data?.needsVerification) {
+            return;
+          }
+          errorMessage = data.message || 'Tài khoản của bạn đã bị khóa!';
+          break;
+          
+        case 404:
+          errorMessage = 'Tài khoản không tồn tại!';
+          fieldErrors = { email: 'Tài khoản không tồn tại' };
+          break;
+          
+        case 500:
+          errorMessage = 'Lỗi server. Vui lòng thử lại sau!';
+          break;
+          
+        default:
+          errorMessage = data.message || errorMessage;
+      }
+      
+      if (Object.keys(fieldErrors).length > 0) {
+        setErrors(fieldErrors);
+      }
+      
+    } else if (error.request) {
+      errorMessage = 'Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng!';
+      console.error('🌐 No response received:', error.request);
+      
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
+    
+    showToast('error', 'Đăng nhập thất bại!', errorMessage);
+    
+  } finally {
+    setLoading(false);
+  }
+};
 
   // Handle social login
   const handleSocialLogin = (provider) => {

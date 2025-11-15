@@ -43,6 +43,7 @@ import PersonalizedRoadmap from './pages/PersonalizedRoadmap';
 import FlashcardReview from './pages/FlashcardReview';
 import AIFlashcardGenerator from './pages/AIFlashcardGenerator';
 import RoadmapStepExercises from './pages/RoadmapStepExercises';
+import Verify2FA from './pages/Verify2FA';
 
 // Admin Pages
 import AdminDashboard from './pages/AdminDashboard';
@@ -204,7 +205,8 @@ function App() {
             </ProtectedRoute>
           } />
           
-          
+          <Route path="/verify-2fa" element={<Verify2FA />} />
+        
          
           <Route path="/decks" element={
             <ProtectedRoute>
