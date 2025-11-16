@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const SpeakingVideo = require('../models/SpeakingVideo');
 const SpeakingAttempt = require('../models/SpeakingAttempt');
 const User = require('../models/User');
@@ -413,6 +414,8 @@ const createVideoWithSentences = async (req, res) => {
  */
 const saveLocalAttempt = async (req, res) => {
   try {
+    console.log('[INFO] Starting save local attempt');
+
     const {
       videoId,
       sentenceIndex,
@@ -426,6 +429,8 @@ const saveLocalAttempt = async (req, res) => {
       feedback
     } = req.body;
 
+    console.log('[DEBUG] Request body:', { videoId, sentenceIndex, transcription, overallScore });
+
     // Validation
     if (!videoId || sentenceIndex === undefined || !transcription) {
       return res.status(400).json({
@@ -436,54 +441,82 @@ const saveLocalAttempt = async (req, res) => {
 
     // Ensure the request is authenticated (we need a user to associate the attempt)
     if (!req.user || !req.user._id) {
+      console.log('[ERROR] No user in request');
       return res.status(401).json({
         success: false,
         message: 'Unauthorized: Vui lòng đăng nhập để lưu kết quả'
       });
     }
 
+    console.log('[INFO] User authenticated:', req.user._id);
+
     // Kiểm tra video tồn tại
     const video = await SpeakingVideo.findById(videoId);
     if (!video) {
+      console.log('[ERROR] Video not found:', videoId);
       return res.status(404).json({
         success: false,
         message: 'Không tìm thấy video'
       });
     }
 
+    console.log('[INFO] Video found:', videoId);
+
     // Tính XP
     const xpEarned = Math.max(5, Math.round(overallScore / 5));
 
+    console.log('[INFO] XP to earn:', xpEarned);
+
     // Tạo attempt
-    const attempt = await SpeakingAttempt.create({
-      user: req.user._id,
-      video: videoId,
-      attemptType: 'sentence',
-      sentenceIndex,
-      originalSentence: originalSentence || video.sentences[sentenceIndex]?.english || '',
-      audioUrl: '', // Không có audio file vì dùng Web Speech API
-      transcription,
-      accuracyScore: accuracyScore || 0,
-      pronunciationScore: pronunciationScore || 0,
-      fluencyScore: fluencyScore || 0,
-      overallScore: overallScore || 0,
-      comparison: comparison || {},
-      feedback: feedback || '',
-      xpEarned,
-      duration: 0,
-      status: 'completed'
-    });
+    let attempt;
+    try {
+      attempt = await SpeakingAttempt.create({
+        user: req.user._id,
+        video: videoId,
+        attemptType: 'sentence',
+        sentenceIndex,
+        originalSentence: originalSentence || video.sentences[sentenceIndex]?.english || '',
+        audioUrl: '', // Không có audio file vì dùng Web Speech API
+        transcription,
+        accuracyScore: accuracyScore || 0,
+        pronunciationScore: pronunciationScore || 0,
+        fluencyScore: fluencyScore || 0,
+        overallScore: overallScore || 0,
+        comparison: comparison || {},
+        feedback: feedback || '',
+        xpEarned,
+        duration: 0,
+        status: 'completed'
+      });
+      console.log('[SUCCESS] Attempt created:', attempt._id);
+    } catch (createError) {
+      console.error('[ERROR] Failed to create attempt:', createError);
+      return res.status(500).json({
+        success: false,
+        message: 'Đã xảy ra lỗi khi lưu kết quả'
+      });
+    }
 
-    // Award XP to user
-    await User.findByIdAndUpdate(
-      req.user._id,
-      { $inc: { xp: xpEarned } }
-    );
+    // Award XP to user (non-critical, don't fail if this fails)
+    try {
+      await User.findByIdAndUpdate(
+        req.user._id,
+        { $inc: { xp: xpEarned } }
+      );
+      console.log('[SUCCESS] User XP updated');
+    } catch (xpError) {
+      console.warn('[WARN] Failed to update user XP:', xpError.message);
+    }
 
-    // Update video stats
-    await SpeakingVideo.findByIdAndUpdate(videoId, {
-      $inc: { totalAttempts: 1 }
-    });
+    // Update video stats (non-critical)
+    try {
+      await SpeakingVideo.findByIdAndUpdate(videoId, {
+        $inc: { totalAttempts: 1 }
+      });
+      console.log('[SUCCESS] Video stats updated');
+    } catch (videoError) {
+      console.warn('[WARN] Failed to update video stats:', videoError.message);
+    }
 
     // Log audit (non-blocking)
     try {
@@ -493,27 +526,30 @@ const saveLocalAttempt = async (req, res) => {
         status: 'SUCCESS',
         ipAddress: getIpAddress(req),
         userAgent: getUserAgent(req),
-        details: { 
-          videoId, 
-          sentenceIndex, 
+        details: {
+          videoId,
+          sentenceIndex,
           score: overallScore,
-          xpEarned 
+          xpEarned
         }
       });
+      console.log('[SUCCESS] Audit logged');
     } catch (auditError) {
       console.warn('[WARN] Audit log failed:', auditError.message);
     }
 
+    console.log('[SUCCESS] Save local attempt completed');
+
     res.status(201).json({
       success: true,
       message: 'Lưu kết quả thành công',
-      data: { 
+      data: {
         attempt,
         xpEarned
       }
     });
   } catch (error) {
-    console.error('[ERROR] Save local attempt:', error);
+    console.error('[ERROR] Save local attempt - unexpected error:', error);
     res.status(500).json({
       success: false,
       message: 'Đã xảy ra lỗi khi lưu kết quả'

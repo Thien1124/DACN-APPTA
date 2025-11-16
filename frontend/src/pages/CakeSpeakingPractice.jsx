@@ -85,7 +85,7 @@ const ProgressBar = styled.div`
 const ProgressFill = styled.div`
   height: 100%;
   background: linear-gradient(90deg, #58CC02 0%, #45a302 100%);
-  width: ${props => props.progress}%;
+  width: ${props => props.$progress}%;
   transition: width 0.5s ease;
 `;
 
@@ -712,7 +712,7 @@ const CakeSpeakingPractice = () => {
           });
 
           autoAdvanceTimeoutRef.current = null;
-        }, 5000);
+        }, 3000);
       }
       
     } catch (error) {
@@ -1066,7 +1066,7 @@ const CakeSpeakingPractice = () => {
           Quay lại
         </BackButton>
         <ProgressBar>
-          <ProgressFill progress={overallProgress} />
+          <ProgressFill $progress={overallProgress} />
         </ProgressBar>
         <ProgressText>{overallProgress}% hoàn thành</ProgressText>
       </Header>
@@ -1182,7 +1182,6 @@ const CakeSpeakingPractice = () => {
         ) : (
           // No current sentence yet - show placeholder/help text
           <div style={{ padding: '2rem 1rem', color: '#6b7280', textAlign: 'center' }}>
-            Bắt đầu phát video để hiện câu đầu tiên.
           </div>
         )}
 

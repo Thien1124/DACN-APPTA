@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 // Import icons
 import { FiGrid, FiTrendingUp, FiUsers, FiBook, FiBox, FiMenu } from 'react-icons/fi';
-import { BiBookOpen, BiTask, BiTestTube } from 'react-icons/bi';
+import { BiBookOpen, BiTask, BiTestTube, BiVideo } from 'react-icons/bi';
 import { BsStack, BsCardText, BsTrophy } from 'react-icons/bs';
 import { AiOutlineSetting, AiOutlineAudit } from 'react-icons/ai';
 import { IoNotificationsOutline } from 'react-icons/io5';
@@ -409,6 +409,12 @@ const AdminSidebar = ({ theme = 'light', onThemeToggle }) => {
           icon: <BiTestTube size={20} />,
           text: 'Bài test',
           path: '/admin/tests',
+          badge: null,
+        },
+        {
+          icon: <BiVideo size={20} />,
+          text: 'Speaking Videos',
+          path: '/admin/speaking-videos',
           badge: null,
         },
       ],
