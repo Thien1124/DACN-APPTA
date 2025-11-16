@@ -4,8 +4,24 @@ import styled from 'styled-components';
 import Toast from '../components/Toast';
 import useToast from '../hooks/useToast';
 import api from '../utils/api';
+import LeftSidebar from '../components/LeftSidebar';
 
 // ========== STYLED COMPONENTS ==========
+
+const LayoutContainer = styled.div`
+  display: flex;
+  min-height: 100vh;
+`;
+
+const MainContent = styled.div`
+  flex: 1;
+  margin-left: 280px;
+  padding: 0;
+
+  @media (max-width: 768px) {
+    margin-left: 0;
+  }
+`;
 
 const PageContainer = styled.div`
   max-width: 1400px;
@@ -72,7 +88,7 @@ const VideoCard = styled.div`
 const VideoThumbnail = styled.div`
   width: 100%;
   height: 200px;
-  background: ${props => props.url ? `url(${props.url})` : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'};
+  background: ${props => props.$url ? `url(${props.$url})` : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'};
   background-size: cover;
   background-position: center;
   position: relative;
@@ -234,80 +250,90 @@ const SpeakingVideos = () => {
 
   if (loading) {
     return (
-      <PageContainer>
-        <LoadingSpinner />
-      </PageContainer>
+      <LayoutContainer>
+        <LeftSidebar />
+        <MainContent>
+          <PageContainer>
+            <LoadingSpinner />
+          </PageContainer>
+        </MainContent>
+      </LayoutContainer>
     );
   }
 
   return (
-    <PageContainer>
-      <Toast toast={toast} onClose={hideToast} />
-      
-      <Header>
-        <Title>Speaking Practice</Title>
-        <Subtitle>Luyện phát âm từng câu với phụ đề song ngữ và nhận điểm ngay lập tức</Subtitle>
-      </Header>
+    <LayoutContainer>
+      <LeftSidebar />
+      <MainContent>
+        <PageContainer>
+          <Toast toast={toast} onClose={hideToast} />
+          
+          <Header>
+            <Title>Speaking Practice</Title>
+            <Subtitle>Luyện phát âm từng câu với phụ đề song ngữ và nhận điểm ngay lập tức</Subtitle>
+          </Header>
 
-      <FilterSection>
-        <Select 
-          value={filters.level} 
-          onChange={(e) => setFilters({...filters, level: e.target.value})}
-        >
-          <option value="">Tất cả Level</option>
-          <option value="beginner">Beginner</option>
-          <option value="intermediate">Intermediate</option>
-          <option value="advanced">Advanced</option>
-        </Select>
-        
-        <Select 
-          value={filters.category} 
-          onChange={(e) => setFilters({...filters, category: e.target.value})}
-        >
-          <option value="">Tất cả Category</option>
-          <option value="conversation">Conversation</option>
-          <option value="pronunciation">Pronunciation</option>
-          <option value="vocabulary">Vocabulary</option>
-          <option value="grammar">Grammar</option>
-          <option value="general">General</option>
-        </Select>
-      </FilterSection>
+          <FilterSection>
+            <Select 
+              value={filters.level} 
+              onChange={(e) => setFilters({...filters, level: e.target.value})}
+            >
+              <option value="">Tất cả Level</option>
+              <option value="beginner">Beginner</option>
+              <option value="intermediate">Intermediate</option>
+              <option value="advanced">Advanced</option>
+            </Select>
+            
+            <Select 
+              value={filters.category} 
+              onChange={(e) => setFilters({...filters, category: e.target.value})}
+            >
+              <option value="">Tất cả Category</option>
+              <option value="conversation">Conversation</option>
+              <option value="pronunciation">Pronunciation</option>
+              <option value="vocabulary">Vocabulary</option>
+              <option value="grammar">Grammar</option>
+              <option value="general">General</option>
+            </Select>
+          </FilterSection>
 
-      {videos.length === 0 ? (
-        <EmptyState>
-          <h3>Chưa có video nào</h3>
-          <p>Video speaking sẽ sớm được cập nhật</p>
-        </EmptyState>
-      ) : (
-        <VideoGrid>
-          {videos.map(video => (
-            <VideoCard key={video._id}>
-              <VideoThumbnail url={video.thumbnailUrl} />
-              <VideoInfo>
-                <VideoTitle>{video.title}</VideoTitle>
-                
-                <VideoMeta>
-                  <Badge type="level" value={video.level}>{video.level}</Badge>
-                  <Badge>{video.category}</Badge>
-                  {video.duration > 0 && <Badge>⏱️ {video.duration}s</Badge>}
-                  {video.sentences && video.sentences.length > 0 && (
-                    <Badge>🎯 {video.sentences.length} câu</Badge>
-                  )}
-                </VideoMeta>
-                
-                {video.description && (
-                  <VideoDescription>{video.description}</VideoDescription>
-                )}
-                
-                <StartButton onClick={() => navigate(`/speaking/${video._id}`)}>
-                  Bắt đầu luyện tập
-                </StartButton>
-              </VideoInfo>
-            </VideoCard>
-          ))}
-        </VideoGrid>
-      )}
-    </PageContainer>
+          {videos.length === 0 ? (
+            <EmptyState>
+              <h3>Chưa có video nào</h3>
+              <p>Video speaking sẽ sớm được cập nhật</p>
+            </EmptyState>
+          ) : (
+            <VideoGrid>
+              {videos.map(video => (
+                <VideoCard key={video._id}>
+                  <VideoThumbnail $url={video.thumbnailUrl} />
+                  <VideoInfo>
+                    <VideoTitle>{video.title}</VideoTitle>
+                    
+                    <VideoMeta>
+                      <Badge type="level" value={video.level}>{video.level}</Badge>
+                      <Badge>{video.category}</Badge>
+                      {video.duration > 0 && <Badge>⏱️ {video.duration}s</Badge>}
+                      {video.sentences && video.sentences.length > 0 && (
+                        <Badge>🎯 {video.sentences.length} câu</Badge>
+                      )}
+                    </VideoMeta>
+                    
+                    {video.description && (
+                      <VideoDescription>{video.description}</VideoDescription>
+                    )}
+                    
+                    <StartButton onClick={() => navigate(`/speaking/${video._id}`)}>
+                      Bắt đầu luyện tập
+                    </StartButton>
+                  </VideoInfo>
+                </VideoCard>
+              ))}
+            </VideoGrid>
+          )}
+        </PageContainer>
+      </MainContent>
+    </LayoutContainer>
   );
 };
 

@@ -19,7 +19,8 @@ import {
   BiBookContent,
   BiBook,
   BiQuestionMark,
-  BiMap
+  BiMap,
+  BiVideo
 } from 'react-icons/bi';
 import { BiBell } from 'react-icons/bi';
 
@@ -308,6 +309,12 @@ const LeftSidebar = () => {
       path: '/practice'
     },
     {
+      id: 'speaking',
+      icon: <BiVideo size={24} />,
+      text: 'Luyện nói',
+      path: '/speaking'
+    },
+    {
       id: 'flashcards',
       icon: <BiBookContent size={24} />,
       text: 'Flashcards',
@@ -466,7 +473,7 @@ const LeftSidebar = () => {
                 </NavBadge>
               )}
             </NavItem>
-            {index === 9 && <Divider />}
+            {index === 11 && <Divider />}
           </React.Fragment>
         ))}
       </NavMenu>

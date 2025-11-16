@@ -3,8 +3,33 @@ import styled from 'styled-components';
 import Toast from '../components/Toast';
 import useToast from '../hooks/useToast';
 import api from '../utils/api';
+import AdminSidebar from '../components/AdminSidebar';
 
 // ========== STYLED COMPONENTS ==========
+
+const LayoutWrapper = styled.div`
+  display: flex;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e0 100%);
+`;
+
+const MainContent = styled.main`
+  flex: 1;
+  margin-left: 280px;
+  min-height: 100vh;
+
+  @media (max-width: 768px) {
+    margin-left: 0;
+  }
+`;
+
+const ContentArea = styled.div`
+  padding: 2rem;
+
+  @media (max-width: 768px) {
+    padding: 1rem;
+  }
+`;
 
 const PageContainer = styled.div`
   max-width: 1400px;
@@ -583,271 +608,276 @@ const AdminSpeakingVideos = () => {
   };
 
   return (
-    <PageContainer>
-      <Toast toast={toast} onClose={hideToast} />
-      
-      <Header>
-        <Title>📹 Quản lý Speaking Videos</Title>
-        <CreateButton onClick={handleCreate}>+ Tạo Video Mới</CreateButton>
-      </Header>
+    <LayoutWrapper>
+      <AdminSidebar />
+      <MainContent>
+        <ContentArea>
+          <Toast toast={toast} onClose={hideToast} />
+          
+          <Header>
+            <Title>📹 Quản lý Speaking Videos</Title>
+            <CreateButton onClick={handleCreate}>+ Tạo Video Mới</CreateButton>
+          </Header>
 
-      <FilterSection>
-        <Select 
-          value={filters.level} 
-          onChange={(e) => setFilters({...filters, level: e.target.value})}
-        >
-          <option value="">Tất cả Level</option>
-          <option value="beginner">Beginner</option>
-          <option value="intermediate">Intermediate</option>
-          <option value="advanced">Advanced</option>
-        </Select>
-        
-        <Select 
-          value={filters.category} 
-          onChange={(e) => setFilters({...filters, category: e.target.value})}
-        >
-          <option value="">Tất cả Category</option>
-          <option value="conversation">Conversation</option>
-          <option value="pronunciation">Pronunciation</option>
-          <option value="vocabulary">Vocabulary</option>
-          <option value="grammar">Grammar</option>
-          <option value="general">General</option>
-        </Select>
-        
-        <SearchInput
-          placeholder="Tìm kiếm video..."
-          value={filters.search}
-          onChange={(e) => setFilters({...filters, search: e.target.value})}
-        />
-      </FilterSection>
-
-      {loading ? (
-        <EmptyState><h3>⏳ Đang tải...</h3></EmptyState>
-      ) : videos.length === 0 ? (
-        <EmptyState>
-          <h3>📹 Chưa có video nào</h3>
-          <p>Hãy tạo video đầu tiên!</p>
-        </EmptyState>
-      ) : (
-        <VideoGrid>
-          {videos.map(video => (
-            <VideoCard key={video._id}>
-              <VideoThumbnail url={video.thumbnailUrl} />
-              <VideoInfo>
-                <VideoTitle>{video.title}</VideoTitle>
-                
-                <VideoMeta>
-                  <Badge type="level" value={video.level}>{video.level}</Badge>
-                  <Badge>{video.category}</Badge>
-                </VideoMeta>
-                
-                <Stats>
-                  <span>👥 {video.totalAttempts} attempts</span>
-                  <span>⭐ {video.averageScore}%</span>
-                </Stats>
-                
-                <Actions>
-                  <ActionButton variant="edit" onClick={() => handleEdit(video)}>
-                    ✏️ Sửa
-                  </ActionButton>
-                  <ActionButton 
-                    variant="toggle" 
-                    active={video.isActive}
-                    onClick={() => handleToggleActive(video._id, video.isActive)}
-                  >
-                    {video.isActive ? '✓ Active' : '✕ Inactive'}
-                  </ActionButton>
-                  <ActionButton 
-                    variant="delete" 
-                    onClick={() => handleDelete(video._id, video.title)}
-                  >
-                    🗑️
-                  </ActionButton>
-                </Actions>
-              </VideoInfo>
-            </VideoCard>
-          ))}
-        </VideoGrid>
-      )}
-
-      {showModal && (
-        <Modal onClick={() => setShowModal(false)}>
-          <ModalContent onClick={(e) => e.stopPropagation()}>
-            <ModalTitle>{editingVideo ? '✏️ Sửa Video' : '➕ Tạo Video Mới'}</ModalTitle>
+          <FilterSection>
+            <Select 
+              value={filters.level} 
+              onChange={(e) => setFilters({...filters, level: e.target.value})}
+            >
+              <option value="">Tất cả Level</option>
+              <option value="beginner">Beginner</option>
+              <option value="intermediate">Intermediate</option>
+              <option value="advanced">Advanced</option>
+            </Select>
             
-            <form onSubmit={handleSubmit}>
-              <FormGroup>
-                <Label>Tiêu đề *</Label>
-                <Input
-                  required
-                  value={formData.title}
-                  onChange={(e) => setFormData({...formData, title: e.target.value})}
-                  placeholder="English Conversation Practice"
-                />
-              </FormGroup>
+            <Select 
+              value={filters.category} 
+              onChange={(e) => setFilters({...filters, category: e.target.value})}
+            >
+              <option value="">Tất cả Category</option>
+              <option value="conversation">Conversation</option>
+              <option value="pronunciation">Pronunciation</option>
+              <option value="vocabulary">Vocabulary</option>
+              <option value="grammar">Grammar</option>
+              <option value="general">General</option>
+            </Select>
+            
+            <SearchInput
+              placeholder="Tìm kiếm video..."
+              value={filters.search}
+              onChange={(e) => setFilters({...filters, search: e.target.value})}
+            />
+          </FilterSection>
 
-              <FormGroup>
-                <Label>Mô tả</Label>
-                <Textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({...formData, description: e.target.value})}
-                  placeholder="Practice everyday English conversation..."
-                />
-              </FormGroup>
-
-              <FormGroup>
-                <Label>Video URL *</Label>
-                <Input
-                  required
-                  value={formData.videoUrl}
-                  onChange={(e) => setFormData({...formData, videoUrl: e.target.value})}
-                  placeholder="https://youtube.com/watch?v=..."
-                />
-              </FormGroup>
-
-              <FormGroup>
-                <Label>Câu nói (Sentence-by-sentence) *</Label>
-                <div style={{ marginBottom: '1rem', fontSize: '0.875rem', color: '#6b7280' }}>
-                  Mỗi câu sẽ có thời gian bắt đầu và kết thúc để video tự động phát từng đoạn
-                </div>
-                
-                {formData.sentences.map((sentence, index) => (
-                  <SentenceItem key={index}>
-                    <SentenceHeader>
-                      <SentenceNumber>Câu {index + 1}</SentenceNumber>
-                      {formData.sentences.length > 1 && (
-                        <RemoveButton type="button" onClick={() => handleRemoveSentence(index)}>
-                          ✕ Xóa
-                        </RemoveButton>
-                      )}
-                    </SentenceHeader>
+          {loading ? (
+            <EmptyState><h3>⏳ Đang tải...</h3></EmptyState>
+          ) : videos.length === 0 ? (
+            <EmptyState>
+              <h3>📹 Chưa có video nào</h3>
+              <p>Hãy tạo video đầu tiên!</p>
+            </EmptyState>
+          ) : (
+            <VideoGrid>
+              {videos.map(video => (
+                <VideoCard key={video._id}>
+                  <VideoThumbnail url={video.thumbnailUrl} />
+                  <VideoInfo>
+                    <VideoTitle>{video.title}</VideoTitle>
                     
-                    <SentenceInputs>
-                      <div>
-                        <Label style={{ fontSize: '0.8125rem', marginBottom: '0.25rem' }}>Tiếng Anh *</Label>
-                        <Input
-                          required
-                          value={sentence.english}
-                          onChange={(e) => handleUpdateSentence(index, 'english', e.target.value)}
-                          placeholder="Hello, how are you?"
-                        />
-                      </div>
-                      <div>
-                        <Label style={{ fontSize: '0.8125rem', marginBottom: '0.25rem' }}>Tiếng Việt *</Label>
-                        <Input
-                          required
-                          value={sentence.vietnamese}
-                          onChange={(e) => handleUpdateSentence(index, 'vietnamese', e.target.value)}
-                          placeholder="Xin chào, bạn thế nào?"
-                        />
-                      </div>
-                    </SentenceInputs>
+                    <VideoMeta>
+                      <Badge type="level" value={video.level}>{video.level}</Badge>
+                      <Badge>{video.category}</Badge>
+                    </VideoMeta>
                     
-                    <TimeInputs>
-                      <div>
-                        <Label style={{ fontSize: '0.8125rem', marginBottom: '0.25rem' }}>Bắt đầu (giây)</Label>
-                        <Input
-                          type="number"
-                          step="0.1"
-                          min="0"
-                          value={sentence.startTime}
-                          onChange={(e) => handleUpdateSentence(index, 'startTime', e.target.value)}
-                          placeholder="0.0"
-                        />
-                      </div>
-                      <div>
-                        <Label style={{ fontSize: '0.8125rem', marginBottom: '0.25rem' }}>Kết thúc (giây)</Label>
-                        <Input
-                          type="number"
-                          step="0.1"
-                          min="0"
-                          value={sentence.endTime}
-                          onChange={(e) => handleUpdateSentence(index, 'endTime', e.target.value)}
-                          placeholder="3.0"
-                        />
-                      </div>
-                    </TimeInputs>
-                  </SentenceItem>
-                ))}
+                    <Stats>
+                      <span>👥 {video.totalAttempts} attempts</span>
+                      <span>⭐ {video.averageScore}%</span>
+                    </Stats>
+                    
+                    <Actions>
+                      <ActionButton variant="edit" onClick={() => handleEdit(video)}>
+                        ✏️ Sửa
+                      </ActionButton>
+                      <ActionButton 
+                        variant="toggle" 
+                        active={video.isActive}
+                        onClick={() => handleToggleActive(video._id, video.isActive)}
+                      >
+                        {video.isActive ? '✓ Active' : '✕ Inactive'}
+                      </ActionButton>
+                      <ActionButton 
+                        variant="delete" 
+                        onClick={() => handleDelete(video._id, video.title)}
+                      >
+                        🗑️
+                      </ActionButton>
+                    </Actions>
+                  </VideoInfo>
+                </VideoCard>
+              ))}
+            </VideoGrid>
+          )}
+
+          {showModal && (
+            <Modal onClick={() => setShowModal(false)}>
+              <ModalContent onClick={(e) => e.stopPropagation()}>
+                <ModalTitle>{editingVideo ? '✏️ Sửa Video' : '➕ Tạo Video Mới'}</ModalTitle>
                 
-                <AddSentenceButton type="button" onClick={handleAddSentence}>
-                  ➕ Thêm câu mới
-                </AddSentenceButton>
-              </FormGroup>
+                <form onSubmit={handleSubmit}>
+                  <FormGroup>
+                    <Label>Tiêu đề *</Label>
+                    <Input
+                      required
+                      value={formData.title}
+                      onChange={(e) => setFormData({...formData, title: e.target.value})}
+                      placeholder="English Conversation Practice"
+                    />
+                  </FormGroup>
 
-              <FormGroup>
-                <Label>Thumbnail URL</Label>
-                <Input
-                  value={formData.thumbnailUrl}
-                  onChange={(e) => setFormData({...formData, thumbnailUrl: e.target.value})}
-                  placeholder="https://..."
-                />
-              </FormGroup>
+                  <FormGroup>
+                    <Label>Mô tả</Label>
+                    <Textarea
+                      value={formData.description}
+                      onChange={(e) => setFormData({...formData, description: e.target.value})}
+                      placeholder="Practice everyday English conversation..."
+                    />
+                  </FormGroup>
 
-              <FormGroup>
-                <Label>Duration (giây) - Tự động tính từ sentences</Label>
-                <Input
-                  type="number"
-                  value={formData.duration || (formData.sentences.length > 0 ? Math.max(...formData.sentences.map(s => parseFloat(s.endTime) || 0)) : 0)}
-                  onChange={(e) => setFormData({...formData, duration: e.target.value})}
-                  placeholder="Tự động tính"
-                  readOnly
-                  style={{ background: '#f9fafb', cursor: 'not-allowed' }}
-                />
-                <div style={{ fontSize: '0.8125rem', color: '#6b7280', marginTop: '0.25rem' }}>
-                  Duration sẽ được tính tự động từ thời gian kết thúc của câu cuối cùng
-                </div>
-              </FormGroup>
+                  <FormGroup>
+                    <Label>Video URL *</Label>
+                    <Input
+                      required
+                      value={formData.videoUrl}
+                      onChange={(e) => setFormData({...formData, videoUrl: e.target.value})}
+                      placeholder="https://youtube.com/watch?v=..."
+                    />
+                  </FormGroup>
 
-              <FormGroup>
-                <Label>Level</Label>
-                <Select
-                  value={formData.level}
-                  onChange={(e) => setFormData({...formData, level: e.target.value})}
-                >
-                  <option value="beginner">Beginner</option>
-                  <option value="intermediate">Intermediate</option>
-                  <option value="advanced">Advanced</option>
-                </Select>
-              </FormGroup>
+                  <FormGroup>
+                    <Label>Câu nói (Sentence-by-sentence) *</Label>
+                    <div style={{ marginBottom: '1rem', fontSize: '0.875rem', color: '#6b7280' }}>
+                      Mỗi câu sẽ có thời gian bắt đầu và kết thúc để video tự động phát từng đoạn
+                    </div>
+                    
+                    {formData.sentences.map((sentence, index) => (
+                      <SentenceItem key={index}>
+                        <SentenceHeader>
+                          <SentenceNumber>Câu {index + 1}</SentenceNumber>
+                          {formData.sentences.length > 1 && (
+                            <RemoveButton type="button" onClick={() => handleRemoveSentence(index)}>
+                              ✕ Xóa
+                            </RemoveButton>
+                          )}
+                        </SentenceHeader>
+                        
+                        <SentenceInputs>
+                          <div>
+                            <Label style={{ fontSize: '0.8125rem', marginBottom: '0.25rem' }}>Tiếng Anh *</Label>
+                            <Input
+                              required
+                              value={sentence.english}
+                              onChange={(e) => handleUpdateSentence(index, 'english', e.target.value)}
+                              placeholder="Hello, how are you?"
+                            />
+                          </div>
+                          <div>
+                            <Label style={{ fontSize: '0.8125rem', marginBottom: '0.25rem' }}>Tiếng Việt *</Label>
+                            <Input
+                              required
+                              value={sentence.vietnamese}
+                              onChange={(e) => handleUpdateSentence(index, 'vietnamese', e.target.value)}
+                              placeholder="Xin chào, bạn thế nào?"
+                            />
+                          </div>
+                        </SentenceInputs>
+                        
+                        <TimeInputs>
+                          <div>
+                            <Label style={{ fontSize: '0.8125rem', marginBottom: '0.25rem' }}>Bắt đầu (giây)</Label>
+                            <Input
+                              type="number"
+                              step="0.1"
+                              min="0"
+                              value={sentence.startTime}
+                              onChange={(e) => handleUpdateSentence(index, 'startTime', e.target.value)}
+                              placeholder="0.0"
+                            />
+                          </div>
+                          <div>
+                            <Label style={{ fontSize: '0.8125rem', marginBottom: '0.25rem' }}>Kết thúc (giây)</Label>
+                            <Input
+                              type="number"
+                              step="0.1"
+                              min="0"
+                              value={sentence.endTime}
+                              onChange={(e) => handleUpdateSentence(index, 'endTime', e.target.value)}
+                              placeholder="3.0"
+                            />
+                          </div>
+                        </TimeInputs>
+                      </SentenceItem>
+                    ))}
+                    
+                    <AddSentenceButton type="button" onClick={handleAddSentence}>
+                      ➕ Thêm câu mới
+                    </AddSentenceButton>
+                  </FormGroup>
 
-              <FormGroup>
-                <Label>Category</Label>
-                <Select
-                  value={formData.category}
-                  onChange={(e) => setFormData({...formData, category: e.target.value})}
-                >
-                  <option value="conversation">Conversation</option>
-                  <option value="pronunciation">Pronunciation</option>
-                  <option value="vocabulary">Vocabulary</option>
-                  <option value="grammar">Grammar</option>
-                  <option value="general">General</option>
-                </Select>
-              </FormGroup>
+                  <FormGroup>
+                    <Label>Thumbnail URL</Label>
+                    <Input
+                      value={formData.thumbnailUrl}
+                      onChange={(e) => setFormData({...formData, thumbnailUrl: e.target.value})}
+                      placeholder="https://..."
+                    />
+                  </FormGroup>
 
-              <FormGroup>
-                <Label>Order (Thứ tự hiển thị)</Label>
-                <Input
-                  type="number"
-                  value={formData.order}
-                  onChange={(e) => setFormData({...formData, order: e.target.value})}
-                  placeholder="0"
-                />
-              </FormGroup>
+                  <FormGroup>
+                    <Label>Duration (giây) - Tự động tính từ sentences</Label>
+                    <Input
+                      type="number"
+                      value={formData.duration || (formData.sentences.length > 0 ? Math.max(...formData.sentences.map(s => parseFloat(s.endTime) || 0)) : 0)}
+                      onChange={(e) => setFormData({...formData, duration: e.target.value})}
+                      placeholder="Tự động tính"
+                      readOnly
+                      style={{ background: '#f9fafb', cursor: 'not-allowed' }}
+                    />
+                    <div style={{ fontSize: '0.8125rem', color: '#6b7280', marginTop: '0.25rem' }}>
+                      Duration sẽ được tính tự động từ thời gian kết thúc của câu cuối cùng
+                    </div>
+                  </FormGroup>
 
-              <ButtonGroup>
-                <Button type="button" variant="secondary" onClick={() => setShowModal(false)}>
-                  Hủy
-                </Button>
-                <Button type="submit" variant="primary">
-                  {editingVideo ? 'Cập nhật' : 'Tạo mới'}
-                </Button>
-              </ButtonGroup>
-            </form>
-          </ModalContent>
-        </Modal>
-      )}
-    </PageContainer>
+                  <FormGroup>
+                    <Label>Level</Label>
+                    <Select
+                      value={formData.level}
+                      onChange={(e) => setFormData({...formData, level: e.target.value})}
+                    >
+                      <option value="beginner">Beginner</option>
+                      <option value="intermediate">Intermediate</option>
+                      <option value="advanced">Advanced</option>
+                    </Select>
+                  </FormGroup>
+
+                  <FormGroup>
+                    <Label>Category</Label>
+                    <Select
+                      value={formData.category}
+                      onChange={(e) => setFormData({...formData, category: e.target.value})}
+                    >
+                      <option value="conversation">Conversation</option>
+                      <option value="pronunciation">Pronunciation</option>
+                      <option value="vocabulary">Vocabulary</option>
+                      <option value="grammar">Grammar</option>
+                      <option value="general">General</option>
+                    </Select>
+                  </FormGroup>
+
+                  <FormGroup>
+                    <Label>Order (Thứ tự hiển thị)</Label>
+                    <Input
+                      type="number"
+                      value={formData.order}
+                      onChange={(e) => setFormData({...formData, order: e.target.value})}
+                      placeholder="0"
+                    />
+                  </FormGroup>
+
+                  <ButtonGroup>
+                    <Button type="button" variant="secondary" onClick={() => setShowModal(false)}>
+                      Hủy
+                    </Button>
+                    <Button type="submit" variant="primary">
+                      {editingVideo ? 'Cập nhật' : 'Tạo mới'}
+                    </Button>
+                  </ButtonGroup>
+                </form>
+              </ModalContent>
+            </Modal>
+          )}
+        </ContentArea>
+      </MainContent>
+    </LayoutWrapper>
   );
 };
 
