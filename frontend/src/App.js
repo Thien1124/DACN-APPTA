@@ -44,6 +44,9 @@ import FlashcardReview from './pages/FlashcardReview';
 import AIFlashcardGenerator from './pages/AIFlashcardGenerator';
 import RoadmapStepExercises from './pages/RoadmapStepExercises';
 import Verify2FA from './pages/Verify2FA';
+import SpeakingVideos from './pages/SpeakingVideos';
+import CakeSpeakingPractice from './pages/CakeSpeakingPractice';
+import AdminSpeakingVideos from './pages/AdminSpeakingVideos';
 
 // Admin Pages
 import AdminDashboard from './pages/AdminDashboard';
@@ -265,6 +268,20 @@ function App() {
               </ProtectedRoute>
             } 
           />
+
+          {/* Speaking Practice Routes - Cake Style Only */}
+          <Route path="/speaking" element={
+            <ProtectedRoute>
+              <SpeakingVideos />
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/speaking/:id" element={
+            <ProtectedRoute>
+              <CakeSpeakingPractice />
+            </ProtectedRoute>
+          } />
+
           {/* ========== ADMIN DASHBOARD & PAGES ========== */}
           
           {/* Dashboard */}
@@ -481,6 +498,13 @@ function App() {
           <Route path="/admin/flashcards/bulk-create" element={
             <ProtectedRoute requireAdmin={true}>
               <AdminFlashcardBulkCreate />
+            </ProtectedRoute>
+          } />
+
+          {/* Admin Speaking Videos */}
+          <Route path="/admin/speaking-videos" element={
+            <ProtectedRoute requireAdmin={true}>
+              <AdminSpeakingVideos />
             </ProtectedRoute>
           } />
 
