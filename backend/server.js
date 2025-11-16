@@ -45,6 +45,7 @@ const aiExplanationRoutes = require('./src/routes/aiExplanationRoutes'); // Task
 const mnemonicRoutes = require('./src/routes/mnemonicRoutes'); // Task 32: Mnemonic & Visualization
 const deviceRoutes = require('./src/routes/deviceRoutes'); // Task 33: Device Management
 const testHistoryRoutes = require('./src/routes/testHistoryRoutes'); // Task 34: Test History
+const speakingRoutes = require('./src/routes/speakingRoutes'); // Speaking Video & Shadowing
 
 const streakRoutes = require('./src/routes/streakRoutes');
 const heartRoutes = require('./src/routes/heartRoutes');
@@ -141,6 +142,7 @@ app.use('/api/ai-explain', aiExplanationRoutes); // Task 31: AI word explanation
 app.use('/api/mnemonic', mnemonicRoutes); // Task 32: Mnemonic generation & visualization suggestions
 app.use('/api/devices', deviceRoutes); // Task 33: Multi-device management & session tracking
 app.use('/api/test-history', testHistoryRoutes); // Task 34: Test history & progress tracking
+app.use('/api/speaking', speakingRoutes); // Speaking Video & Shadowing practice
 
 app.use('/api/streaks', streakRoutes);
 app.use('/api/hearts', heartRoutes);

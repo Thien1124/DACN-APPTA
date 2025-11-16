@@ -70,13 +70,13 @@ const ToastWrapper = styled.div`
   flex-direction: column;
   min-width: 360px;
   max-width: 420px;
-  animation: ${props => props.show ? slideIn : slideOut} 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  animation: ${props => props.$show ? slideIn : slideOut} 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
   pointer-events: auto;
   overflow: hidden;
   border: 2px solid ${props => {
-    if (props.type === 'success') return '#10b981';
-    if (props.type === 'error') return '#ef4444';
-    if (props.type === 'warning') return '#f59e0b';
+    if (props.$type === 'success') return '#10b981';
+    if (props.$type === 'error') return '#ef4444';
+    if (props.$type === 'warning') return '#f59e0b';
     return '#1CB0F6';
   }};
   position: relative;
@@ -90,9 +90,9 @@ const ToastWrapper = styled.div`
 
 const ToastHeader = styled.div`
   background: ${props => {
-    if (props.type === 'success') return 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
-    if (props.type === 'error') return 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
-    if (props.type === 'warning') return 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
+    if (props.$type === 'success') return 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+    if (props.$type === 'error') return 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
+    if (props.$type === 'warning') return 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
     return 'linear-gradient(135deg, #1CB0F6 0%, #0891b2 100%)';
   }};
   padding: 1rem 1.25rem;
@@ -201,11 +201,11 @@ const ToastProgressFill = styled.div`
     if (props.type === 'warning') return 'linear-gradient(90deg, #f59e0b 0%, #d97706 100%)';
     return 'linear-gradient(90deg, #1CB0F6 0%, #0891b2 100%)';
   }};
-  animation: ${progressBar} ${props => props.duration || 3000}ms linear;
+  animation: ${progressBar} ${props => props.$duration || 3000}ms linear;
   box-shadow: 0 0 8px ${props => {
-    if (props.type === 'success') return 'rgba(16, 185, 129, 0.5)';
-    if (props.type === 'error') return 'rgba(239, 68, 68, 0.5)';
-    if (props.type === 'warning') return 'rgba(245, 158, 11, 0.5)';
+    if (props.$type === 'success') return 'rgba(16, 185, 129, 0.5)';
+    if (props.$type === 'error') return 'rgba(239, 68, 68, 0.5)';
+    if (props.$type === 'warning') return 'rgba(245, 158, 11, 0.5)';
     return 'rgba(28, 176, 246, 0.5)';
   }};
 `;
@@ -249,8 +249,8 @@ const Toast = ({ toast, onClose }) => {
 
   return (
     <ToastContainer>
-      <ToastWrapper type={toast.type} show={toast.show}>
-        <ToastHeader type={toast.type}>
+      <ToastWrapper $type={toast.type} $show={toast.show}>
+        <ToastHeader $type={toast.type}>
           <ToastIconWrapper>
             <ToastIcon>{getIcon(toast.type)}</ToastIcon>
           </ToastIconWrapper>
@@ -265,10 +265,10 @@ const Toast = ({ toast, onClose }) => {
           <ToastMessage>{toast.message}</ToastMessage>
         </ToastBody>
 
-        <ToastProgressBar type={toast.type}>
+        <ToastProgressBar $type={toast.type}>
           <ToastProgressFill 
-            type={toast.type} 
-            duration={toast.duration || 3000}
+            $type={toast.type} 
+            $duration={toast.duration || 3000}
           />
         </ToastProgressBar>
       </ToastWrapper>
