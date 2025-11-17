@@ -161,7 +161,15 @@ app.use('/api/calendar', calendarRoutes); // Task 21: Đồng bộ Google Calend
 app.use('/api/vocabulary-bank', require('./src/routes/vocabularyBankRoutes'));
 
 // ✅ Roadmap Topic routes
-app.use('/api/roadmap-topic', require('./src/routes/roadmapTopicRoutes'));
+console.log('🔄 Loading roadmap topic routes...');
+const roadmapTopicRoutes = require('./src/routes/roadmapTopicRoutes');
+console.log('✅ Roadmap topic routes loaded successfully');
+app.use('/api/roadmap-topic', roadmapTopicRoutes);
+
+// Test route at app level
+app.get('/api/test-roadmap-topic', (req, res) => {
+  res.json({ success: true, message: 'App-level roadmap topic test working' });
+});
 
 
 // ✅ Practice routes

@@ -1,16 +1,12 @@
 import api from '../utils/api';
 
 export const roadmapTopicService = {
-  // Generate roadmap for topic
-  generate: async (startLevel, endLevel, topic = 'General English', stepsPerLevel = 20, easyRatio = 35, mediumRatio = 35, hardRatio = 30) => {
+  // Tạo lộ trình học cá nhân hóa toàn diện
+  generate: async (startLevel, endLevel, topic) => {
     const response = await api.post('/roadmap-topic/generate', {
       startLevel,
       endLevel,
-      topic,
-      stepsPerLevel,
-      easyRatio,
-      mediumRatio,
-      hardRatio
+      topic
     });
     return response.data;
   },
@@ -32,6 +28,16 @@ export const roadmapTopicService = {
         stepNumber,
         score
       });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // Get exercises for a step (alias: getStep)
+  getStep: async (roadmapId, stepNumber) => {
+    try {
+      const response = await api.get(`/roadmap-topic/${roadmapId}/step/${stepNumber}/exercises`);
       return response.data;
     } catch (error) {
       throw error;
