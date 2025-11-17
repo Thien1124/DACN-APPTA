@@ -13,7 +13,8 @@ import {
   ArrowForward,
   School,
   Timer,
-  Flag
+  Flag,
+  VolumeUp
 } from '@mui/icons-material';
 
 // ========== ANIMATIONS ==========
@@ -669,6 +670,45 @@ const QuestionPrompt = styled.div`
   line-height: 1.6;
 `;
 
+const QuestionHeader = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 2rem;
+`;
+
+const QuestionText = styled.div`
+  flex: 1;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+  line-height: 1.6;
+`;
+
+const SpeakButton = styled.button`
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #58cc02, #45a302);
+  border: none;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+
+  &:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(88, 204, 2, 0.3);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+`;
+
 const ChoicesContainer = styled.div`
   display: flex;
   flex-direction: column;
@@ -679,23 +719,23 @@ const ChoicesContainer = styled.div`
 const ChoiceButton = styled.button`
   padding: 1.5rem;
   background: ${props => {
-    if (props.selected && props.showResult) {
-      return props.isCorrect ? '#e6f7e8' : '#fee2e2';
+    if (props.$selected && props.$showResult) {
+      return props.$isCorrect ? '#e6f7e8' : '#fee2e2';
     }
-    return props.selected ? '#e6f7e8' : 'white';
+    return props.$selected ? '#e6f7e8' : 'white';
   }};
   border: 2px solid ${props => {
-    if (props.selected && props.showResult) {
-      return props.isCorrect ? '#58cc02' : '#ef4444';
+    if (props.$selected && props.$showResult) {
+      return props.$isCorrect ? '#58cc02' : '#ef4444';
     }
-    return props.selected ? '#58cc02' : '#e5e7eb';
+    return props.$selected ? '#58cc02' : '#e5e7eb';
   }};
   border-radius: 12px;
   font-size: 1rem;
   font-weight: 600;
   color: ${props => {
-    if (props.selected && props.showResult) {
-      return props.isCorrect ? '#166a0b' : '#dc2626';
+    if (props.$selected && props.$showResult) {
+      return props.$isCorrect ? '#166a0b' : '#dc2626';
     }
     return '#1f2937';
   }};
@@ -732,11 +772,11 @@ const ChoiceText = styled.div`
 
 const FeedbackBanner = styled.div`
   padding: 1.5rem;
-  background: ${props => props.isCorrect ? '#e6f7e8' : '#fee2e2'};
-  border: 2px solid ${props => props.isCorrect ? '#58cc02' : '#ef4444'};
+  background: ${props => props.$isCorrect ? '#e6f7e8' : '#fee2e2'};
+  border: 2px solid ${props => props.$isCorrect ? '#58cc02' : '#ef4444'};
   border-radius: 12px;
   margin-bottom: 2rem;
-  display: ${props => props.show ? 'flex' : 'none'};
+  display: flex;
   align-items: center;
   gap: 1rem;
   animation: ${slideIn} 0.4s ease;
@@ -746,7 +786,7 @@ const FeedbackIcon = styled.div`
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  background: ${props => props.isCorrect ? '#58cc02' : '#ef4444'};
+  background: ${props => props.$isCorrect ? '#58cc02' : '#ef4444'};
   color: white;
   display: flex;
   align-items: center;
@@ -761,13 +801,13 @@ const FeedbackContent = styled.div`
 const FeedbackTitle = styled.div`
   font-size: 1.25rem;
   font-weight: 700;
-  color: ${props => props.isCorrect ? '#166a0b' : '#dc2626'};
+  color: ${props => props.$isCorrect ? '#166a0b' : '#dc2626'};
   margin-bottom: 0.25rem;
 `;
 
 const FeedbackText = styled.div`
   font-size: 1rem;
-  color: ${props => props.isCorrect ? '#15803d' : '#b91c1c'};
+  color: ${props => props.$isCorrect ? '#15803d' : '#b91c1c'};
 `;
 
 const ActionButtons = styled.div`
@@ -1037,6 +1077,24 @@ const RoadmapStepExercises = () => {
     }
   };
 
+  // 🔊 Text-to-speech function
+  const speakText = (text) => {
+    if ('speechSynthesis' in window) {
+      // Cancel any ongoing speech
+      window.speechSynthesis.cancel();
+      
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'en-US';
+      utterance.rate = 0.65; // Tốc độ đọc
+      utterance.pitch = 1; // Cao độ giọng
+      utterance.volume = 1; // Âm lượng
+      
+      window.speechSynthesis.speak(utterance);
+    } else {
+      showToast('warning', 'Không hỗ trợ', 'Trình duyệt không hỗ trợ text-to-speech');
+    }
+  };
+
   const renderExercise = () => {
     if (exercises.length === 0) return null;
 
@@ -1046,12 +1104,13 @@ const RoadmapStepExercises = () => {
       index: currentExerciseIndex,
       exercise: currentExercise,
       type: currentExercise.type,
-      hasQuestions: !!currentExercise.questions,
-      questionsLength: currentExercise.questions?.length
+      hasOptions: !!currentExercise.options,
+      optionsLength: currentExercise.options?.length,
+      content: currentExercise.content
     });
 
-    // ✅ Kiểm tra có questions không (cho multiple-choice)
-    const hasChoices = currentExercise.questions && currentExercise.questions.length > 0;
+    // ✅ Kiểm tra có options không (cho multiple-choice)
+    const hasChoices = currentExercise.options && currentExercise.options.length > 0;
 
     return (
       <ExerciseContainer>
@@ -1068,28 +1127,36 @@ const RoadmapStepExercises = () => {
           </ProgressIndicator>
         </ExerciseHeader>
 
-        <QuestionPrompt>{currentExercise.question}</QuestionPrompt>
+        <QuestionHeader>
+          <QuestionText>{currentExercise.content}</QuestionText>
+          <SpeakButton 
+            onClick={() => speakText(currentExercise.content)}
+            title="Đọc câu hỏi"
+          >
+            <VolumeUp />
+          </SpeakButton>
+        </QuestionHeader>
 
         {/* ✅ Render choices nếu là multiple-choice */}
         {currentExercise.type === 'multiple-choice' && hasChoices && (
           <ChoicesContainer>
-            {currentExercise.questions.map((question, index) => (
+            {currentExercise.options.map((option, index) => (
               <ChoiceButton
-                key={question._id}
-                selected={selectedAnswer === question._id}
-                onClick={() => handleSelectAnswer(question._id)}
+                key={index}
+                $selected={selectedAnswer === option}
+                onClick={() => handleSelectAnswer(option)}
                 disabled={showFeedback}
-                showResult={showFeedback}
-                isCorrect={question._id === currentExercise.correctAnswer}
+                $showResult={showFeedback}
+                $isCorrect={option === currentExercise.correctAnswer}
               >
                 <ChoiceIcon>
-                  {selectedAnswer === question._id ? (
+                  {selectedAnswer === option ? (
                     <CheckCircle style={{ color: showFeedback ? (isCorrect ? '#58cc02' : '#ef4444') : '#58cc02' }} />
                   ) : (
                     <RadioButtonUnchecked style={{ color: '#d1d5db' }} />
                   )}
                 </ChoiceIcon>
-                <ChoiceText>{question.question}</ChoiceText>
+                <ChoiceText>{option}</ChoiceText>
               </ChoiceButton>
             ))}
           </ChoicesContainer>
@@ -1113,26 +1180,24 @@ const RoadmapStepExercises = () => {
           </InputContainer>
         )}
 
-        <FeedbackBanner show={showFeedback} isCorrect={isCorrect}>
-          <FeedbackIcon isCorrect={isCorrect}>
-            {isCorrect ? '✓' : '✗'}
-          </FeedbackIcon>
-          <FeedbackContent>
-            <FeedbackTitle isCorrect={isCorrect}>
-              {isCorrect ? 'Chính xác!' : 'Chưa đúng'}
-            </FeedbackTitle>
-            <FeedbackText isCorrect={isCorrect}>
-              {isCorrect 
-                ? 'Bạn đã trả lời đúng câu hỏi này'
-                : `Đáp án đúng là: ${
-                    currentExercise.type === 'multiple-choice' 
-                      ? currentExercise.questions?.find(q => q._id === currentExercise.correctAnswer)?.question 
-                      : currentExercise.correctAnswer
-                  }`
-              }
-            </FeedbackText>
-          </FeedbackContent>
-        </FeedbackBanner>
+        {showFeedback && (
+          <FeedbackBanner $isCorrect={isCorrect}>
+            <FeedbackIcon $isCorrect={isCorrect}>
+              {isCorrect ? '✓' : '✗'}
+            </FeedbackIcon>
+            <FeedbackContent>
+              <FeedbackTitle $isCorrect={isCorrect}>
+                {isCorrect ? 'Chính xác!' : 'Chưa đúng'}
+              </FeedbackTitle>
+              <FeedbackText $isCorrect={isCorrect}>
+                {isCorrect 
+                  ? 'Bạn đã trả lời đúng câu hỏi này'
+                  : `Đáp án đúng là: ${currentExercise.correctAnswer}`
+                }
+              </FeedbackText>
+            </FeedbackContent>
+          </FeedbackBanner>
+        )}
 
         <ActionButtons>
           {!showFeedback ? (

@@ -37,7 +37,7 @@ const exerciseSchema = new mongoose.Schema({
   lesson: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Lesson',
-    required: [true, 'Bài tập phải thuộc về một bài học']
+    required: false // Cho phép null cho roadmap exercises
   },
   difficulty: {
     type: String,

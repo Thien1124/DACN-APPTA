@@ -9,8 +9,15 @@ router.use(protect);
 // Generate roadmap
 router.post('/generate', roadmapTopicController.generateRoadmap);
 
+// Test route
+router.get('/test', (req, res) => {
+  console.log('🧪 Test route called');
+  res.json({ success: true, message: 'Roadmap topic routes working' });
+});
+
 // Get current roadmap
 router.get('/current', roadmapTopicController.getCurrentRoadmap);
+console.log('✅ Roadmap topic routes registered: GET /current');
 
 // Complete a step
 router.post('/:roadmapId/complete-step', roadmapTopicController.completeStep);

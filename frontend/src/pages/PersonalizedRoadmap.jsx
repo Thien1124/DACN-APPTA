@@ -836,8 +836,8 @@ const PersonalizedRoadmap = () => {
           description: step.description,
           progress: step.isCompleted ? 100 : (roadmap.currentStep === step.stepNumber ? 50 : 0),
           status: step.isCompleted ? 'completed' : (roadmap.currentStep === step.stepNumber ? 'current' : 'locked'),
-          lessons: step.exercises.length,
-          completedLessons: step.isCompleted ? step.exercises.length : 0,
+          lessons: step.exercises ? step.exercises.length : 0,
+          completedLessons: step.isCompleted ? (step.exercises ? step.exercises.length : 0) : 0,
           difficulty: step.difficulty,
           minScore: step.minScore,
           xpReward: step.xpReward,
@@ -900,28 +900,14 @@ const PersonalizedRoadmap = () => {
             </select>
           </div>
 
-          <div style="margin-bottom: 1.5rem;">
-            <label style="display: block; margin-bottom: 0.5rem; font-weight: 700; color: #166a0b; font-size: 1rem;">
-              Số bài tập cho mỗi trình độ
-            </label>
-            <input id="swal-steps-per-level" type="number" class="swal2-input" style="margin: 0; width: 100%; padding: 0.875rem; border: 2px solid #e6f3e6; border-radius: 8px; font-size: 1rem;" placeholder="20" value="20" min="5" max="50" />
-          </div>
-
-          <div style="margin-bottom: 1.5rem;">
-            <label style="display: block; margin-bottom: 0.5rem; font-weight: 700; color: #166a0b; font-size: 1rem;">
-              Tỷ lệ độ khó (Easy/Medium/Hard)
-            </label>
-            <div style="display: flex; gap: 0.5rem;">
-              <input id="swal-easy-ratio" type="number" class="swal2-input" style="flex: 1; padding: 0.875rem; border: 2px solid #e6f3e6; border-radius: 8px; font-size: 1rem;" placeholder="35" value="35" min="0" max="100" />
-              <input id="swal-medium-ratio" type="number" class="swal2-input" style="flex: 1; padding: 0.875rem; border: 2px solid #e6f3e6; border-radius: 8px; font-size: 1rem;" placeholder="35" value="35" min="0" max="100" />
-              <input id="swal-hard-ratio" type="number" class="swal2-input" style="flex: 1; padding: 0.875rem; border: 2px solid #e6f3e6; border-radius: 8px; font-size: 1rem;" placeholder="30" value="30" min="0" max="100" />
-            </div>
-            <small style="color: #6b7280; font-size: 0.875rem;">Tổng tỷ lệ phải bằng 100%</small>
-          </div>
-
           <div style="background: #e6f7e8; border-left: 4px solid #58cc02; padding: 1rem; border-radius: 8px; margin-top: 1.5rem;">
             <p style="margin: 0; color: #166a0b; font-size: 0.875rem; line-height: 1.6;">
-              <strong>💡 Lưu ý:</strong> Lộ trình sẽ bao gồm tất cả skills (vocabulary, grammar, listening, reading, speaking, writing, mixed) từ trình độ bắt đầu đến kết thúc. Từ vựng sẽ được tạo riêng cho từng trình độ. Độ khó tăng dần theo tỷ lệ bạn chọn.
+              <strong>💡 Cấu trúc lộ trình:</strong><br/>
+              Mỗi trình độ là <strong>1 bài học duy nhất</strong> chứa đầy đủ:<br/>
+              • 7 skills: Vocabulary, Grammar, Listening, Reading, Speaking, Writing, Mixed<br/>
+              • 3 độ khó mỗi skill: Easy, Medium, Hard<br/>
+              • Khi bấm "Bắt đầu học" sẽ load tất cả bài tập trong trình độ đó<br/><br/>
+              <strong>Ví dụ:</strong> A1 → B1 = <strong>3 trình độ</strong> (A1, A2, B1)
             </p>
           </div>
         </div>
@@ -937,10 +923,6 @@ const PersonalizedRoadmap = () => {
         const topic = document.getElementById('swal-topic').value;
         const startLevel = document.getElementById('swal-start-level').value;
         const endLevel = document.getElementById('swal-end-level').value;
-        const stepsPerLevel = parseInt(document.getElementById('swal-steps-per-level').value);
-        const easyRatio = parseInt(document.getElementById('swal-easy-ratio').value);
-        const mediumRatio = parseInt(document.getElementById('swal-medium-ratio').value);
-        const hardRatio = parseInt(document.getElementById('swal-hard-ratio').value);
         
         if (!topic || topic.trim().length < 3) {
           Swal.showValidationMessage('⚠️ Vui lòng nhập chủ đề (tối thiểu 3 ký tự)');
@@ -949,7 +931,6 @@ const PersonalizedRoadmap = () => {
         
         const levels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
 
-        // Thêm validation trước khi so sánh
         if (!levels.includes(startLevel) || !levels.includes(endLevel)) {
           Swal.showValidationMessage('⚠️ Trình độ bắt đầu và kết thúc phải là A1, A2, B1, B2, C1 hoặc C2');
           return false;
@@ -959,30 +940,20 @@ const PersonalizedRoadmap = () => {
           Swal.showValidationMessage('⚠️ Trình độ kết thúc phải cao hơn trình độ bắt đầu');
           return false;
         }
-
-        if (stepsPerLevel < 5 || stepsPerLevel > 50) {
-          Swal.showValidationMessage('⚠️ Số bài tập cho mỗi trình độ phải từ 5 đến 50');
-          return false;
-        }
-
-        if (easyRatio + mediumRatio + hardRatio !== 100) {
-          Swal.showValidationMessage('⚠️ Tổng tỷ lệ độ khó phải bằng 100%');
-          return false;
-        }
         
-        return { topic: topic.trim(), startLevel, endLevel, stepsPerLevel, easyRatio, mediumRatio, hardRatio };
+        return { topic: topic.trim(), startLevel, endLevel };
       }
     });
 
     if (formValues) {
-      await createRoadmap(formValues.startLevel, formValues.endLevel, formValues.topic, formValues.stepsPerLevel, formValues.easyRatio, formValues.mediumRatio, formValues.hardRatio);
+      await createRoadmap(formValues.startLevel, formValues.endLevel, formValues.topic);
     }
   };
 
-  const createRoadmap = async (startLevel, endLevel, topic, stepsPerLevel, easyRatio, mediumRatio, hardRatio) => {
+  const createRoadmap = async (startLevel, endLevel, topic) => {
     try {
       setLoading(true);
-      const response = await roadmapTopicService.generate(startLevel, endLevel, topic, stepsPerLevel, easyRatio, mediumRatio, hardRatio);
+      const response = await roadmapTopicService.generate(startLevel, endLevel, topic);
       
       if (response.success) {
         showToast('success', 'Thành công', response.message);
@@ -1008,6 +979,11 @@ const PersonalizedRoadmap = () => {
       if (!milestone.roadmapId || !milestone.stepNumber) {
         showToast('error', 'Lỗi', 'Không thể mở bài tập: Thiếu thông tin lộ trình');
         return;
+      }
+
+      // Hiển thị thông báo đang tải
+      if (milestone.lessons === 0) {
+        showToast('info', 'Đang tải', '⏳ Hệ thống đang chuẩn bị bài tập cho bạn...');
       }
 
       navigate(`/roadmap-step/${milestone.roadmapId}/${milestone.stepNumber}`);
@@ -1264,13 +1240,6 @@ const PersonalizedRoadmap = () => {
                                 {milestone.status === 'completed' ? 'Xem lại' : 'Bắt đầu học'}
                               </ActionButton>
                               
-                              {/* Chỉ hiển thị nếu đăng nhập và milestone không khóa */}
-                              {isLoggedIn && milestone.status !== 'locked' && (
-                                <ActionButton onClick={() => handleGenerateAIExercises(milestone)}>
-                                  <AutoAwesome />
-                                  Tạo bài tập AI
-                                </ActionButton>
-                              )}
                             </MilestoneActions>
                           )}
                         </MilestoneCard>

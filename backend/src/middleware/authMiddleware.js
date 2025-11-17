@@ -4,6 +4,7 @@ const TokenBlacklist = require('../models/TokenBlacklist');
 
 // Bảo vệ routes - Yêu cầu đăng nhập
 exports.protect = async (req, res, next) => {
+  console.log(`🛡️ Protect middleware called for ${req.method} ${req.path}`);
   try {
     let token;
 

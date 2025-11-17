@@ -29,6 +29,12 @@ const roadmapStepSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'VocabularyBank'
   }],
+  exerciseMetadata: [{
+    exerciseId: mongoose.Schema.Types.ObjectId,
+    skill: String,
+    difficulty: String,
+    level: String
+  }],
   minScore: {
     type: Number,
     default: 70 // Điểm tối thiểu để mở khóa bước tiếp theo

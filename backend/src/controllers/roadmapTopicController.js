@@ -11,14 +11,20 @@ const geminiService = require('../services/geminiService');
  * @access  Private
  */
 exports.getCurrentRoadmap = async (req, res) => {
+  console.log('🗺️ getCurrentRoadmap called with user:', req.user?.id);
   try {
     const userId = req.user.id;
+    console.log('🔍 Looking for roadmap with userId:', userId);
 
     const roadmap = await LearningRoadmap.findOne({
       user: userId,
       isActive: true
     })
-      .populate('steps.exercises')
+      .populate({
+        path: 'steps.exercises',
+        model: 'Exercise',
+        strictPopulate: false
+      })
       .sort({ createdAt: -1 });
 
     if (!roadmap) {
@@ -124,7 +130,7 @@ exports.completeStep = async (req, res) => {
 };
 
 /**
- * @desc    Lấy danh sách exercises của một step
+ * @desc    Lấy danh sách exercises của một step (tự động generate nếu chưa có)
  * @route   GET /api/roadmap-topic/:roadmapId/step/:stepNumber/exercises
  * @access  Private
  */
@@ -138,12 +144,6 @@ exports.getStepExercises = async (req, res) => {
     const roadmap = await LearningRoadmap.findOne({
       _id: roadmapId,
       user: userId
-    }).populate({
-      path: 'steps.exercises',
-      populate: {
-        path: 'lesson',
-        select: 'title'
-      }
     });
 
     if (!roadmap) {
@@ -164,92 +164,118 @@ exports.getStepExercises = async (req, res) => {
 
     console.log('✅ Found step:', step.stepNumber, 'with exercises:', step.exercises?.length || 0);
 
+    // 🆕 Nếu step chưa có exercises, tự động generate
     if (!step.exercises || step.exercises.length === 0) {
-      return res.status(200).json({
-        success: true,
-        data: {
-          step: {
-            stepNumber: step.stepNumber,
-            title: step.title,
-            description: step.description,
-            difficulty: step.difficulty,
-            minScore: step.minScore,
-            xpReward: step.xpReward
-          },
-          exercises: []
+      console.log('⚠️ Step has no exercises. Auto-generating...');
+      
+      try {
+        const skillMapping = {
+          'VOCABULARY': 'vocabulary',
+          'GRAMMAR': 'grammar',
+          'LISTENING': 'listening',
+          'READING': 'reading',
+          'SPEAKING': 'speaking',
+          'WRITING': 'writing',
+          'MIXED': 'mixed'
+        };
+        
+        const skill = skillMapping[step.skill] || 'mixed';
+        const level = roadmap.level || 'B1'; // Lấy level từ roadmap, fallback B1
+        const exerciseData = await generateExercisesForStep(
+          skill,
+          level,
+          roadmap.topic,
+          step.difficulty,
+          userId
+        );
+
+        if (exerciseData && exerciseData.length > 0) {
+          // Lưu exerciseIds vào step.exercises
+          const exerciseIds = exerciseData.map(e => e.exerciseId);
+          
+          // Sử dụng findOneAndUpdate để tránh version conflict
+          const updated = await LearningRoadmap.findOneAndUpdate(
+            { 
+              _id: roadmapId, 
+              user: userId,
+              'steps.stepNumber': parseInt(stepNumber)
+            },
+            { 
+              $set: { 'steps.$.exercises': exerciseIds } 
+            },
+            { new: true }
+          );
+          
+          if (updated) {
+            console.log(`✅ Auto-generated ${exerciseData.length} exercises for step ${stepNumber}`);
+            // Cập nhật roadmap object để tiếp tục xử lý
+            const stepIndex = roadmap.steps.findIndex(s => s.stepNumber === parseInt(stepNumber));
+            if (stepIndex !== -1) {
+              roadmap.steps[stepIndex].exercises = exerciseIds;
+            }
+          }
+        } else {
+          console.log('⚠️ Could not generate exercises');
         }
-      });
+      } catch (genError) {
+        console.error('❌ Auto-generate error:', genError);
+        // Continue to return empty exercises
+      }
     }
 
-    // ✅ Transform exercises để frontend có thể render
-    const transformedExercises = step.exercises.map(exercise => {
-      console.log('🔍 Transforming exercise:', {
-        id: exercise._id,
-        type: exercise.type,
-        hasOptions: !!exercise.options,
-        optionsLength: exercise.options?.length
-      });
-      
-      // Base exercise object
-      const exerciseObj = {
-        _id: exercise._id,
-        question: exercise.question,
-        type: exercise.type,
-        points: exercise.points || 10,
-        difficulty: exercise.difficulty,
-        explanation: exercise.explanation
-      };
-
-      // ✅ Transform theo type
-      if (exercise.type === 'multiple-choice') {
-        // Transform options thành questions array
-        if (!exercise.options || exercise.options.length === 0) {
-          console.warn('⚠️ Multiple-choice exercise has no options:', exercise._id);
-          exerciseObj.questions = [];
-          exerciseObj.correctAnswer = null;
-        } else {
-          exerciseObj.questions = exercise.options.map((option) => ({
-            _id: option._id || `opt-${Math.random()}`,
-            question: option.text
-          }));
-          
-          // Tìm correctAnswer
-          const correctOption = exercise.options.find(opt => opt.isCorrect);
-          exerciseObj.correctAnswer = correctOption ? correctOption._id : null;
-          
-          console.log('✅ Transformed multiple-choice:', {
-            questionsCount: exerciseObj.questions.length,
-            correctAnswerId: exerciseObj.correctAnswer
-          });
-        }
-      } 
-      else if (['fill-in-blank', 'translation', 'listening'].includes(exercise.type)) {
-        exerciseObj.correctAnswer = exercise.correctAnswer;
-        exerciseObj.questions = []; // Không có choices
-        exerciseObj.audioUrl = exercise.audioUrl;
-        
-        console.log('✅ Transformed fill/translation/listening:', {
-          type: exercise.type,
-          hasCorrectAnswer: !!exerciseObj.correctAnswer
-        });
-      }
-
-      return exerciseObj;
+    // Populate exercises sau khi đã generate (nếu cần)
+    await roadmap.populate({
+      path: 'steps.exercises',
+      model: 'Exercise'
     });
+
+    const updatedStep = roadmap.steps.find(s => s.stepNumber === parseInt(stepNumber));
+    console.log('✅ Final step exercises count:', updatedStep.exercises?.length || 0);
+
+    // Transform exercises cho frontend
+    let transformedExercises = [];
+    
+    if (updatedStep.exercises && updatedStep.exercises.length > 0) {
+      transformedExercises = updatedStep.exercises.map((exercise) => {
+        // Nếu exercise là object ID thì cần populate trước
+        const ex = exercise._id ? exercise : { _id: exercise };
+        
+        return {
+          _id: ex._id,
+          type: ex.type || 'multiple-choice',
+          content: ex.question || '', // Map 'question' -> 'content'
+          options: (ex.options || []).map(opt => 
+            typeof opt === 'string' ? opt : opt.text // Lấy text từ {text, isCorrect}
+          ),
+          correctAnswer: ex.correctAnswer || '',
+          explanation: ex.explanation || '',
+          points: ex.points || 10,
+          audioUrl: ex.audioUrl,
+          imageUrl: ex.imageUrl,
+          skill: ex.skill || updatedStep.skill,
+          difficulty: ex.difficulty || updatedStep.difficulty,
+          level: ex.level || roadmap.level // Lấy từ roadmap.level
+        };
+      });
+    }
 
     console.log('✅ Total transformed exercises:', transformedExercises.length);
 
     res.status(200).json({
       success: true,
+      message: transformedExercises.length > 0 ? 'Đã tải bài tập' : 'Bước này chưa có bài tập',
       data: {
         step: {
-          stepNumber: step.stepNumber,
-          title: step.title,
-          description: step.description,
-          difficulty: step.difficulty,
-          minScore: step.minScore,
-          xpReward: step.xpReward,
-          estimatedTime: step.estimatedTime
+          stepNumber: updatedStep.stepNumber,
+          title: updatedStep.title,
+          description: updatedStep.description,
+          difficulty: updatedStep.difficulty,
+          minScore: updatedStep.minScore,
+          xpReward: updatedStep.xpReward,
+          estimatedTime: updatedStep.estimatedTime,
+          vocabularySet: updatedStep.vocabularySet || [],
+          skill: updatedStep.skill,
+          level: updatedStep.level
         },
         exercises: transformedExercises
       }
@@ -267,7 +293,9 @@ exports.getStepExercises = async (req, res) => {
 };
 
 /**
- * Tạo lộ trình học tuần tự từ A1 đến C2 (20 steps/level với độ khó tăng dần)
+ * Tạo lộ trình học toàn diện từ A1 đến C2
+ * Mỗi level là 1 STEP DUY NHẤT chứa ĐẦY ĐỦ exercises từ tất cả skills và difficulties
+ * Cấu trúc: 1 level = 1 step với 21 exercise groups (7 skills × 3 difficulties)
  * 
  * API Test:
  * POST /api/roadmap-topic/generate
@@ -281,12 +309,18 @@ exports.getStepExercises = async (req, res) => {
 exports.generateRoadmap = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { startLevel = 'A1', endLevel = 'C2', topic = 'General English' } = req.body;
+    const { 
+      startLevel = 'A1', 
+      endLevel = 'C2', 
+      topic = 'General English'
+    } = req.body;
 
-    console.log(`🗺️ Generating sequential roadmap for user ${userId} from ${startLevel} to ${endLevel} on topic "${topic}"`);
+    console.log(`🗺️ Generating comprehensive roadmap for user ${userId}`);
+    console.log(`📊 Config: ${startLevel} → ${endLevel}, 1 step per level with ALL skills & difficulties`);
 
     const levels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
     const skills = ['vocabulary', 'grammar', 'listening', 'reading', 'speaking', 'writing', 'mixed'];
+    const difficulties = ['easy', 'medium', 'hard'];
     
     const startIndex = levels.indexOf(startLevel);
     const endIndex = levels.indexOf(endLevel);
@@ -304,95 +338,157 @@ exports.generateRoadmap = async (req, res) => {
     let stepNumber = 1;
     let totalXP = 0;
 
-    console.log(`🔄 Processing levels: ${selectedLevels.join(', ')}`);
+    console.log(`📈 Structure: Each level = 1 step containing (7 skills × 3 difficulties) exercises`);
+    console.log(`🔄 Processing ${selectedLevels.length} levels: ${selectedLevels.join(', ')}`);
 
     for (const level of selectedLevels) {
-      console.log(`🔥 Preparing 20 steps for level ${level}...`);
-      for (let i = 0; i < 20; i++) {
-        const skill = skills[i % skills.length];
-        
-        let difficulty, minScore, xpReward, estimatedTime;
-        
-        if (i < 7) { // Steps 1-7: Easy
-          difficulty = 'easy'; minScore = 60; xpReward = 40; estimatedTime = 10;
-        } else if (i < 14) { // Steps 8-14: Medium
-          difficulty = 'medium'; minScore = 70; xpReward = 60; estimatedTime = 15;
-        } else { // Steps 15-20: Hard
-          difficulty = 'hard'; minScore = 80; xpReward = 80; estimatedTime = 20;
-        }
-        
-        const stepTitle = `${skill.charAt(0).toUpperCase() + skill.slice(1)} ${level} - Bài ${i + 1}`;
+      console.log(`\n🎯 Level ${level}: Generating 1 comprehensive step with ALL content...`);
+      
+      const levelXP = (40 * 7) + (60 * 7) + (80 * 7); // Easy + Medium + Hard for all skills
+      totalXP += levelXP;
 
-        const currentStepNumber = stepNumber++;
-        totalXP += xpReward;
+      const currentStepNumber = stepNumber++;
 
-        stepPromises.push(
-          (async () => {
-            console.log(`  - Generating content for Step ${currentStepNumber}: ${stepTitle} (Difficulty: ${difficulty})`);
-            const exercises = await generateExercisesForStep(skill, level, topic, difficulty, userId);
-            
-            let vocabularyBank = null;
-            if (skill === 'vocabulary') {
-              vocabularyBank = await generateVocabularyForLevel(level, topic, userId);
+      stepPromises.push(
+        (async () => {
+          console.log(`  📝 Step ${currentStepNumber}: Trình Độ ${level}`);
+          
+          // Generate exercises for ALL skills and ALL difficulties
+          const allExercises = [];
+          let vocabularyBank = null;
+          
+          for (const skill of skills) {
+            for (const difficulty of difficulties) {
+              console.log(`    🔹 Generating ${skill} - ${difficulty}...`);
+              
+              const exerciseMetadata = await generateExercisesForStep(
+                skill, 
+                level, 
+                topic, 
+                difficulty, 
+                userId
+              );
+              
+              // Thêm vào danh sách tổng hợp
+              allExercises.push(...exerciseMetadata);
+              
+              // Generate vocabulary bank for vocabulary skill (only once per level)
+              if (skill === 'vocabulary' && difficulty === 'easy' && !vocabularyBank) {
+                console.log(`    📚 Generating vocabulary bank for ${level}...`);
+                vocabularyBank = await generateVocabularyForLevel(level, topic, userId);
+                console.log(`    ✅ Vocabulary bank generated: ${vocabularyBank.length} words`);
+              }
             }
+          }
 
-            return {
-              stepNumber: currentStepNumber,
-              title: stepTitle,
-              description: `Học ${skill} ở trình độ ${level}. Độ khó: ${difficulty}.`,
-              skill: skill.toUpperCase(),
-              level,
-              difficulty,
-              minScore,
-              xpReward,
-              estimatedTime,
-              exercises,
-              vocabularyBank,
-              isCompleted: false
-            };
-          })()
-        );
-      }
+          console.log(`  ✅ Generated ${allExercises.length} exercises for ${level}`);
+
+          return {
+            stepNumber: currentStepNumber,
+            title: `Trình Độ ${level}`,
+            description: `Hoàn thành tất cả bài tập ở trình độ ${level}, bao gồm đầy đủ 7 kỹ năng (Vocabulary, Grammar, Listening, Reading, Speaking, Writing, Mixed) với 3 độ khó (Easy, Medium, Hard). Hoàn thành để đạt ${levelXP} XP.`,
+            skill: 'MIXED',
+            level: level,
+            difficulty: 'medium',
+            minScore: 70,
+            xpReward: levelXP,
+            estimatedTime: (10 * 7) + (15 * 7) + (20 * 7),
+            exercises: allExercises.map(ex => ex.exerciseId), // Store only ObjectIds
+            vocabularyBank,
+            isCompleted: false,
+            // Store metadata separately for frontend use
+            exerciseMetadata: allExercises
+          };
+        })()
+      );
     }
 
-    console.log(`🚀 Executing ${stepPromises.length} step generation tasks in parallel...`);
-    const steps = await Promise.all(stepPromises);
-    steps.sort((a, b) => a.stepNumber - b.stepNumber); // Ensure order
-    console.log('✅ All steps generated and sorted.');
+    console.log(`\n🚀 Executing ${stepPromises.length} level generation tasks...`);
+    console.log(`⚡ Processing in batches to avoid overload...`);
+    
+    // Process in batches (typically small number of levels, but keep batching for consistency)
+    const batchSize = 3;
+    const steps = [];
+    
+    for (let i = 0; i < stepPromises.length; i += batchSize) {
+      const batch = stepPromises.slice(i, i + batchSize);
+      console.log(`  🔄 Processing batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(stepPromises.length / batchSize)} (${batch.length} levels)...`);
+      const batchResults = await Promise.all(batch);
+      steps.push(...batchResults);
+    }
+    
+    steps.sort((a, b) => a.stepNumber - b.stepNumber);
+    console.log(`\n✅ All ${steps.length} level steps generated and sorted.`);
 
-    console.log('⏳ Deactivating old roadmaps...');
+    // Calculate statistics
+    console.log('\n📊 Roadmap Statistics:');
+    steps.forEach(step => {
+      const skillCount = {};
+      const difficultyCount = { easy: 0, medium: 0, hard: 0 };
+      
+      step.exerciseMetadata.forEach(ex => {
+        skillCount[ex.skill] = (skillCount[ex.skill] || 0) + 1;
+        difficultyCount[ex.difficulty.toLowerCase()]++;
+      });
+      
+      console.log(`  ${step.level}: ${step.exercises.length} exercises`);
+      console.log(`    Skills: ${Object.entries(skillCount).map(([k,v]) => `${k}=${v}`).join(', ')}`);
+      console.log(`    Difficulties: Easy=${difficultyCount.easy}, Medium=${difficultyCount.medium}, Hard=${difficultyCount.hard}`);
+    });
+
+    console.log('\n⏳ Deactivating old roadmaps...');
     await LearningRoadmap.updateMany({ user: userId, isActive: true }, { isActive: false });
 
-    console.log('✅ Creating new roadmap in database...');
-    const roadmap = await LearningRoadmap.create({
-      user: userId,
-      topic,
-      category: 'sequential-progressive',
-      level: `${startLevel}-${endLevel}`,
-      steps,
-      totalXP,
-      currentStep: 1,
-      overallProgress: 0,
-      startedAt: new Date(),
-      estimatedCompletionDate: new Date(Date.now() + (steps.length * 2 * 24 * 60 * 60 * 1000)) // Estimate 2 days per step
-    });
+    console.log('✅ Creating new comprehensive roadmap in database...');
+    console.log(`📋 Roadmap data: steps=${steps.length}, totalXP=${totalXP}, user=${userId}`);
+    
+    try {
+      const roadmap = await LearningRoadmap.create({
+        user: userId,
+        topic,
+        category: 'comprehensive-progressive',
+        level: `${startLevel}-${endLevel}`,
+        steps,
+        totalXP,
+        currentStep: 1,
+        overallProgress: 0,
+        startedAt: new Date(),
+        estimatedCompletionDate: new Date(Date.now() + (steps.length * 2 * 24 * 60 * 60 * 1000))
+      });
 
-    console.log(`🎉 Successfully created roadmap ${roadmap._id} with ${steps.length} steps.`);
+      console.log(`\n🎉 Successfully created comprehensive roadmap ${roadmap._id}:`);
+      console.log(`   📚 Total levels: ${steps.length}`);
+      console.log(`   🎯 Levels: ${selectedLevels.join(' → ')}`);
+      console.log(`   💎 Total XP: ${totalXP}`);
+      console.log(`   ⏱️ Estimated completion: ${roadmap.estimatedCompletionDate.toLocaleDateString('vi-VN')}`);
 
-    res.status(201).json({
-      success: true,
-      message: 'Lộ trình học đã được tạo thành công!',
-      data: roadmap
-    });
+      res.status(201).json({
+        success: true,
+        message: `Lộ trình học toàn diện đã được tạo thành công! ${steps.length} trình độ từ ${startLevel} đến ${endLevel}.`,
+        data: roadmap
+      });
+    } catch (createError) {
+      console.error('❌ Error creating roadmap document:', createError);
+      console.error('Error details:', createError.message);
+      console.error('Validation errors:', createError.errors);
+      res.status(500).json({
+        success: false,
+        message: 'Không thể lưu lộ trình vào database',
+        error: createError.message
+      });
+    }
   } catch (error) {
     console.error('❌ Generate roadmap error:', error);
+    console.error('Error stack:', error.stack);
     res.status(500).json({
       success: false,
-      message: 'Không thể tạo lộ trình',
-      error: error.message
+      message: 'Không thể tạo lộ trình học',
+      error: error.message,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 };
+
 
 // Hàm helper: Generate exercises cho từng step với độ khó cụ thể
 const generateExercisesForStep = async (skill, level, topic, stepDifficulty, userId) => {
@@ -400,58 +496,57 @@ const generateExercisesForStep = async (skill, level, topic, stepDifficulty, use
     const exerciseCount = 5; // Lấy 5 bài tập cho mỗi step
     console.log(`    - Finding ${exerciseCount} exercises for Step: [Skill: ${skill}, Level: ${level}, Difficulty: ${stepDifficulty}]`);
 
-    // 1. Tìm exercises đã có trong DB
-    const existingExercises = await Exercise.find({
-      skill: skill.toUpperCase(),
-      level: level,
-      difficulty: stepDifficulty,
-    }).limit(exerciseCount);
-
+    // 1. Ưu tiên lấy bài tập có sẵn từ database
+    const existingExercises = await getExistingExercises(skill, stepDifficulty, level, exerciseCount);
+    
     if (existingExercises.length >= exerciseCount) {
-      console.log(`    - ✅ Found ${existingExercises.length} existing exercises in DB.`);
-      return existingExercises.map(e => e._id);
+      console.log(`    - ✅ Found ${existingExercises.length} existing exercises in DB. Using them.`);
+      return existingExercises.map(e => ({
+        exerciseId: e._id,
+        skill: e.skill,
+        difficulty: e.difficulty,
+        level: e.level
+      }));
     }
 
-    // 2. Nếu không đủ, generate thêm bằng AI
+    // 2. Nếu không đủ, lấy tất cả có sẵn + tạo thêm bằng AI
     const neededCount = exerciseCount - existingExercises.length;
-    console.log(`    - ⚠️ Not enough exercises in DB. Generating ${neededCount} new exercises with AI...`);
+    console.log(`    - ⚠️ Only ${existingExercises.length} existing exercises. Need ${neededCount} more from AI...`);
 
-    const generatedExercises = await geminiService.generateExercises(skill, level, topic, neededCount, stepDifficulty);
+    // Tạo thêm với AI
+    const aiExercises = await generateExercisesWithAI(skill, stepDifficulty, level, topic, neededCount, userId);
+    
+    // 3. Kết hợp cả hai
+    const allExercises = [
+      ...existingExercises.map(e => ({
+        exerciseId: e._id,
+        skill: e.skill,
+        difficulty: e.difficulty,
+        level: e.level
+      })),
+      ...aiExercises
+    ];
 
-    if (!generatedExercises || generatedExercises.length === 0) {
-      console.log(`    - ❌ AI failed to generate exercises. Using what we have.`);
-      return existingExercises.map(e => e._id);
-    }
-
-    console.log(`    - 🤖 AI returned ${generatedExercises.length} exercises.`);
-
-    // 3. Lưu exercises mới vào DB
-    const newExerciseDocs = await Promise.all(
-      generatedExercises.map(ex =>
-        Exercise.create({
-          skill: skill.toUpperCase(),
-          level,
-          type: ex.type || 'multiple_choice',
-          question: ex.question,
-          options: ex.options || [],
-          correctAnswer: ex.correctAnswer,
-          explanation: ex.explanation || '',
-          points: stepDifficulty === 'easy' ? 5 : stepDifficulty === 'medium' ? 10 : 15,
-          difficulty: stepDifficulty,
-          audioUrl: ex.audioUrl || null,
-          imageUrl: ex.imageUrl || null,
-          createdBy: userId,
-        })
-      )
-    );
-
-    console.log(`    - ✅ Created ${newExerciseDocs.length} new exercises in DB.`);
-
-    // 4. Kết hợp cả hai
-    const allExerciseIds = [...existingExercises.map(e => e._id), ...newExerciseDocs.map(e => e._id)];
-    return allExerciseIds;
+    console.log(`    - 🎯 Total exercises for this step: ${allExercises.length} (${existingExercises.length} from DB + ${aiExercises.length} from AI)`);
+    return allExercises;
+    
   } catch (error) {
-    console.error('Error generating exercises:', error);
+    console.error('❌ Error generating exercises:', error);
+    // Fallback: thử lấy ít nhất 1 bài từ DB
+    try {
+      const fallbackExercises = await getExistingExercises(skill, stepDifficulty, level, 1);
+      if (fallbackExercises.length > 0) {
+        console.log(`    - 🔄 Fallback: Using ${fallbackExercises.length} existing exercises`);
+        return fallbackExercises.map(e => ({
+          exerciseId: e._id,
+          skill: e.skill,
+          difficulty: e.difficulty,
+          level: e.level
+        }));
+      }
+    } catch (fallbackError) {
+      console.error('❌ Fallback also failed:', fallbackError);
+    }
     return [];
   }
 };
@@ -506,36 +601,140 @@ const generateVocabularyForLevel = async (level, topic, userId) => {
   try {
     const count = 20; // 20 words per vocabulary step
     console.log(`    - Generating ${count} vocabulary words for level ${level}...`);
-    const vocabularyList = await geminiService.generateVocabularyList(topic, level, count);
+    
+    let vocabularyList = [];
+    try {
+      vocabularyList = await geminiService.generateVocabularyList(topic, level, count);
+    } catch (aiError) {
+      console.error(`    - AI vocabulary generation failed:`, aiError.message);
+      return []; // Return empty array on AI error
+    }
 
     if (!vocabularyList || vocabularyList.length === 0) {
       console.log(`    - AI service returned no vocabulary. Skipping.`);
       return [];
     }
+    
     const vocabularies = [];
     for (const vocab of vocabularyList) {
-      // ✅ Sửa: Kiểm tra an toàn cho vocab.meanings
-      const meaning = vocab.meanings && vocab.meanings.length > 0 ? vocab.meanings[0].definition : '';
-      const example = vocab.meanings && vocab.meanings.length > 0 ? vocab.meanings[0].example : '';
-      const newVocab = await VocabularyBank.create({
-        user: userId,
-        word: vocab.word,
-        pronunciation: vocab.pronunciation,
-        meaning: meaning,
-        partOfSpeech: vocab.partOfSpeech,
-        example: example,
-        synonyms: vocab.synonyms || [],
-        antonyms: vocab.antonyms || [],
-        difficulty: level.toLowerCase(),
-        cefrLevel: level,
-        source: 'roadmap-generated'
-      });
-      vocabularies.push(newVocab._id);
+      try {
+        // ✅ Sửa: Kiểm tra an toàn cho vocab.meanings
+        const meaning = vocab.meanings && vocab.meanings.length > 0 ? vocab.meanings[0].definition : '';
+        const example = vocab.meanings && vocab.meanings.length > 0 ? vocab.meanings[0].example : '';
+        const newVocab = await VocabularyBank.create({
+          user: userId,
+          word: vocab.word,
+          pronunciation: vocab.pronunciation,
+          meaning: meaning,
+          partOfSpeech: vocab.partOfSpeech,
+          example: example,
+          synonyms: vocab.synonyms || [],
+          antonyms: vocab.antonyms || [],
+          difficulty: level.toLowerCase(),
+          cefrLevel: level,
+          source: 'roadmap-generated'
+        });
+        vocabularies.push(newVocab._id);
+      } catch (vocabError) {
+        console.error(`    - Error creating vocabulary entry for "${vocab.word}":`, vocabError.message);
+        // Continue with next vocabulary
+      }
     }
     console.log(`    - Created ${vocabularies.length} vocabulary entries.`);
     return vocabularies;
   } catch (error) {
     console.error(`Error generating vocabulary for ${level}:`, error);
     return []; // Return empty array on error
+  }
+};
+
+// 🆕 Thêm function lấy bài tập có sẵn từ database
+const getExistingExercises = async (skill, difficulty, level, limit = 10) => {
+  try {
+    console.log(`🔍 Looking for existing exercises: ${skill} ${difficulty} ${level}, limit: ${limit}`);
+    
+    const exercises = await Exercise.find({
+      skill: skill.toUpperCase(),
+      difficulty: difficulty.toLowerCase(),
+      level: level.toUpperCase(),
+      isActive: { $ne: false } // Không lấy bài tập bị disable
+    })
+    .limit(limit)
+    .select('_id skill difficulty level type question')
+    .lean();
+
+    console.log(`✅ Found ${exercises.length} existing exercises in DB`);
+    return exercises;
+  } catch (error) {
+    console.error(`❌ Error getting existing exercises for ${skill} ${difficulty} ${level}:`, error);
+    return [];
+  }
+};
+
+// 🆕 Thêm function tạo bài tập với AI khi cần
+const generateExercisesWithAI = async (skill, difficulty, level, topic, count, userId) => {
+  try {
+    console.log(`🤖 Generating ${count} exercises with AI for ${skill} ${difficulty} ${level}`);
+    
+    const exercises = await geminiService.generateExercises(skill, level, topic, count, difficulty);
+    
+    if (!exercises || exercises.length === 0) {
+      console.log(`❌ AI returned no exercises`);
+      return [];
+    }
+
+    console.log(`✅ AI generated ${exercises.length} exercises`);
+
+    // Lưu vào database và trả về metadata
+    const savedExercises = [];
+    for (const exerciseData of exercises) {
+      try {
+        // Transform type: multiple_choice -> multiple-choice
+        let exerciseType = exerciseData.type || 'multiple-choice';
+        if (exerciseType === 'multiple_choice') {
+          exerciseType = 'multiple-choice';
+        }
+        if (exerciseType === 'fill_blank') {
+          exerciseType = 'fill-in-blank';
+        }
+
+        // Transform options from array of strings to array of objects
+        const transformedOptions = (exerciseData.options || []).map(opt => ({
+          text: typeof opt === 'string' ? opt : opt.text,
+          isCorrect: typeof opt === 'string' ? opt === exerciseData.correctAnswer : opt.isCorrect
+        }));
+
+        const exercise = new Exercise({
+          question: exerciseData.question,
+          type: exerciseType,
+          options: transformedOptions,
+          correctAnswer: exerciseData.correctAnswer,
+          explanation: exerciseData.explanation || '',
+          lesson: null, // Tạm thời set null vì roadmap exercises không thuộc lesson cụ thể
+          difficulty: difficulty.toLowerCase(),
+          points: difficulty === 'easy' ? 5 : difficulty === 'medium' ? 10 : 15,
+          audioUrl: exerciseData.audioUrl || null,
+          imageUrl: exerciseData.imageUrl || null
+        });
+        
+        const saved = await exercise.save();
+        savedExercises.push({
+          exerciseId: saved._id,
+          skill: skill,
+          difficulty: saved.difficulty,
+          level: level
+        });
+      } catch (saveError) {
+        console.error(`❌ Error saving AI-generated exercise:`, saveError.message);
+        // Continue with next exercise
+      }
+    }
+
+    console.log(`💾 Saved ${savedExercises.length} AI-generated exercises to DB`);
+    return savedExercises;
+    
+  } catch (error) {
+    console.error(`❌ Error generating exercises with AI for ${skill} ${difficulty} ${level}:`, error);
+    return [];
   }
 };

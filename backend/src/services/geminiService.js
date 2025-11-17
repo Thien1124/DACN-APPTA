@@ -463,7 +463,7 @@ exports.generateExercises = async (skill, level, topic, count = 5, difficulty = 
       mixed: `Generate ${count} ${difficulty} mixed skill exercises for ${level} level, topic: ${topic}. Combine multiple skills. Make them ${difficulty === 'easy' ? 'simple' : difficulty === 'medium' ? 'balanced' : 'challenging'}.`
     };
 
-    const prompt = skillPrompts[skill] || skillPrompts.mixed;
+    let prompt = skillPrompts[skill] || skillPrompts.mixed;
     prompt += `\n\nReturn as JSON array of exercises. Each exercise: { "question": "string", "type": "multiple_choice/fill_blank/etc", "options": ["array"], "correctAnswer": "string", "explanation": "string", "audioUrl": "optional", "imageUrl": "optional" }`;
 
     const result = await model.generateContent(prompt);

@@ -266,11 +266,22 @@ const RoadmapStep = () => {
       const response = await roadmapTopicService.getStep(roadmapId, stepNumber);
       
       if (response.success) {
+        console.log('📦 Loaded step data:', response.data);
+        
+        // Kiểm tra nếu có exercises
+        if (response.data.exercises && response.data.exercises.length > 0) {
+          showToast('success', 'Đã tải', `${response.data.exercises.length} bài tập`);
+        } else if (response.data.step.vocabularySet && response.data.step.vocabularySet.length > 0) {
+          showToast('info', 'Từ vựng', `Có ${response.data.step.vocabularySet.length} từ vựng`);
+        } else {
+          showToast('warning', 'Chưa có bài tập', 'Bài học này đang được cập nhật');
+        }
+        
         setStepData(response.data);
       }
     } catch (error) {
       console.error('Load step error:', error);
-      showToast('error', 'Lỗi', 'Không thể tải bài học');
+      showToast('error', 'Lỗi', error.response?.data?.message || 'Không thể tải bài học');
     } finally {
       setLoading(false);
     }
@@ -328,7 +339,13 @@ const RoadmapStep = () => {
       <PageWrapper>
         <Container>
           <div style={{ textAlign: 'center', padding: '4rem 2rem' }}>
-            <p>Đang tải bài học...</p>
+            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>⏳</div>
+            <p style={{ fontSize: '1.125rem', color: '#6b7280', fontWeight: 600 }}>
+              Đang chuẩn bị bài học...
+            </p>
+            <p style={{ fontSize: '0.95rem', color: '#9ca3af', marginTop: '0.5rem' }}>
+              {stepData?.exercises?.length === 0 ? 'Đang tạo bài tập từ database và AI...' : 'Vui lòng đợi'}
+            </p>
           </div>
         </Container>
       </PageWrapper>
@@ -362,13 +379,13 @@ const RoadmapStep = () => {
           <Subtitle>{stepData.description}</Subtitle>
         </Header>
 
-        {stepData.vocabularySet && stepData.vocabularySet.length > 0 && (
+        {stepData.step && stepData.step.vocabularySet && stepData.step.vocabularySet.length > 0 && (
           <ContentSection>
             <SectionTitle>
-              📚 Từ vựng ({stepData.vocabularySet.length} từ)
+              📚 Từ vựng ({stepData.step.vocabularySet.length} từ)
             </SectionTitle>
             <VocabGrid>
-              {stepData.vocabularySet.map((vocab, index) => (
+              {stepData.step.vocabularySet.map((vocab, index) => (
                 <VocabCard key={index}>
                   <Word>
                     {vocab.word}
@@ -402,17 +419,20 @@ const RoadmapStep = () => {
                     {exerciseIndex + 1}. {exercise.content}
                   </Question>
                   <OptionsGrid>
-                    {exercise.options.map((option, optionIndex) => (
-                      <OptionButton
-                        key={optionIndex}
-                        selected={answers[exerciseIndex] === option}
-                        isCorrect={option === exercise.correctAnswer}
-                        disabled={showResults}
-                        onClick={() => handleAnswerSelect(exerciseIndex, option)}
-                      >
-                        {option}
-                      </OptionButton>
-                    ))}
+                    {exercise.options && exercise.options.map((option, optionIndex) => {
+                      const optionText = typeof option === 'string' ? option : option.text || option;
+                      return (
+                        <OptionButton
+                          key={optionIndex}
+                          selected={answers[exerciseIndex] === optionText}
+                          isCorrect={optionText === exercise.correctAnswer}
+                          disabled={showResults}
+                          onClick={() => handleAnswerSelect(exerciseIndex, optionText)}
+                        >
+                          {optionText}
+                        </OptionButton>
+                      );
+                    })}
                   </OptionsGrid>
                   {showResults && answers[exerciseIndex] && (
                     <Explanation>
