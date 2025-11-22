@@ -368,7 +368,7 @@ const resendOTP = async (req, res) => {
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
-
+    
     if (!email || !password) {
       return res.status(400).json({
         success: false,
@@ -508,6 +508,18 @@ const login = async (req, res) => {
     res.json({
       success: true,
       message: 'Đăng nhập thành công',
+      token: token, 
+      user: {
+          _id: user._id, // Lưu ý: Flutter thường dùng _id
+          id: user._id,
+          name: user.name,
+          username: user.name, // Thêm dòng này phòng trường hợp Flutter gọi là username
+          email: user.email,
+          avatar: user.avatar,
+          role: user.role,
+          xp: user.xp || 0,      // Thêm mấy chỉ số game nếu cần
+          streak: user.streak || 0
+      },
       data: {
         user: {
           id: user._id,

@@ -18,7 +18,9 @@ import {
   School,
   CloudUpload,
   Download,
-  Mic
+  Mic,
+  ChevronLeft,
+  ChevronRight
 } from '@mui/icons-material';
 import SpeakingExerciseModal from '../components/SpeakingExerciseModal';
 
@@ -242,6 +244,39 @@ const HiddenFileInput = styled.input`
   display: none;
 `;
 
+const PaginationContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding: 1rem;
+`;
+
+const PageButton = styled.button`
+  padding: 0.5rem 1rem;
+  border: 1px solid ${props => props.theme === 'dark' ? '#374151' : '#e5e7eb'};
+  border-radius: 8px;
+  background: ${props => props.active ? '#58CC02' : props.theme === 'dark' ? '#1f2937' : '#ffffff'};
+  color: ${props => props.active ? 'white' : props.theme === 'dark' ? '#f9fafb' : '#1a1a1a'};
+  cursor: pointer;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    background: ${props => props.active ? '#58CC02' : '#f3f4f6'};
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+`;
+
+const PageInfo = styled.span`
+  font-size: 0.875rem;
+  color: ${props => props.theme === 'dark' ? '#9ca3af' : '#6b7280'};
+`;
+
 // ========== COMPONENT ==========
 
 const AdminExercises = () => {
@@ -260,6 +295,10 @@ const AdminExercises = () => {
   // Thêm state
   const [showSpeakingModal, setShowSpeakingModal] = useState(false);
   const [selectedExercise, setSelectedExercise] = useState(null);
+
+  // Thêm state cho phân trang
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 12;
 
   useEffect(() => {
     fetchLessons();
@@ -467,6 +506,74 @@ const handleDownloadTemplate = async () => {
     setShowSpeakingModal(false);
   };
 
+  // Tính toán phân trang
+  const totalPages = Math.ceil(exercises.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentExercises = exercises.slice(startIndex, endIndex);
+
+  // Reset về trang 1 khi filter thay đổi
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [typeFilter, lessonFilter, difficultyFilter]);
+
+  // Thêm hàm xử lý phân trang
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  // Thêm hàm tính toán các trang hiển thị
+  const getVisiblePages = (currentPage, totalPages) => {
+    const pages = [];
+    
+    if (totalPages <= 7) {
+      // Nếu ít trang, hiển thị tất cả
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      // Luôn hiển thị trang đầu
+      pages.push(1);
+      
+      // Thêm "..." nếu cần
+      if (currentPage > 4) {
+        pages.push('...');
+      }
+      
+      // Hiển thị các trang xung quanh trang hiện tại
+      const start = Math.max(2, currentPage - 1);
+      const end = Math.min(totalPages - 1, currentPage + 1);
+      
+      for (let i = start; i <= end; i++) {
+        pages.push(i);
+      }
+      
+      // Thêm "..." nếu cần
+      if (currentPage < totalPages - 3) {
+        pages.push('...');
+      }
+      
+      // Luôn hiển thị trang cuối
+      if (totalPages > 1) {
+        pages.push(totalPages);
+      }
+    }
+    
+    return pages;
+  };
+
   if (loading) {
     return (
       <AdminLayout pageTitle="Quản lý Bài tập">
@@ -566,62 +673,113 @@ const handleDownloadTemplate = async () => {
           </div>
         </EmptyState>
       ) : (
-        <ExercisesGrid>
-          {exercises.map((exercise) => (
-            <ExerciseCard key={exercise._id} theme={theme}>
-              <ExerciseHeader>
-                <div>
-                  <TypeBadge type={exercise.type}>
-                    {getTypeLabel(exercise.type)}
-                  </TypeBadge>
-                </div>
-                <DifficultyBadge level={exercise.difficulty}>
-                  {exercise.difficulty === 'easy' ? '⭐ Dễ' : 
-                   exercise.difficulty === 'medium' ? '⭐⭐ TB' : '⭐⭐⭐ Khó'}
-                </DifficultyBadge>
-              </ExerciseHeader>
+        <>
+          <ExercisesGrid>
+            {currentExercises.map((exercise) => (
+              <ExerciseCard key={exercise._id} theme={theme}>
+                <ExerciseHeader>
+                  <div>
+                    <TypeBadge type={exercise.type}>
+                      {getTypeLabel(exercise.type)}
+                    </TypeBadge>
+                  </div>
+                  <DifficultyBadge level={exercise.difficulty}>
+                    {exercise.difficulty === 'easy' ? '⭐ Dễ' : 
+                     exercise.difficulty === 'medium' ? '⭐⭐ TB' : '⭐⭐⭐ Khó'}
+                  </DifficultyBadge>
+                </ExerciseHeader>
 
-              <ExerciseQuestion theme={theme}>
-                {exercise.question || 'Không có câu hỏi'}
-              </ExerciseQuestion>
+                <ExerciseQuestion theme={theme}>
+                  {exercise.question || 'Không có câu hỏi'}
+                </ExerciseQuestion>
 
-              <ExerciseInfo theme={theme}>
-                <InfoItem>
-                  <MenuBook sx={{ fontSize: 18 }} />
-                  {exercise.lesson?.title || 'N/A'}
-                </InfoItem>
-                <InfoItem>
-                  <Star sx={{ fontSize: 18 }} />
-                  {exercise.points || 0} điểm
-                </InfoItem>
-              </ExerciseInfo>
+                <ExerciseInfo theme={theme}>
+                  <InfoItem>
+                    <MenuBook sx={{ fontSize: 18 }} />
+                    {exercise.lesson?.title || 'N/A'}
+                  </InfoItem>
+                  <InfoItem>
+                    <Star sx={{ fontSize: 18 }} />
+                    {exercise.points || 0} điểm
+                  </InfoItem>
+                </ExerciseInfo>
 
-              <ActionButtons>
-                <ActionButton variant="view" onClick={() => handleView(exercise._id)}>
-                  <Visibility sx={{ fontSize: 18 }} /> Xem
-                </ActionButton>
-                
-                {/* ✅ Thêm nút Test cho speaking */}
-                {exercise.type === 'speaking' && (
-                  <ActionButton 
-                    variant="test" 
-                    onClick={() => handleTestSpeaking(exercise)}
-                    style={{ background: '#8b5cf6' }}
-                  >
-                    <Mic sx={{ fontSize: 18 }} /> Test
+                <ActionButtons>
+                  <ActionButton variant="view" onClick={() => handleView(exercise._id)}>
+                    <Visibility sx={{ fontSize: 18 }} /> Xem
                   </ActionButton>
-                )}
-                
-                <ActionButton variant="edit" onClick={() => handleEdit(exercise._id)}>
-                  <Edit sx={{ fontSize: 18 }} /> Sửa
-                </ActionButton>
-                <ActionButton variant="delete" onClick={() => handleDelete(exercise)}>
-                  <Delete sx={{ fontSize: 18 }} />
-                </ActionButton>
-              </ActionButtons>
-            </ExerciseCard>
-          ))}
-        </ExercisesGrid>
+                  
+                  {/* ✅ Thêm nút Test cho speaking */}
+                  {exercise.type === 'speaking' && (
+                    <ActionButton 
+                      variant="test" 
+                      onClick={() => handleTestSpeaking(exercise)}
+                      style={{ background: '#8b5cf6' }}
+                    >
+                      <Mic sx={{ fontSize: 18 }} /> Test
+                    </ActionButton>
+                  )}
+                  
+                  <ActionButton variant="edit" onClick={() => handleEdit(exercise._id)}>
+                    <Edit sx={{ fontSize: 18 }} /> Sửa
+                  </ActionButton>
+                  <ActionButton variant="delete" onClick={() => handleDelete(exercise)}>
+                    <Delete sx={{ fontSize: 18 }} />
+                  </ActionButton>
+                </ActionButtons>
+              </ExerciseCard>
+            ))}
+          </ExercisesGrid>
+
+          {/* Thêm phân trang */}
+          {totalPages > 1 && (
+            <PaginationContainer theme={theme}>
+              <PageButton 
+                onClick={handlePrevPage} 
+                disabled={currentPage === 1}
+                theme={theme}
+              >
+                <ChevronLeft />
+              </PageButton>
+              
+              {getVisiblePages(currentPage, totalPages).map((page, index) => (
+                page === '...' ? (
+                  <span 
+                    key={`ellipsis-${index}`} 
+                    style={{ 
+                      padding: '0.5rem 1rem', 
+                      color: theme === 'dark' ? '#9ca3af' : '#6b7280',
+                      fontSize: '0.875rem'
+                    }}
+                  >
+                    ...
+                  </span>
+                ) : (
+                  <PageButton
+                    key={page}
+                    active={page === currentPage}
+                    onClick={() => handlePageChange(page)}
+                    theme={theme}
+                  >
+                    {page}
+                  </PageButton>
+                )
+              ))}
+              
+              <PageButton 
+                onClick={handleNextPage} 
+                disabled={currentPage === totalPages}
+                theme={theme}
+              >
+                <ChevronRight />
+              </PageButton>
+              
+              <PageInfo theme={theme}>
+                Trang {currentPage} / {totalPages} 
+              </PageInfo>
+            </PaginationContainer>
+          )}
+        </>
       )}
 
       {/* Thêm modal ở cuối return */}

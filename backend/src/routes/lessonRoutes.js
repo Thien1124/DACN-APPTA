@@ -6,6 +6,7 @@ const exerciseController = require('../controllers/exerciseController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
 // ========== PUBLIC ROUTES (User có thể xem) ==========
+router.get('/', lessonController.getAllLessons);
 // ✅ Đặt TRƯỚC middleware admin
 router.get('/:id', lessonController.getLessonById);
 router.get('/:lessonId/vocabularies', vocabularyController.getVocabulariesByLesson);
@@ -18,7 +19,6 @@ router.use(authorize('admin'));
 
 router
   .route('/')
-  .get(lessonController.getAllLessons)
   .post(lessonController.createLesson);
 
 router

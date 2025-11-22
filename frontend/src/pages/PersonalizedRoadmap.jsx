@@ -59,6 +59,7 @@ const PageWrapper = styled.div`
   background-repeat: no-repeat;
   background-position: right 10% top 10%;
   position: relative;
+  z-index: 1;
 `;
 
 const MainContent = styled.main`
@@ -766,6 +767,46 @@ const AddEventButton = styled.button`
   }
 `;
 
+// Thêm styled components cho Roadmap Selector
+const RoadmapSelector = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+`;
+
+const SelectorLabel = styled.label`
+  font-weight: 700;
+  color: #166a0b;
+  font-size: 1rem;
+`;
+
+const SelectorSelect = styled.select`
+  padding: 0.75rem 1rem;
+  border: 2px solid #e6f3e6;
+  border-radius: 8px;
+  font-size: 1rem;
+  background: white;
+  color: #166a0b;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    border-color: #58cc02;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: #58cc02;
+    box-shadow: 0 0 0 3px rgba(88, 204, 2, 0.1);
+  }
+`;
+
 // ========== COMPONENT ==========
 const PersonalizedRoadmap = () => {
   const navigate = useNavigate();
@@ -778,6 +819,9 @@ const PersonalizedRoadmap = () => {
   const [roadmapData, setRoadmapData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [milestones, setMilestones] = useState([]);
+  // Thêm state cho roadmap selector
+  const [allRoadmaps, setAllRoadmaps] = useState([]);
+  const [selectedRoadmapId, setSelectedRoadmapId] = useState(null);
 
   // Mock calendar events
   const [events] = useState([
@@ -806,58 +850,110 @@ const PersonalizedRoadmap = () => {
     // Kiểm tra token để xác định đăng nhập
     const token = localStorage.getItem('token');
     setIsLoggedIn(!!token);
-    loadRoadmap();
+    loadAllRoadmaps();
   }, []);
 
-  const loadRoadmap = async () => {
+  // Thay đổi loadRoadmap thành loadAllRoadmaps
+  const loadAllRoadmaps = async () => {
+    try {
+      const response = await roadmapTopicService.getAll();
+      if (response.success && Array.isArray(response.data)) {
+        setAllRoadmaps(response.data);
+        const activeRoadmap = response.data.find(r => r.isActive) || response.data[0];
+        if (activeRoadmap) {
+          setSelectedRoadmapId(activeRoadmap._id);
+          await loadRoadmap(activeRoadmap._id);
+        } else {
+          setLoading(false);
+        }
+      } else {
+        setAllRoadmaps([]);
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error('Load all roadmaps error:', error);
+      setAllRoadmaps([]);
+      showToast('error', 'Lỗi', 'Không thể tải danh sách lộ trình');
+      setLoading(false);
+    }
+  };
+
+  // Cập nhật loadRoadmap để nhận roadmapId
+  const loadRoadmap = async (roadmapId = null) => {
     try {
       setLoading(true);
-      const response = await roadmapTopicService.getCurrent();
+      const id = roadmapId || selectedRoadmapId;
+      if (!id) {
+        setLoading(false);
+        return;
+      }
+
+      const response = await roadmapTopicService.getById(id);
       
       if (response.success) {
         const roadmap = response.data;
         
+        // Validation cho roadmap data
+        if (!roadmap || !roadmap.steps) {
+          throw new Error('Dữ liệu lộ trình không hợp lệ');
+        }
+
         setRoadmapData({
-          topic: roadmap.topic,
-          category: roadmap.category,
-          level: roadmap.level,
-          overallProgress: roadmap.overallProgress,
-          completedMilestones: roadmap.steps.filter(s => s.isCompleted).length,
+          topic: roadmap.topic || 'Không có chủ đề',
+          category: roadmap.category || 'General',
+          level: roadmap.level || 'A1',
+          overallProgress: roadmap.overallProgress || 0,
+          completedMilestones: roadmap.steps.filter(s => s && s.isCompleted).length,
           totalMilestones: roadmap.steps.length,
           currentStreak: 12,
-          estimatedCompletion: new Date(roadmap.estimatedCompletionDate).toLocaleDateString('vi-VN'),
-          totalXP: roadmap.totalXP,
-          startedAt: new Date(roadmap.startedAt).toLocaleDateString('vi-VN')
+          estimatedCompletion: roadmap.estimatedCompletionDate ? new Date(roadmap.estimatedCompletionDate).toLocaleDateString('vi-VN') : 'Chưa xác định',
+          totalXP: roadmap.totalXP || 0,
+          startedAt: roadmap.startedAt ? new Date(roadmap.startedAt).toLocaleDateString('vi-VN') : 'Chưa xác định'
         });
 
         const transformedMilestones = roadmap.steps.map(step => ({
-          id: step._id,
-          title: step.title,
-          description: step.description,
-          progress: step.isCompleted ? 100 : (roadmap.currentStep === step.stepNumber ? 50 : 0),
-          status: step.isCompleted ? 'completed' : (roadmap.currentStep === step.stepNumber ? 'current' : 'locked'),
-          lessons: step.exercises ? step.exercises.length : 0,
-          completedLessons: step.isCompleted ? (step.exercises ? step.exercises.length : 0) : 0,
-          difficulty: step.difficulty,
-          minScore: step.minScore,
-          xpReward: step.xpReward,
-          estimatedTime: step.estimatedTime,
+          id: step?._id || 'unknown',
+          title: step?.title || 'Bước không xác định',
+          description: step?.description || 'Mô tả không có',
+          progress: step?.isCompleted ? 100 : (roadmap.currentStep === step?.stepNumber ? 50 : 0),
+          status: step?.isCompleted ? 'completed' : (roadmap.currentStep === step?.stepNumber ? 'current' : 'locked'),
+          lessons: step?.exercises ? step.exercises.length : 0,
+          completedLessons: step?.isCompleted ? (step?.exercises ? step.exercises.length : 0) : 0,
+          difficulty: step?.difficulty || 'medium',
+          minScore: step?.minScore || 0,
+          xpReward: step?.xpReward || 0,
+          estimatedTime: step?.estimatedTime || 30,
           roadmapId: roadmap._id,
-          stepNumber: step.stepNumber
+          stepNumber: step?.stepNumber || 1
         }));
 
         setMilestones(transformedMilestones);
+      } else {
+        throw new Error('API trả về không thành công');
       }
     } catch (error) {
       console.error('Load roadmap error:', error);
-      if (error.response?.status === 404) {
-        setRoadmapData(null);
-        setMilestones([]);
-      } else {
-        showToast('error', 'Lỗi', 'Không thể tải lộ trình học');
-      }
+      setRoadmapData(null);
+      setMilestones([]);
+      showToast('error', 'Lỗi', error.message || 'Không thể tải lộ trình học');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Thêm handleRoadmapChange
+  const handleRoadmapChange = async (event) => {
+    const roadmapId = event.target.value;
+    if (!roadmapId) {
+      showToast('error', 'Lỗi', 'Không thể chọn lộ trình');
+      return;
+    }
+    setSelectedRoadmapId(roadmapId);
+    try {
+      await loadRoadmap(roadmapId);
+    } catch (error) {
+      console.error('Handle roadmap change error:', error);
+      showToast('error', 'Lỗi', 'Không thể tải lộ trình đã chọn');
     }
   };
 
@@ -957,7 +1053,7 @@ const PersonalizedRoadmap = () => {
       
       if (response.success) {
         showToast('success', 'Thành công', response.message);
-        await loadRoadmap();
+        await loadAllRoadmaps(); // Làm mới danh sách roadmaps
       }
     } catch (error) {
       console.error('Create roadmap error:', error);
@@ -1119,6 +1215,23 @@ const PersonalizedRoadmap = () => {
 
           {activeTab === 'roadmap' && (
             <RoadmapSection>
+              {/* Thêm Roadmap Selector */}
+              {allRoadmaps.length > 0 && (
+                <RoadmapSelector>
+                  <SelectorLabel>Chọn lộ trình:</SelectorLabel>
+                  <SelectorSelect 
+                    value={selectedRoadmapId || ''} 
+                    onChange={handleRoadmapChange}
+                  >
+                    {allRoadmaps.map(roadmap => (
+                      <option key={roadmap._id} value={roadmap._id}>
+                        {roadmap.topic || 'Không có chủ đề'} - {roadmap.level || 'A1'} ({roadmap.overallProgress || 0}% hoàn thành)
+                      </option>
+                    ))}
+                  </SelectorSelect>
+                </RoadmapSelector>
+              )}
+
               {!roadmapData ? (
                 <EmptyState>
                   <EmptyIcon>🗺️</EmptyIcon>
@@ -1160,7 +1273,7 @@ const PersonalizedRoadmap = () => {
                       <IconButton onClick={showCreateRoadmapDialog} title="Tạo lộ trình mới">
                         <Add />
                       </IconButton>
-                      <IconButton onClick={loadRoadmap} title="Làm mới">
+                      <IconButton onClick={() => loadRoadmap()} title="Làm mới">
                         <Refresh />
                       </IconButton>
                     </RoadmapActions>
