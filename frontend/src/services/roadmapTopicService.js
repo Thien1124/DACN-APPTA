@@ -52,5 +52,25 @@ export const roadmapTopicService = {
     } catch (error) {
       throw error;
     }
+  },
+
+  // Get all roadmaps for user
+  getAll: async () => {
+    try {
+      const response = await api.get('/roadmap-topic/all');
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // Get roadmap by ID
+  getById: async (roadmapId) => {
+    try {
+      const response = await api.get(`/roadmap-topic/${roadmapId}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   }
 };

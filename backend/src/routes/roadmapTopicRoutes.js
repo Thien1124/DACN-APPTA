@@ -26,5 +26,11 @@ router.post('/:roadmapId/complete-step', roadmapTopicController.completeStep);
 router.get('/:roadmapId/step/:stepNumber/exercises', roadmapTopicController.getStepExercises);
 router.post('/generate-exercises', roadmapTopicController.generateExercisesForRoadmap);
 
+// Get all roadmaps for user
+router.get('/all', roadmapTopicController.getAllRoadmaps);
+
+// Get roadmap by ID
+router.get('/:id', roadmapTopicController.getRoadmapById);
+
 
 module.exports = router;
