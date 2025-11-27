@@ -890,17 +890,20 @@ const CakeSpeakingPractice = () => {
     });
   };
 
-  const onPlayerReady = (event) => {
-    // Start time tracking when player is ready
-    timeTrackerRef.current = setInterval(() => {
-      if (playerRef.current && playerRef.current.getCurrentTime) {
-        const t = playerRef.current.getCurrentTime();
-        setCurrentVideoTime(t);
-        // Check for auto-pause opportunities
-        checkAndAutoPause(t);
-      }
-    }, 100); // Update every 100ms for smooth tracking
-  };
+
+const onPlayerReady = (event) => {
+  // Start time tracking when player is ready
+  timeTrackerRef.current = setInterval(() => {
+    if (playerRef.current && playerRef.current.getCurrentTime) {
+      const t = playerRef.current.getCurrentTime();
+      setCurrentVideoTime(t);
+      // Check for auto-pause opportunities
+      checkAndAutoPause(t);
+    }
+  }, 25); // Giảm từ 100ms xuống 50ms để check thường xuyên hơn
+};
+
+
 
   const onPlayerStateChange = (event) => {
     // Handle play/pause events if needed
@@ -912,76 +915,93 @@ const CakeSpeakingPractice = () => {
       setVideoPlaying(false);
     }
   };
+const checkAndAutoPause = (currentTime) => {
+  if (!video || !video.sentences) return;
 
-  const checkAndAutoPause = (currentTime) => {
-    if (!video || !video.sentences) return;
+  // Only run checks while the player is playing
+  try {
+    const state = playerRef.current && playerRef.current.getPlayerState ? playerRef.current.getPlayerState() : null;
+    if (state !== window.YT.PlayerState.PLAYING) {
+      console.debug('⏸️ Player not playing, skipping check');
+      return;
+    }
+  } catch (err) {
+    console.warn('Error checking player state:', err);
+    return;
+  }
 
-    // Only run checks while the player is playing
+  const showTolerance = 0.25; // seconds tolerance for marking sentence shown
+
+  // Find the sentence that the current time falls into (start <= t < end)
+  let activeIndex = -1;
+  let activeStart = null;
+  let activeEnd = null;
+
+  for (let i = 0; i < video.sentences.length; i++) {
+    const s = video.sentences[i];
+    if (!s || typeof s.startTime !== 'number') continue;
+
+    let endTime = null;
+    if (typeof s.endTime === 'number') {
+      endTime = s.endTime;
+    } else if (video.sentences[i + 1] && typeof video.sentences[i + 1].startTime === 'number') {
+      endTime = video.sentences[i + 1].startTime;
+    } else {
+      endTime = s.startTime + 2; // fallback
+    }
+
+    if (currentTime >= s.startTime && currentTime < endTime) {
+      activeIndex = i;
+      activeStart = s.startTime;
+      activeEnd = endTime;
+      break;
+    }
+  }
+
+  // Debug logging - log every check when close to end
+  const timeToEnd = activeEnd - currentTime;
+  if (activeIndex !== -1 && timeToEnd <= 0.5 && timeToEnd >= -0.1) {
+    console.log(`🎯 Close to end: currentTime=${currentTime.toFixed(3)}, activeEnd=${activeEnd.toFixed(3)}, timeToEnd=${timeToEnd.toFixed(3)}, activeIndex=${activeIndex}, endedIndices=${endedIndices}`);
+  }
+
+  if (activeIndex === -1) {
+    console.debug('❌ No active sentence found');
+    return;
+  }
+
+  // Mark shown when we pass start + showTolerance
+  if (!shownIndices.includes(activeIndex) && currentTime >= (activeStart + showTolerance)) {
+    console.log(`👁️ Showing sentence ${activeIndex} at ${currentTime.toFixed(3)}`);
+    setShownIndices(prev => prev.includes(activeIndex) ? prev : [...prev, activeIndex]);
+    setCurrentSentenceIndex(activeIndex);
+  }
+
+  // Pause when we reach the exact end of the active sentence (with small tolerance for YouTube delay)
+  const pauseTolerance = 0.05; // Thêm tolerance 0.05s để dừng sớm hơn, tránh bỏ lỡ điểm dừng
+  const shouldPause = !endedIndices.includes(activeIndex) && currentTime >= (activeEnd - pauseTolerance) && currentTime >= (activeStart + 0.03);
+
+  if (shouldPause) {
+    console.log(`⏹️ PAUSING at sentence ${activeIndex}: currentTime=${currentTime.toFixed(3)} >= activeEnd=${activeEnd.toFixed(3)} (with ${pauseTolerance}s tolerance)`);
+    setEndedIndices(prev => prev.includes(activeIndex) ? prev : [...prev, activeIndex]);
     try {
-      const state = playerRef.current && playerRef.current.getPlayerState ? playerRef.current.getPlayerState() : null;
-      if (state !== window.YT.PlayerState.PLAYING) return;
-    } catch (err) {
-      return;
-    }
-
-    const showTolerance = 0.25; // seconds tolerance for marking sentence shown
-    const endTolerance = 0.05; // seconds tolerance for end (pause near exact end)
-
-    // Find the sentence that the current time falls into (start <= t < end)
-    let activeIndex = -1;
-    let activeStart = null;
-    let activeEnd = null;
-
-    for (let i = 0; i < video.sentences.length; i++) {
-      const s = video.sentences[i];
-      if (!s || typeof s.startTime !== 'number') continue;
-
-      let endTime = null;
-      if (typeof s.endTime === 'number') {
-        endTime = s.endTime;
-      } else if (video.sentences[i + 1] && typeof video.sentences[i + 1].startTime === 'number') {
-        endTime = video.sentences[i + 1].startTime;
+      if (playerRef.current && playerRef.current.pauseVideo) {
+        playerRef.current.pauseVideo();
+        console.log('✅ Player paused successfully');
       } else {
-        endTime = s.startTime + 2; // fallback
+        console.warn('❌ Player pause method not available');
       }
-
-      if (currentTime >= s.startTime && currentTime < endTime) {
-        activeIndex = i;
-        activeStart = s.startTime;
-        activeEnd = endTime;
-        break;
-      }
+    } catch (err) {
+      console.warn('Error pausing player at sentence end:', err);
     }
 
-    // Debug logging to help diagnose timing issues
-    // eslint-disable-next-line no-console
-    console.debug('checkAndAutoPause', { currentTime: currentTime.toFixed(3), activeIndex, activeStart, activeEnd, shownIndices, endedIndices });
-
-    if (activeIndex === -1) return;
-
-    // Mark shown when we pass start + showTolerance
-    if (!shownIndices.includes(activeIndex) && currentTime >= (activeStart + showTolerance)) {
-      setShownIndices(prev => prev.includes(activeIndex) ? prev : [...prev, activeIndex]);
-      setCurrentSentenceIndex(activeIndex);
-    }
-
-    // Pause when we reach near the end of the active sentence
-    if (!endedIndices.includes(activeIndex) && currentTime >= (activeEnd - endTolerance) && currentTime >= (activeStart + 0.03)) {
-      setEndedIndices(prev => prev.includes(activeIndex) ? prev : [...prev, activeIndex]);
-      try {
-        if (playerRef.current && playerRef.current.pauseVideo) {
-          playerRef.current.pauseVideo();
-        }
-      } catch (err) {
-        console.warn('Error pausing player at sentence end:', err);
-      }
-
-      setCurrentSentenceIndex(activeIndex);
-      setAutoPausedIndex(activeIndex);
-      setVideoPlaying(false);
-      return;
-    }
-  };
+    setCurrentSentenceIndex(activeIndex);
+    setAutoPausedIndex(activeIndex);
+    setVideoPlaying(false);
+    return;
+  } else if (!endedIndices.includes(activeIndex) && currentTime >= activeEnd - 0.2) {
+    console.log(`⚠️ Should pause soon: currentTime=${currentTime.toFixed(3)}, activeEnd=${activeEnd.toFixed(3)}, endedIndices=${endedIndices}`);
+  }
+};
 
   const resumeVideo = (opts = {}) => {
     // Resume playing from the sentence's start (if provided) or current position.
@@ -1012,19 +1032,19 @@ const CakeSpeakingPractice = () => {
 
   // Cleanup on unmount
   useEffect(() => {
-    return () => {
-      if (timeTrackerRef.current) {
-        clearInterval(timeTrackerRef.current);
-      }
-      if (playerRef.current) {
-        playerRef.current.destroy();
-      }
-      if (autoAdvanceTimeoutRef.current) {
-        clearTimeout(autoAdvanceTimeoutRef.current);
-        autoAdvanceTimeoutRef.current = null;
-      }
-    };
-  }, []);
+  return () => {
+    if (timeTrackerRef.current) {
+      clearInterval(timeTrackerRef.current);
+    }
+    if (playerRef.current) {
+      playerRef.current.destroy();
+    }
+    if (autoAdvanceTimeoutRef.current) {
+      clearTimeout(autoAdvanceTimeoutRef.current);
+      autoAdvanceTimeoutRef.current = null;
+    }
+  };
+}, []);
 
   const isSentenceCompleted = (index) => {
     // Check if completed in current session or in database

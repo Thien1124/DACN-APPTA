@@ -1077,23 +1077,141 @@ const RoadmapStepExercises = () => {
     }
   };
 
-  // 🔊 Text-to-speech function
-  const speakText = (text) => {
-    if ('speechSynthesis' in window) {
-      // Cancel any ongoing speech
-      window.speechSynthesis.cancel();
-      
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'en-US';
-      utterance.rate = 0.65; // Tốc độ đọc
-      utterance.pitch = 1; // Cao độ giọng
-      utterance.volume = 1; // Âm lượng
-      
-      window.speechSynthesis.speak(utterance);
-    } else {
-      showToast('warning', 'Không hỗ trợ', 'Trình duyệt không hỗ trợ text-to-speech');
-    }
-  };
+    
+    const speakText = (text) => {
+      if (!text || !text.toString().trim()) {
+        console.warn('⚠️ Không có text để phát âm');
+        return;
+      }
+    
+      // ✅ Cancel bất kỳ speech nào đang chạy
+      if (window.speechSynthesis.speaking) {
+        window.speechSynthesis.cancel();
+      }
+    
+      // ✅ Hàm chọn giọng ENGLISH tốt nhất
+      const getEnglishVoice = (voices) => {
+        console.log('📋 Available voices:', voices.map(v => `${v.name} (${v.lang})`));
+    
+        // ✅ 1. Ưu tiên Google US English
+        let voice = voices.find(v => 
+          v.lang === 'en-US' && 
+          v.name.toLowerCase().includes('google')
+        );
+        if (voice) {
+          console.log('✅ Chọn Google US:', voice.name);
+          return voice;
+        }
+    
+        // ✅ 2. Microsoft David/Zira (Windows)
+        voice = voices.find(v => 
+          v.lang === 'en-US' && 
+          (v.name.includes('David') || v.name.includes('Zira'))
+        );
+        if (voice) {
+          console.log('✅ Chọn Microsoft:', voice.name);
+          return voice;
+        }
+    
+        // ✅ 3. Samantha (macOS)
+        voice = voices.find(v => 
+          v.lang === 'en-US' && 
+          v.name.includes('Samantha')
+        );
+        if (voice) {
+          console.log('✅ Chọn Samantha:', voice.name);
+          return voice;
+        }
+    
+        // ✅ 4. BẤT KỲ giọng en-US nào (KHÔNG phải en-GB)
+        voice = voices.find(v => v.lang === 'en-US');
+        if (voice) {
+          console.log('✅ Chọn en-US:', voice.name);
+          return voice;
+        }
+    
+        // ✅ 5. Bất kỳ giọng English nào (en-GB, en-AU...)
+        voice = voices.find(v => v.lang && v.lang.startsWith('en-'));
+        if (voice) {
+          console.log('✅ Chọn English:', voice.name);
+          return voice;
+        }
+    
+        // ✅ 6. LOẠI BỎ tất cả giọng Vietnamese
+        voice = voices.find(v => 
+          v.lang && 
+          !v.lang.startsWith('vi') && 
+          !v.name.toLowerCase().includes('vietnam')
+        );
+        if (voice) {
+          console.log('⚠️ Fallback voice:', voice.name);
+          return voice;
+        }
+    
+        console.error('❌ Không tìm thấy giọng English!');
+        return null;
+      };
+    
+      // ✅ Hàm thực hiện speak
+      const doSpeak = (selectedVoice) => {
+        const utterance = new SpeechSynthesisUtterance(text.toString());
+        
+        // ✅ QUAN TRỌNG: Set voice TRƯỚC khi set lang
+        if (selectedVoice) {
+          utterance.voice = selectedVoice;
+        }
+        
+        // ✅ Luôn set lang = en-US
+        utterance.lang = 'en-US';
+        
+        // ✅ Điều chỉnh giọng nói
+        utterance.rate = 0.9;   // Tốc độ (0.1 - 10)
+        utterance.pitch = 1.0;  // Cao độ (0 - 2)
+        utterance.volume = 1.0; // Âm lượng (0 - 1)
+    
+        utterance.onstart = () => {
+          console.log(`🔊 Đang đọc: "${text}"`);
+          console.log(`   Voice: ${utterance.voice?.name || 'default'}`);
+          console.log(`   Lang: ${utterance.lang}`);
+        };
+    
+        utterance.onend = () => {
+          console.log('✅ Hoàn thành');
+        };
+    
+        utterance.onerror = (err) => {
+          if (err.error !== 'canceled') {
+            console.error('❌ Lỗi:', err.error);
+          }
+        };
+    
+        window.speechSynthesis.speak(utterance);
+      };
+    
+      // ✅ Lấy danh sách voices
+      let voices = window.speechSynthesis.getVoices();
+    
+      if (voices.length > 0) {
+        // ✅ Đã có voices, chọn ngay
+        const englishVoice = getEnglishVoice(voices);
+        doSpeak(englishVoice);
+      } else {
+        
+        // ✅ Chỉ set event 1 lần
+        window.speechSynthesis.onvoiceschanged = () => {
+          voices = window.speechSynthesis.getVoices();
+          console.log(`✅ Loaded ${voices.length} voices`);
+          
+          const englishVoice = getEnglishVoice(voices);
+          doSpeak(englishVoice);
+          
+          // ✅ Clear event sau khi dùng xong
+          window.speechSynthesis.onvoiceschanged = null;
+        };
+      }
+    };
+  
+  
 
   const renderExercise = () => {
     if (exercises.length === 0) return null;

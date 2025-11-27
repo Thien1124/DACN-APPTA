@@ -24,6 +24,7 @@ import { vocabularyService } from "../services/vocabularyService";
 import { exerciseService } from "../services/exerciseService";
 import progressService from "../services/progressService";
 
+import { xpService } from "../services/xpService"; 
 // ========== ANIMATIONS ==========
 const fadeIn = keyframes`
   from { opacity: 0; transform: translateY(20px); }
@@ -2997,6 +2998,13 @@ const Lesson = () => {
         lessonId,
         progressData
       );
+      // ✅ 2. Lấy XP reward từ lesson data
+    const xpReward = lessonData?.xpReward || 10; // Default 10 XP nếu không có
+    console.log(`💎 Earning ${xpReward} XP from lesson`);
+
+    // ✅ 3. Update XP qua API
+    const xpResult = await xpService.updateXP(xpReward);
+    console.log("✅ XP updated:", xpResult);
 
       console.log("✅ Progress updated:", response);
 
@@ -3613,6 +3621,13 @@ const Lesson = () => {
                 ✓ {correctAnswers}/{answeredQuestions.length}
               </StatValue>
             </StatCard>
+            {/* ✅ Thêm card hiển thị XP reward */}
+  <StatCard color="#1CB0F6">
+    <StatLabel color="#1CB0F6">XP NHẬN ĐƯỢC</StatLabel>
+    <StatValue color="#1CB0F6">
+      💎 +{lessonData?.xpReward || 10} XP
+    </StatValue>
+  </StatCard>
           </StatsContainer>
 
           <CompletionButtons>
@@ -3922,7 +3937,10 @@ const SpeakingText = styled.div`
   }
 `;
 
-
+const XPCard = styled(StatCard)`
+  background: linear-gradient(135deg, #1CB0F6 0%, #0D9ED8 100%);
+  border: none;
+`;
 const PlaySampleButton = styled.button`
   width: 112px;
   height: 112px;
