@@ -20,6 +20,15 @@ axiosInstance.interceptors.request.use((config) => {
 // ✅ Thêm method getAllByDeck
 export const flashcardService = {
   // ✅ GET /api/decks/:deckId - Lấy deck info only (không có flashcards)
+  getUserFlashcards: async () => {
+    try {
+      const response = await axiosInstance.get('/flashcards/user');
+      return response.data;
+    } catch (error) {
+      console.error('Get user flashcards error:', error);
+      throw error;
+    }
+  },
   getByDeck: async (deckId) => {
     try {
       // ✅ Change from /decks/:id/flashcards to /decks/:id

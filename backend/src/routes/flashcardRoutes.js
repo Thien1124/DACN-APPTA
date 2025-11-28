@@ -5,7 +5,7 @@ const noteTypeController = require('../controllers/noteTypeController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
 
-router.get('/', protect, flashcardController.getUserFlashcards); // ✅ Thay getAllFlashcards thành getUserFlashcards
+router.get('/user', protect, flashcardController.getUserFlashcards); 
 
 
 
