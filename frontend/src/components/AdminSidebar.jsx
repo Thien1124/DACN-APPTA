@@ -344,7 +344,7 @@ const AdminSidebar = ({ theme = 'light', onThemeToggle }) => {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const currentUser = {
-    name: 'vinhsonvlog',
+    name: "user",
     role: 'Super Admin',
     avatar: <FaCrown size={24} />,
   };
@@ -547,7 +547,7 @@ const AdminSidebar = ({ theme = 'light', onThemeToggle }) => {
 
         {/* Footer */}
         <SidebarFooter theme={theme}>
-          <UserCard theme={theme} onClick={() => handleNavigate('/profile')}>
+          <UserCard theme={theme} onClick={() => handleNavigate('/admin')}>
             <UserAvatar>{currentUser.avatar}</UserAvatar>
             <UserInfo collapsed={collapsed}>
               <UserName theme={theme}>{currentUser.name}</UserName>

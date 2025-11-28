@@ -35,7 +35,10 @@ const scaleIn = keyframes`
   from { opacity: 0; transform: scale(0.9); }
   to { opacity: 1; transform: scale(1); }
 `;
-
+const shimmer = keyframes`
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+`;
 const shake = keyframes`
   0%, 100% { transform: translateX(0); }
   25% { transform: translateX(-5px); }
@@ -3469,32 +3472,63 @@ const Lesson = () => {
       {/* ✅ Kết quả sau khi chấm điểm */}
       {isChecked && pronunciationScore > 0 && (
         <SpeakingResult passed={pronunciationScore >= 50}>
-          <ResultEmoji>
-            {pronunciationScore >= 50 ? '🎉' : '😕'}
-          </ResultEmoji>
-          <ResultScore passed={pronunciationScore >= 50}>
-            {pronunciationScore}%
-          </ResultScore>
-          <ResultText>
+          {/* Header với emoji và score */}
+          <ResultHeader>
+            <ResultEmoji passed={pronunciationScore >= 50}>
+              {pronunciationScore >= 50 ? '🎉' : '😕'}
+            </ResultEmoji>
+            <ResultScoreContainer>
+              <ResultScore passed={pronunciationScore >= 50}>
+                {pronunciationScore}%
+              </ResultScore>
+              <ResultScoreLabel>Điểm phát âm</ResultScoreLabel>
+            </ResultScoreContainer>
+          </ResultHeader>
+
+          {/* Progress bar cho score */}
+          <ScoreProgressBar>
+            <ScoreProgressFill score={pronunciationScore} passed={pronunciationScore >= 50} />
+          </ScoreProgressBar>
+
+          {/* Text feedback */}
+          <ResultText passed={pronunciationScore >= 50}>
             {pronunciationScore >= 50 
-              ? 'Phát âm tốt!' 
-              : 'Cần luyện tập thêm'}
+              ? 'Tuyệt vời! Phát âm rất chuẩn!' 
+              : 'Cần luyện tập thêm nhé!'}
           </ResultText>
           
-          {/* ✅ THÊM: Hiển thị transcription */}
-          <TranscriptionBox>
-            <TranscriptionLabel>Bạn đã nói:</TranscriptionLabel>
-            <TranscriptionText>
-              {transcription || 'Không nhận diện được'}
-            </TranscriptionText>
-          </TranscriptionBox>
+          {/* Transcription comparison */}
+          <TranscriptionComparison>
+            <TranscriptionBox>
+              <TranscriptionHeader>
+                <TranscriptionLabel>Bạn đã nói:</TranscriptionLabel>
+              </TranscriptionHeader>
+              <TranscriptionText passed={pronunciationScore >= 50}>
+                {transcription || 'Không nhận diện được'}
+              </TranscriptionText>
+            </TranscriptionBox>
 
-          <TranscriptionBox>
-            <TranscriptionLabel>Cần nói:</TranscriptionLabel>
-            <TranscriptionText>
-              {question.correctAnswer}
-            </TranscriptionText>
-          </TranscriptionBox>
+            <TranscriptionDivider />
+
+            <TranscriptionBox>
+              <TranscriptionHeader>
+                <TranscriptionLabel>Cần nói:</TranscriptionLabel>
+              </TranscriptionHeader>
+              <TranscriptionText correct={true}>
+                {question.correctAnswer}
+              </TranscriptionText>
+            </TranscriptionBox>
+          </TranscriptionComparison>
+
+          {/* Tips for improvement */}
+          {pronunciationScore < 50 && (
+            <ImprovementTips>
+              <TipsIcon>💡</TipsIcon>
+              <TipsText>
+                <strong>Mẹo cải thiện:</strong> Luyện tập phát âm từng từ một và chú ý trọng âm.
+              </TipsText>
+            </ImprovementTips>
+          )}
         </SpeakingResult>
       )}
     </SpeakingContainer>
@@ -3941,6 +3975,42 @@ const XPCard = styled(StatCard)`
   background: linear-gradient(135deg, #1CB0F6 0%, #0D9ED8 100%);
   border: none;
 `;
+
+const ResultText = styled.div`
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: ${props => props.passed ? '#047857' : '#dc2626'};
+  text-align: center;
+  z-index: 1;
+  animation: ${fadeIn} 0.8s ease 0.4s both;
+
+  @media (max-width: 768px) {
+    font-size: 1.25rem;
+  }
+`;
+
+const TranscriptionComparison = styled.div`
+  width: 100%;
+  display: flex;
+  gap: 1rem;
+  z-index: 1;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+`;
+
+const TranscriptionDivider = styled.div`
+  width: 2px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 1px;
+
+  @media (max-width: 768px) {
+    display: none;
+  }
+`;
+
 const PlaySampleButton = styled.button`
   width: 112px;
   height: 112px;
@@ -4134,39 +4204,139 @@ const AudioPlayback = styled.div`
     border-radius: 12px;
   }
 `;
-
 const SpeakingResult = styled.div`
   width: 100%;
-  padding: 2rem;
+  padding: 2.5rem;
   background: ${props => props.passed 
-    ? 'linear-gradient(135deg, #d7ffb8 0%, #b8f0a0 100%)'
-    : 'linear-gradient(135deg, #ffdfe0 0%, #ffcdd2 100%)'
+    ? 'linear-gradient(135deg, #d7ffb8 0%, #b8f0a0 50%, #a8e6a0 100%)'
+    : 'linear-gradient(135deg, #ffe0e0 0%, #ffd0d0 50%, #ffc0c0 100%)'
   };
-  border: 3px solid ${props => props.passed ? '#58CC02' : '#ef4444'};
-  border-radius: 20px;
+  border: 4px solid ${props => props.passed ? '#58CC02' : '#ef4444'};
+  border-radius: 24px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
-  animation: ${scaleIn} 0.5s ease;
+  gap: 1.5rem;
+  animation: ${scaleIn} 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  position: relative;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+
+  /* Subtle pattern overlay */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: ${props => props.passed 
+      ? 'radial-gradient(circle at 20% 80%, rgba(255,255,255,0.1) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(255,255,255,0.1) 0%, transparent 50%)'
+      : 'radial-gradient(circle at 20% 80%, rgba(255,255,255,0.1) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(255,255,255,0.1) 0%, transparent 50%)'
+    };
+    pointer-events: none;
+  }
+
+  @media (max-width: 768px) {
+    padding: 2rem 1.5rem;
+    gap: 1.25rem;
+  }
 `;
+const ResultHeader = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  z-index: 1;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 1rem;
+  }
+`;
+
+
 
 const ResultEmoji = styled.div`
-  font-size: 4rem;
-  animation: ${bounce} 0.6s ease;
+  font-size: 5rem;
+  animation: ${bounce} 0.8s ease;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  width: 120px;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  @media (max-width: 768px) {
+    font-size: 4rem;
+    width: 100px;
+    height: 100px;
+  }
 `;
+
+const ResultScoreContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+`;
+
+
+
 
 const ResultScore = styled.div`
-  font-size: 3rem;
-  font-weight: 700;
+  font-size: 4rem;
+  font-weight: 800;
   color: ${props => props.passed ? '#58CC02' : '#ef4444'};
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+  animation: ${scaleIn} 0.8s ease 0.2s both;
+
+  @media (max-width: 768px) {
+    font-size: 3rem;
+  }
 `;
 
-const ResultText = styled.div`
-  font-size: 1.25rem;
+
+const ResultScoreLabel = styled.div`
+  font-size: 1rem;
   font-weight: 600;
-  color: #1f2937;
-  text-align: center;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+`;
+
+const ScoreProgressBar = styled.div`
+  width: 100%;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 1;
+`;
+
+const ScoreProgressFill = styled.div`
+  height: 100%;
+  width: ${props => props.score}%;
+  background: ${props => props.passed 
+    ? 'linear-gradient(90deg, #58CC02 0%, #46A302 100%)'
+    : 'linear-gradient(90deg, #ef4444 0%, #dc2626 100%)'
+  };
+  border-radius: 20px;
+  transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%);
+    animation: shimmer 2s ease-in-out infinite;
+  }
 `;
 
 const TranscriptionBox = styled.div`
@@ -4175,6 +4345,18 @@ const TranscriptionBox = styled.div`
   background: white;
   border-radius: 12px;
   margin-top: 1rem;
+`;
+
+const TranscriptionHeader = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+`;
+
+const TranscriptionIcon = styled.div`
+  font-size: 1.25rem;
+  flex-shrink: 0;
 `;
 
 const TranscriptionLabel = styled.div`
@@ -4218,6 +4400,50 @@ const ButtonGroup = styled.div`
 
   @media (max-width: 768px) {
     flex-direction: column;
+  }
+`;
+
+
+const ImprovementTips = styled.div`
+  width: 100%;
+  padding: 1.25rem;
+  background: rgba(255, 193, 7, 0.1);
+  border: 2px solid #f59e0b;
+  border-radius: 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  z-index: 1;
+  animation: ${slideInFromBottom} 0.6s ease 0.6s both;
+
+  @media (max-width: 768px) {
+    padding: 1rem;
+    gap: 0.5rem;
+  }
+`;
+
+const TipsIcon = styled.div`
+  font-size: 1.5rem;
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+
+  @media (max-width: 768px) {
+    font-size: 1.25rem;
+  }
+`;
+
+const TipsText = styled.div`
+  font-size: 1rem;
+  font-weight: 600;
+  color: #92400e;
+  line-height: 1.5;
+
+  strong {
+    color: #f59e0b;
+  }
+
+  @media (max-width: 768px) {
+    font-size: 0.9375rem;
   }
 `;
 

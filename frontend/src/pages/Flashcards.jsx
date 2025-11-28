@@ -260,46 +260,48 @@ const Flashcards = () => {
   const [totalItems, setTotalItems] = useState(0); // total flashcards from API
   const itemsPerPage = 12;
 
-  const fetchFlashcards = async () => {
-    try {
-      setLoading(true);
-      const token = localStorage.getItem('token');
-      if (!token) throw new Error('Bạn chưa đăng nhập. Vui lòng đăng nhập để tiếp tục.');
+  
+const fetchFlashcards = async () => {
+  try {
+    setLoading(true);
+    const token = localStorage.getItem('token');
+    if (!token) throw new Error('Bạn chưa đăng nhập. Vui lòng đăng nhập để tiếp tục.');
 
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/flashcards`, {
-        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
-      });
+    // ✅ Thay đổi từ '/flashcards' thành '/flashcards/user'
+    const response = await fetch(`${process.env.REACT_APP_API_URL}/flashcards/user`, {
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+    });
 
-      if (!response.ok) {
-        if (response.status === 401) throw new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
-        if (response.status === 403) throw new Error('Bạn không có quyền truy cập flashcards này.');
-        if (response.status === 404) throw new Error('Không tìm thấy flashcards. Vui lòng liên hệ admin.');
-        throw new Error(`Lỗi server: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      if (data.success && data.flashcards) {
-        const allFlashcards = data.flashcards;
-        const total = data.count ?? allFlashcards.length;
-        setTotalItems(total);
-        const pages = Math.max(1, Math.ceil(total / itemsPerPage));
-        setTotalPages(pages);
-
-        // slice for current page
-        const start = (currentPage - 1) * itemsPerPage;
-        const end = start + itemsPerPage;
-        setFlashcards(allFlashcards.slice(start, end));
-      } else {
-        throw new Error(data.message || 'Không thể tải flashcards');
-      }
-    } catch (err) {
-      console.error('❌ Error fetching flashcards:', err);
-      setError(err.message);
-    } finally {
-      setLoading(false);
+    if (!response.ok) {
+      if (response.status === 401) throw new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+      if (response.status === 403) throw new Error('Bạn không có quyền truy cập flashcards này.');
+      if (response.status === 404) throw new Error('Không tìm thấy flashcards. Vui lòng liên hệ admin.');
+      throw new Error(`Lỗi server: ${response.status}`);
     }
-  };
+
+    const data = await response.json();
+
+    if (data.success && data.flashcards) {
+      const allFlashcards = data.flashcards;
+      const total = data.count ?? allFlashcards.length;
+      setTotalItems(total);
+      const pages = Math.max(1, Math.ceil(total / itemsPerPage));
+      setTotalPages(pages);
+
+      // slice for current page
+      const start = (currentPage - 1) * itemsPerPage;
+      const end = start + itemsPerPage;
+      setFlashcards(allFlashcards.slice(start, end));
+    } else {
+      throw new Error(data.message || 'Không thể tải flashcards');
+    }
+  } catch (err) {
+    console.error('❌ Error fetching flashcards:', err);
+    setError(err.message);
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
     fetchFlashcards();
