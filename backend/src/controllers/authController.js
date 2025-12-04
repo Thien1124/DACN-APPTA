@@ -1008,73 +1008,75 @@ const resetPassword = async (req, res) => {
   }
 };
 
+
 /**
  * Xử lý callback OAuth
  */
 const oauthSuccessRedirect = async (req, res) => {
   try {
-
-    let user = req.user;
+    const user = req.user;
+    
     if (!user) {
-      user = req.user;
-      if (!user) {
-        return res.redirect(`${process.env.CLIENT_URL}/login?error=no_user`);
-      }
-
-      user.isActive = true;
-      user.emailVerified = true;
-      await user.save();
-
-      await logAudit({
-        userId: user._id,
-        action: 'OAUTH_LOGIN',
-        status: 'SUCCESS',
-        ipAddress: getIpAddress(req),
-        userAgent: getUserAgent(req),
-        details: {
-          provider: user.provider,
-          email: user.email,
-          name: user.name
-        }
-      });
-
-      const token = generateToken(user._id);
-
-      // Task 33: Create device session for OAuth login
-      try {
-        const session = await deviceService.createDeviceSession(
-          user._id,
-          token,
-          req,
-          30 // 30 days expiration
-        );
-        console.log(`[INFO] Device session created for OAuth login: ${session._id}`);
-      } catch (deviceError) {
-        console.error('[ERROR] Failed to create device session for OAuth:', deviceError);
-        // Continue OAuth flow even if device session fails
-      }
-
-      const userData = {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        avatar: user.avatar,
-        provider: user.provider,
-        isActive: true,
-        emailVerified: true,
-        createdAt: user.createdAt
-      };
-
-      const encodedUser = encodeURIComponent(JSON.stringify(userData));
-      const timestamp = Date.now();
-      const redirectUrl = `${process.env.CLIENT_URL}/oauth/success?token=${token}&user=${encodedUser}&t=${timestamp}`;
-
-
-      return res.redirect(redirectUrl);
-
+      console.error('[ERROR] No user found in OAuth callback');
+      return res.redirect(`${process.env.CLIENT_URL}/login?error=no_user`);
     }
+
+    console.log(`[INFO] OAuth success for user: ${user.email}`);
+
+    user.isActive = true;
+    user.emailVerified = true;
+    await user.save();
+
+    await logAudit({
+      userId: user._id,
+      action: 'OAUTH_LOGIN',
+      status: 'SUCCESS',
+      ipAddress: getIpAddress(req),
+      userAgent: getUserAgent(req),
+      details: {
+        provider: user.provider,
+        email: user.email,
+        name: user.name
+      }
+    });
+
+    const token = generateToken(user._id);
+
+    // Task 33: Create device session for OAuth login
+    try {
+      const session = await deviceService.createDeviceSession(
+        user._id,
+        token,
+        req,
+        30 // 30 days expiration
+      );
+      console.log(`[INFO] Device session created for OAuth login: ${session._id}`);
+    } catch (deviceError) {
+      console.error('[ERROR] Failed to create device session for OAuth:', deviceError);
+      // Continue OAuth flow even if device session fails
+    }
+
+    const userData = {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      avatar: user.avatar,
+      provider: user.provider,
+      isActive: true,
+      emailVerified: true,
+      createdAt: user.createdAt
+    };
+
+    const encodedUser = encodeURIComponent(JSON.stringify(userData));
+    const timestamp = Date.now();
+    const redirectUrl = `${process.env.CLIENT_URL}/oauth/success?token=${token}&user=${encodedUser}&t=${timestamp}`;
+
+    console.log(`[INFO] Redirecting to: ${process.env.CLIENT_URL}/oauth/success`);
+    return res.redirect(redirectUrl);
+
   } catch (err) {
+    console.error('[ERROR] OAuth redirect error:', err);
     return res.redirect(`${process.env.CLIENT_URL}/login?error=server_error`);
   }
 };
