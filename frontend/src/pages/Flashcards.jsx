@@ -311,7 +311,7 @@ const fetchFlashcards = async () => {
   if (loading) {
     return (
       <PageWrapper>
-        <LeftSidebar />
+        <LeftSidebar leftSideVar="flashcards" />
         <MainContent>
           <LoadingText theme={theme}>Đang tải flashcards...</LoadingText>
         </MainContent>
@@ -333,7 +333,7 @@ const fetchFlashcards = async () => {
   if (error) {
     return (
       <PageWrapper>
-        <LeftSidebar />
+        <LeftSidebar leftSideVar="flashcards" />
         <MainContent>
           <div style={{ 
             display: 'flex', 
@@ -376,7 +376,7 @@ const fetchFlashcards = async () => {
 
   return (
     <PageWrapper>
-      <LeftSidebar />
+      <LeftSidebar leftSideVar="flashcards" />
       
       <MainContent>
         <Header>

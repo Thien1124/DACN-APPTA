@@ -7,7 +7,8 @@ const { protect, authorize } = require('../middleware/authMiddleware');
 
 router.get('/user', protect, flashcardController.getUserFlashcards); 
 
-
+// Route for TypeRacer game - get random flashcards
+router.get('/typeracer/random', protect, flashcardController.getRandomFlashcardsForTypeRacer);
 
 // Tất cả routes đều yêu cầu đăng nhập và quyền admin
 router.use(protect);

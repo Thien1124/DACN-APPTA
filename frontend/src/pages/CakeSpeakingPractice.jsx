@@ -450,7 +450,7 @@ const CakeSpeakingPractice = () => {
     firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
     
     window.onYouTubeIframeAPIReady = () => {
-      console.log('✅ YouTube IFrame API ready');
+       ('✅ YouTube IFrame API ready');
       setPlayerReady(true);
     };
     
@@ -521,7 +521,7 @@ const CakeSpeakingPractice = () => {
       
       recognitionRef.current = recognition;
       
-      recognition.onstart = () => {
+        recognition.onstart = () => {
         setIsRecording(true);
         setRecordingTime(0);
         setRecognizedText('');
@@ -531,9 +531,7 @@ const CakeSpeakingPractice = () => {
         }, 1000);
         
         console.log('🎤 Speech recognition started');
-      };
-      
-      recognition.onresult = (event) => {
+      };      recognition.onresult = (event) => {
         const transcript = event.results[0][0].transcript;
         const confidence = event.results[0][0].confidence;
         

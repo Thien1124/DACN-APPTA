@@ -645,7 +645,7 @@ const wrongAnswers = detail.answers.filter(a => !a.isCorrect);
 
 // Show explanations
 wrongAnswers.forEach(answer => {
-  console.log(answer.explanation);
+   (answer.explanation);
 });
 ```
 
@@ -655,8 +655,8 @@ wrongAnswers.forEach(answer => {
 const comparison = await fetch(`/api/test-history/compare/${testId}`);
 
 // Show improvement
-console.log(`Score improved by: ${comparison.improvement.scoreImprovement}%`);
-console.log(`Time improved by: ${comparison.improvement.timeImprovement} seconds`);
+ (`Score improved by: ${comparison.improvement.scoreImprovement}%`);
+ (`Time improved by: ${comparison.improvement.timeImprovement} seconds`);
 ```
 
 ---

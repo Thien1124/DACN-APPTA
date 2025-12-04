@@ -240,10 +240,59 @@ const getUserFlashcards = asyncHandler(async (req, res) => {
   }
 });
 
+/**
+ * Get random flashcards for TypeRacer game
+ * @route   GET /api/flashcards/typeracer/random
+ * @access  Private
+ */
+const getRandomFlashcardsForTypeRacer = asyncHandler(async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 10;
+    
+    // Lấy flashcards ngẫu nhiên có cả front (tiếng Anh) và back (tiếng Việt)
+    const flashcards = await Flashcard.aggregate([
+      {
+        $match: {
+          front: { $exists: true, $ne: '' },
+          back: { $exists: true, $ne: '' }
+        }
+      },
+      { $sample: { size: limit } },
+      {
+        $project: {
+          _id: 1,
+          front: 1,
+          back: 1,
+          example: 1
+        }
+      }
+    ]);
+    
+    res.status(200).json({
+      success: true,
+      count: flashcards.length,
+      flashcards: flashcards.map(card => ({
+        id: card._id,
+        english: card.front,
+        vietnamese: card.back,
+        example: card.example
+      }))
+    });
+    
+  } catch (error) {
+    console.error('❌ Get random flashcards for TypeRacer error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Không thể lấy flashcards ngẫu nhiên'
+    });
+  }
+});
+
 // ✅ SỬA: module.exports export các const variables
 module.exports = {
   getAllFlashcards,
   getUserFlashcards, 
+  getRandomFlashcardsForTypeRacer,
   getFlashcardById,
   getFlashcardsByDeck,
   createFlashcard,

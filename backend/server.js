@@ -6,6 +6,9 @@ const passport = require('passport');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
 
+const http = require('http'); // 1. Import HTTP
+const { Server } = require('socket.io'); // 2. Import Socket.io
+
 const authenticate = require('./src/middleware/authenticate');
 const connectDatabase = require('./config/database');
 const authRoutes = require('./src/routes/authRoutes');
@@ -66,6 +69,7 @@ const progressRoutes = require('./src/routes/progressRoutes');
 
 
 const app = express();
+const server = http.createServer(app);
 const PORT = process.env.PORT || 1124;
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:3000';
 
@@ -161,9 +165,9 @@ app.use('/api/calendar', calendarRoutes); // Task 21: Đồng bộ Google Calend
 app.use('/api/vocabulary-bank', require('./src/routes/vocabularyBankRoutes'));
 
 // ✅ Roadmap Topic routes
-console.log('🔄 Loading roadmap topic routes...');
+ ('🔄 Loading roadmap topic routes...');
 const roadmapTopicRoutes = require('./src/routes/roadmapTopicRoutes');
-console.log('✅ Roadmap topic routes loaded successfully');
+ ('✅ Roadmap topic routes loaded successfully');
 app.use('/api/roadmap-topic', roadmapTopicRoutes);
 
 // Test route at app level
@@ -224,7 +228,90 @@ app.get('/', (req, res) => {
     }
   });
 });
+// ==========================================
+// 4. SETUP SOCKET.IO LOGIC (GAME ENGINE)
+// ==========================================
+const io = new Server(server, {
+  cors: {
+    origin: ['http://localhost:3000', CLIENT_URL],
+    methods: ["GET", "POST"]
+  }
+});
 
+let waitingPlayer = null; // Hàng đợi người chơi (chỉ chứa 1 người chờ)
+
+// Dữ liệu mẫu (Sau này bạn có thể lấy từ DB Vocabulary)
+const SENTENCES = [
+  "Learning English opens up new opportunities.",
+  "Practice makes perfect in every skill.",
+  "Artificial Intelligence works alongside humans.",
+  "The quick brown fox jumps over the lazy dog.",
+  "Reading books expands your knowledge horizons.",
+  "Technology is constantly changing our world.",
+  "Good communication is key to success.",
+  "Time management helps you stay productive.",
+  "The internet connects people globally.",
+  "Healthy habits lead to a better quality of life.",
+  "Critical thinking skills are highly valued.",
+  "Enjoy the little things in life.",
+  "Coding is a fundamental skill in the digital age.",
+  "Every problem has a solution."
+];
+
+io.on('connection', (socket) => {
+
+  // Xử lý tìm trận
+  socket.on('find_match', (userData) => {
+    if (waitingPlayer) {
+      // Nếu đã có người chờ -> Ghép cặp
+      const roomID = `room_${waitingPlayer.id}_${socket.id}`;
+      const sentence = SENTENCES[Math.floor(Math.random() * SENTENCES.length)];
+
+      socket.join(roomID);
+      waitingPlayer.join(roomID);
+
+      // Gửi thông tin bắt đầu game cho cả 2
+      io.to(roomID).emit('game_start', {
+        roomID,
+        sentence,
+        players: {
+          [waitingPlayer.id]: waitingPlayer.userData,
+          [socket.id]: userData
+        }
+      });
+
+      waitingPlayer = null; // Reset hàng đợi
+    } else {
+      // Nếu chưa có ai -> Đưa vào hàng đợi
+      waitingPlayer = socket;
+      waitingPlayer.userData = userData; // Lưu tên user tạm vào socket
+      socket.emit('waiting_for_opponent');
+    }
+  });
+
+  // Xử lý tiến độ gõ (Gửi % hoàn thành)
+  socket.on('update_progress', ({ roomID, progress }) => {
+    // Gửi tiến độ của mình cho đối thủ trong phòng
+    socket.to(roomID).emit('opponent_progress', progress);
+  });
+
+  // Xử lý chiến thắng
+  socket.on('player_won', ({ roomID }) => {
+    io.to(roomID).emit('game_over', { winnerId: socket.id });
+  });
+
+  socket.on('disconnect', () => {
+     ('User disconnected:', socket.id);
+    if (waitingPlayer === socket) {
+      waitingPlayer = null;
+    }
+    // Xử lý báo đối thủ thoát game nếu cần
+  });
+});
+
+// ==========================================
+// KẾT THÚC SETUP SOCKET
+// ==========================================
 /**
  * PUT /api/users/profile
  * Task 8: Cập nhật thông tin profile
@@ -292,7 +379,6 @@ app.put('/api/users/profile', authenticate, async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Lỗi cập nhật profile:', error);
     res.status(500).json({
       success: false,
       message: 'Đã xảy ra lỗi khi cập nhật profile'
@@ -313,7 +399,6 @@ app.use((req, res) => {
 
 // Global error handler
 app.use((err, req, res, next) => {
-  console.error('Unhandled error:', err);
   res.status(500).json({ 
     success: false, 
     message: 'Internal server error',
@@ -322,8 +407,8 @@ app.use((err, req, res, next) => {
 });
 
 // Start server
-app.listen(PORT, () => {
-  console.log(`✅ Server đang chạy tại http://localhost:${PORT}`);
-  console.log(`✅ Static files: http://localhost:${PORT}/uploads`);
-  console.log(`✅ CORS enabled for: ${corsOptions.origin.join(', ')}`);
+server.listen(PORT, () => {
+   (`✅ Server đang chạy tại http://localhost:${PORT}`);
+   (`✅ Static files: http://localhost:${PORT}/uploads`);
+   (`✅ CORS enabled for: ${corsOptions.origin.join(', ')}`);
 });

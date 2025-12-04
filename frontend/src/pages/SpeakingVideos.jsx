@@ -251,7 +251,7 @@ const SpeakingVideos = () => {
   if (loading) {
     return (
       <LayoutContainer>
-        <LeftSidebar />
+        <LeftSidebar leftSideVar="speaking" />
         <MainContent>
           <PageContainer>
             <LoadingSpinner />
@@ -263,7 +263,7 @@ const SpeakingVideos = () => {
 
   return (
     <LayoutContainer>
-      <LeftSidebar />
+      <LeftSidebar leftSideVar="speaking" />
       <MainContent>
         <PageContainer>
           <Toast toast={toast} onClose={hideToast} />

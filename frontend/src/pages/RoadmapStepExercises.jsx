@@ -1091,7 +1091,7 @@ const RoadmapStepExercises = () => {
     
       // ✅ Hàm chọn giọng ENGLISH tốt nhất
       const getEnglishVoice = (voices) => {
-        console.log('📋 Available voices:', voices.map(v => `${v.name} (${v.lang})`));
+         console.log('📋 Available voices:', voices.map(v => `${v.name} (${v.lang})`));
     
         // ✅ 1. Ưu tiên Google US English
         let voice = voices.find(v => 
@@ -1099,7 +1099,7 @@ const RoadmapStepExercises = () => {
           v.name.toLowerCase().includes('google')
         );
         if (voice) {
-          console.log('✅ Chọn Google US:', voice.name);
+           console.log('✅ Chọn Google US:', voice.name);
           return voice;
         }
     
@@ -1109,7 +1109,7 @@ const RoadmapStepExercises = () => {
           (v.name.includes('David') || v.name.includes('Zira'))
         );
         if (voice) {
-          console.log('✅ Chọn Microsoft:', voice.name);
+           console.log('✅ Chọn Microsoft:', voice.name);
           return voice;
         }
     
@@ -1119,21 +1119,21 @@ const RoadmapStepExercises = () => {
           v.name.includes('Samantha')
         );
         if (voice) {
-          console.log('✅ Chọn Samantha:', voice.name);
+           console.log('✅ Chọn Samantha:', voice.name);
           return voice;
         }
     
         // ✅ 4. BẤT KỲ giọng en-US nào (KHÔNG phải en-GB)
         voice = voices.find(v => v.lang === 'en-US');
         if (voice) {
-          console.log('✅ Chọn en-US:', voice.name);
+           console.log('✅ Chọn en-US:', voice.name);
           return voice;
         }
     
         // ✅ 5. Bất kỳ giọng English nào (en-GB, en-AU...)
         voice = voices.find(v => v.lang && v.lang.startsWith('en-'));
         if (voice) {
-          console.log('✅ Chọn English:', voice.name);
+           console.log('✅ Chọn English:', voice.name);
           return voice;
         }
     
@@ -1144,7 +1144,7 @@ const RoadmapStepExercises = () => {
           !v.name.toLowerCase().includes('vietnam')
         );
         if (voice) {
-          console.log('⚠️ Fallback voice:', voice.name);
+           console.log('⚠️ Fallback voice:', voice.name);
           return voice;
         }
     
@@ -1170,13 +1170,13 @@ const RoadmapStepExercises = () => {
         utterance.volume = 1.0; // Âm lượng (0 - 1)
     
         utterance.onstart = () => {
-          console.log(`🔊 Đang đọc: "${text}"`);
-          console.log(`   Voice: ${utterance.voice?.name || 'default'}`);
-          console.log(`   Lang: ${utterance.lang}`);
+           console.log(`🔊 Đang đọc: "${text}"`);
+           console.log(`   Voice: ${utterance.voice?.name || 'default'}`);
+           console.log(`   Lang: ${utterance.lang}`);
         };
     
         utterance.onend = () => {
-          console.log('✅ Hoàn thành');
+           console.log('✅ Hoàn thành');
         };
     
         utterance.onerror = (err) => {
@@ -1200,7 +1200,7 @@ const RoadmapStepExercises = () => {
         // ✅ Chỉ set event 1 lần
         window.speechSynthesis.onvoiceschanged = () => {
           voices = window.speechSynthesis.getVoices();
-          console.log(`✅ Loaded ${voices.length} voices`);
+           console.log(`✅ Loaded ${voices.length} voices`);
           
           const englishVoice = getEnglishVoice(voices);
           doSpeak(englishVoice);

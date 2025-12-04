@@ -8,7 +8,7 @@ const Lesson = require('../src/models/Lesson');
 const seedTests = async () => {
   try {
     await mongoose.connect(process.env.MONGODB_URI);
-    console.log('[SUCCESS] Connected to MongoDB');
+     ('[SUCCESS] Connected to MongoDB');
 
     // Tìm admin user
     const admin = await User.findOne({ role: 'admin' });
@@ -17,12 +17,12 @@ const seedTests = async () => {
       process.exit(1);
     }
 
-    console.log('[INFO] Found admin:', admin.email);
+     ('[INFO] Found admin:', admin.email);
 
     // Tìm hoặc tạo lesson mẫu
     let lesson = await Lesson.findOne();
     if (!lesson) {
-      console.log('[INFO] No lesson found, creating sample lesson...');
+       ('[INFO] No lesson found, creating sample lesson...');
       
       // Tạo lesson đơn giản (cần biết Lesson schema)
       lesson = await Lesson.create({
@@ -32,15 +32,15 @@ const seedTests = async () => {
         // Thêm các fields bắt buộc khác nếu có
       });
       
-      console.log('[SUCCESS] Created sample lesson:', lesson._id);
+       ('[SUCCESS] Created sample lesson:', lesson._id);
     } else {
-      console.log('[INFO] Using existing lesson:', lesson._id);
+       ('[INFO] Using existing lesson:', lesson._id);
     }
 
     // Xóa dữ liệu cũ
     await Exercise.deleteMany({});
     await Test.deleteMany({});
-    console.log('[INFO] Cleared old data');
+     ('[INFO] Cleared old data');
 
     // Tạo exercises mẫu (đúng format theo schema)
     const exercises = await Exercise.insertMany([
@@ -126,7 +126,7 @@ const seedTests = async () => {
       }
     ]);
 
-    console.log(`[SUCCESS] Created ${exercises.length} exercises`);
+     (`[SUCCESS] Created ${exercises.length} exercises`);
 
     // Tạo test mẫu - ✅ ĐÃ SỬA
     const test = await Test.create({
@@ -146,10 +146,10 @@ const seedTests = async () => {
       createdBy: admin._id
     });
 
-    console.log('[SUCCESS] Created test:', test.title);
-    console.log('[INFO] Test ID:', test._id);
-    console.log('[INFO] Total exercises:', exercises.length);
-    console.log('[INFO] Total points:', test.totalPoints);
+     ('[SUCCESS] Created test:', test.title);
+     ('[INFO] Test ID:', test._id);
+     ('[INFO] Total exercises:', exercises.length);
+     ('[INFO] Total points:', test.totalPoints);
 
     // Tạo test Grammar riêng - ✅ ĐÃ SỬA
     const grammarExercises = exercises.filter(ex => 
@@ -173,32 +173,32 @@ const seedTests = async () => {
       createdBy: admin._id
     });
 
-    console.log('[SUCCESS] Created grammar test:', grammarTest.title);
-    console.log('[INFO] Grammar test ID:', grammarTest._id);
+     ('[SUCCESS] Created grammar test:', grammarTest.title);
+     ('[INFO] Grammar test ID:', grammarTest._id);
 
-    console.log('\n===========================================');
-    console.log('[SUMMARY]');
-    console.log('===========================================');
-    console.log('Exercises created:', exercises.length);
-    console.log('Tests created: 2');
-    console.log('\nTest 1:', test.title);
-    console.log('  - ID:', test._id);
-    console.log('  - Questions:', test.totalQuestions);
-    console.log('  - Points:', test.totalPoints);
-    console.log('\nTest 2:', grammarTest.title);
-    console.log('  - ID:', grammarTest._id);
-    console.log('  - Questions:', grammarTest.totalQuestions);
-    console.log('  - Points:', grammarTest.totalPoints);
-    console.log('\n===========================================');
-    console.log('[NEXT STEPS]');
-    console.log('===========================================');
-    console.log('1. Get all tests:');
-    console.log('   GET http://localhost:1124/api/tests');
-    console.log('\n2. Start test 1:');
-    console.log('   POST http://localhost:1124/api/tests/' + test._id + '/start');
-    console.log('\n3. Start test 2:');
-    console.log('   POST http://localhost:1124/api/tests/' + grammarTest._id + '/start');
-    console.log('===========================================\n');
+     ('\n===========================================');
+     ('[SUMMARY]');
+     ('===========================================');
+     ('Exercises created:', exercises.length);
+     ('Tests created: 2');
+     ('\nTest 1:', test.title);
+     ('  - ID:', test._id);
+     ('  - Questions:', test.totalQuestions);
+     ('  - Points:', test.totalPoints);
+     ('\nTest 2:', grammarTest.title);
+     ('  - ID:', grammarTest._id);
+     ('  - Questions:', grammarTest.totalQuestions);
+     ('  - Points:', grammarTest.totalPoints);
+     ('\n===========================================');
+     ('[NEXT STEPS]');
+     ('===========================================');
+     ('1. Get all tests:');
+     ('   GET http://localhost:1124/api/tests');
+     ('\n2. Start test 1:');
+     ('   POST http://localhost:1124/api/tests/' + test._id + '/start');
+     ('\n3. Start test 2:');
+     ('   POST http://localhost:1124/api/tests/' + grammarTest._id + '/start');
+     ('===========================================\n');
 
     process.exit(0);
   } catch (error) {

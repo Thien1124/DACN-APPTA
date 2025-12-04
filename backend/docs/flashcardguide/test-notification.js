@@ -4,7 +4,7 @@ const { sendTestCompletedNotification } = require('./src/services/notificationSe
 
 mongoose.connect(process.env.MONGODB_URI)
   .then(async () => {
-    console.log('✅ Connected to MongoDB');
+     ('✅ Connected to MongoDB');
 
     // Thay YOUR_USER_ID bằng ID thật
     await sendTestCompletedNotification({
@@ -15,10 +15,9 @@ mongoose.connect(process.env.MONGODB_URI)
       passed: true
     });
 
-    console.log('✅ Test notification sent');
+     ('✅ Test notification sent');
     process.exit(0);
   })
   .catch(err => {
-    console.error('❌ Error:', err);
     process.exit(1);
   });

@@ -106,7 +106,7 @@ Thêm vào tab "Tests" của request Login:
 if (pm.response.code === 200) {
     var jsonData = pm.response.json();
     pm.environment.set("token", jsonData.data.token);
-    console.log("Token saved:", jsonData.data.token);
+     ("Token saved:", jsonData.data.token);
 }
 ```
 
@@ -294,7 +294,7 @@ Body (raw JSON):
 if (pm.response.code === 201) {
     var jsonData = pm.response.json();
     pm.environment.set("session_id", jsonData.data.session.sessionId);
-    console.log("Session ID saved:", jsonData.data.session.sessionId);
+     ("Session ID saved:", jsonData.data.session.sessionId);
 }
 ```
 

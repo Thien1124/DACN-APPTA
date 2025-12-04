@@ -113,7 +113,7 @@ const seedSpeakingVideos = async () => {
   try {
     // Connect to MongoDB
     await mongoose.connect(process.env.MONGODB_URI);
-    console.log('📦 Connected to MongoDB');
+     ('📦 Connected to MongoDB');
 
     // Find admin user
     const adminUser = await User.findOne({ role: 'admin' });
@@ -123,11 +123,11 @@ const seedSpeakingVideos = async () => {
       process.exit(1);
     }
 
-    console.log(`✅ Found admin: ${adminUser.email}`);
+     (`✅ Found admin: ${adminUser.email}`);
 
     // Delete existing videos
     const deleteResult = await SpeakingVideo.deleteMany({});
-    console.log(`🗑️  Deleted ${deleteResult.deletedCount} existing videos`);
+     (`🗑️  Deleted ${deleteResult.deletedCount} existing videos`);
 
     // Create new videos
     const videosWithUploader = sampleVideos.map(video => {
@@ -145,37 +145,37 @@ const seedSpeakingVideos = async () => {
     });
 
     const createdVideos = await SpeakingVideo.insertMany(videosWithUploader);
-    console.log(`✅ Created ${createdVideos.length} speaking videos (Cake-style with bilingual sentences)`);
+     (`✅ Created ${createdVideos.length} speaking videos (Cake-style with bilingual sentences)`);
 
     // Display summary
-    console.log('\n📊 Summary by level:');
+     ('\n📊 Summary by level:');
     const beginner = createdVideos.filter(v => v.level === 'beginner').length;
     const intermediate = createdVideos.filter(v => v.level === 'intermediate').length;
     const advanced = createdVideos.filter(v => v.level === 'advanced').length;
-    console.log(`  - Beginner: ${beginner}`);
-    console.log(`  - Intermediate: ${intermediate}`);
-    console.log(`  - Advanced: ${advanced}`);
+     (`  - Beginner: ${beginner}`);
+     (`  - Intermediate: ${intermediate}`);
+     (`  - Advanced: ${advanced}`);
 
-    console.log('\n📊 Summary by category:');
+     ('\n📊 Summary by category:');
     const conversation = createdVideos.filter(v => v.category === 'conversation').length;
     const pronunciation = createdVideos.filter(v => v.category === 'pronunciation').length;
     const vocabulary = createdVideos.filter(v => v.category === 'vocabulary').length;
-    console.log(`  - Conversation: ${conversation}`);
-    console.log(`  - Pronunciation: ${pronunciation}`);
-    console.log(`  - Vocabulary: ${vocabulary}`);
+     (`  - Conversation: ${conversation}`);
+     (`  - Pronunciation: ${pronunciation}`);
+     (`  - Vocabulary: ${vocabulary}`);
 
-    console.log('\n🎉 Seeding completed successfully!');
-    console.log('\n📊 Total Sentences:', createdVideos.reduce((sum, v) => sum + (v.sentences?.length || 0), 0));
-    console.log('\n📍 You can now:');
-    console.log('   - Admin: Visit /admin/speaking-videos');
-    console.log('   - User: Visit /speaking');
-    console.log('   - Test Cake-style: Click "🍰 Cake Style" button on any video');
+     ('\n🎉 Seeding completed successfully!');
+     ('\n📊 Total Sentences:', createdVideos.reduce((sum, v) => sum + (v.sentences?.length || 0), 0));
+     ('\n📍 You can now:');
+     ('   - Admin: Visit /admin/speaking-videos');
+     ('   - User: Visit /speaking');
+     ('   - Test Cake-style: Click "🍰 Cake Style" button on any video');
 
   } catch (error) {
     console.error('❌ Error seeding videos:', error);
   } finally {
     await mongoose.disconnect();
-    console.log('\n👋 Disconnected from MongoDB');
+     ('\n👋 Disconnected from MongoDB');
   }
 };
 

@@ -289,7 +289,7 @@ exports.markAsLearned = async (req, res) => {
     
     await vocabulary.save();
     
-    console.log(`✅ Marked vocabulary "${vocabulary.word}" as learned for user ${userId}`);
+     (`✅ Marked vocabulary "${vocabulary.word}" as learned for user ${userId}`);
     
     res.status(200).json({
       success: true,
@@ -340,7 +340,7 @@ exports.toggleStarVocabulary = async (req, res) => {
     userProgress.starred = starred;
     await vocabulary.save();
     
-    console.log(`${starred ? '⭐' : '☆'} Toggled star for vocabulary "${vocabulary.word}"`);
+     (`${starred ? '⭐' : '☆'} Toggled star for vocabulary "${vocabulary.word}"`);
     
     res.status(200).json({
       success: true,

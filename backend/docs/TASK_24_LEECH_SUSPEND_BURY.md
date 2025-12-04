@@ -450,7 +450,7 @@ const cron = require('node-cron');
 // Run every day at 00:00
 cron.schedule('0 0 * * *', async () => {
   await leechService.unburyExpiredCards();
-  console.log('✅ Auto-unbury completed');
+   ('✅ Auto-unbury completed');
 });
 ```
 
@@ -998,16 +998,16 @@ const leechService = require('./services/leechService');
 
 // Run at midnight every day
 cron.schedule('0 0 * * *', async () => {
-  console.log('🔄 Running daily maintenance...');
+   ('🔄 Running daily maintenance...');
   
   // 1. Unbury expired cards
   const unburiedCount = await leechService.unburyExpiredCards();
-  console.log(`✅ Unburied ${unburiedCount} cards`);
+   (`✅ Unburied ${unburiedCount} cards`);
   
   // 2. Generate leech reports for admins
   // ... your implementation
   
-  console.log('✅ Daily maintenance completed');
+   ('✅ Daily maintenance completed');
 });
 ```
 
@@ -1031,7 +1031,7 @@ cron.schedule('0 2 * * 0', async () => {
     }
   );
   
-  console.log(`✅ Auto-unsuspended ${result.modifiedCount} old cards`);
+   (`✅ Auto-unsuspended ${result.modifiedCount} old cards`);
 });
 ```
 

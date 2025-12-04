@@ -1175,7 +1175,7 @@ Bật logging debug:
 ```javascript
 // Trong file service
 const DEBUG = process.env.DEBUG_INTERACTIVE === 'true';
-if (DEBUG) console.log('Dữ liệu trò chơi:', gameData);
+if (DEBUG)  ('Dữ liệu trò chơi:', gameData);
 ```
 
 ### Liên Hệ

@@ -45,7 +45,7 @@ const setup2FA = async (req, res) => {
 
     // Nếu có force=true, log warning
     if (force === 'true' && user.twoFactorAuth && user.twoFactorAuth.secret) {
-      console.log(`⚠️ FORCE RESET: User ${user.email} đang thiết lập lại 2FA`);
+       (`⚠️ FORCE RESET: User ${user.email} đang thiết lập lại 2FA`);
     }
 
     // Tạo secret key cho TOTP
@@ -93,7 +93,7 @@ const setup2FA = async (req, res) => {
       }
     });
 
-    console.log(`✅ User ${user.email} đã setup 2FA (chưa kích hoạt)`);
+     (`✅ User ${user.email} đã setup 2FA (chưa kích hoạt)`);
 
     res.json({
       success: true,
@@ -214,7 +214,7 @@ const enable2FA = async (req, res) => {
       userAgent: getUserAgent(req)
     });
 
-    console.log(`✅ User ${user.email} đã kích hoạt 2FA thành công`);
+     (`✅ User ${user.email} đã kích hoạt 2FA thành công`);
 
     res.json({
       success: true,
@@ -303,7 +303,7 @@ const verify2FA = async (req, res) => {
         user.twoFactorAuth.backupCodes.splice(codeIndex, 1);
         await user.save();
         
-        console.log(`⚠️ User ${user.email} đã sử dụng backup code (còn ${user.twoFactorAuth.backupCodes.length}/10 codes)`);
+         (`⚠️ User ${user.email} đã sử dụng backup code (còn ${user.twoFactorAuth.backupCodes.length}/10 codes)`);
       }
     }
 
@@ -467,7 +467,7 @@ const disable2FA = async (req, res) => {
       userAgent: getUserAgent(req)
     });
 
-    console.log(`✅ User ${user.email} đã tắt 2FA`);
+     (`✅ User ${user.email} đã tắt 2FA`);
 
     res.json({
       success: true,

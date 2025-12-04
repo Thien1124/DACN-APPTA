@@ -177,7 +177,7 @@ const revokeAllOtherSessions = async (req, res) => {
         
         if (currentSession) {
           currentSessionId = currentSession._id;
-          console.log(`[INFO] Found current session by token: ${currentSessionId}`);
+           (`[INFO] Found current session by token: ${currentSessionId}`);
         }
       }
     }

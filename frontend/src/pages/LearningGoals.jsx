@@ -611,7 +611,7 @@ const LearningGoals = () => {
     <PageWrapper theme={theme}>
       <Toast toast={toast} onClose={hideToast} />
     
-      <LeftSidebar />
+      <LeftSidebar leftSideVar="goals" />
       <PageLayout>
         <FormWrapper>
           <MainContent>

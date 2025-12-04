@@ -43,11 +43,10 @@ async function generateAudioWithGoogleTTS(text, outputPath) {
     const [response] = await client.synthesizeSpeech(request);
     
     await fs.promises.writeFile(outputPath, response.audioContent, 'binary');
-    console.log(`✅ Audio saved to: ${outputPath}`);
+     (`✅ Audio saved to: ${outputPath}`);
     
     return outputPath;
   } catch (error) {
-    console.error('❌ Error generating audio:', error.message);
     return null;
   }
 }
@@ -68,7 +67,7 @@ async function createMockAudioFile(word, outputPath) {
   ]);
 
   await fs.promises.writeFile(outputPath, mockWebMData);
-  console.log(`✅ Mock audio created: ${outputPath}`);
+   (`✅ Mock audio created: ${outputPath}`);
   
   return outputPath;
 }
@@ -87,7 +86,7 @@ async function generateSampleRecording(word, targetAccuracy = 90) {
   let audioPath = await generateAudioWithGoogleTTS(word, outputPath);
   
   if (!audioPath) {
-    console.log('⚠️  Google TTS not available, creating mock audio...');
+     ('⚠️  Google TTS not available, creating mock audio...');
     audioPath = await createMockAudioFile(word, outputPath);
   }
 
@@ -103,7 +102,7 @@ async function generateSampleRecording(word, targetAccuracy = 90) {
 
   const metadataPath = path.join(outputDir, `${word}_${targetAccuracy}pct.json`);
   await fs.promises.writeFile(metadataPath, JSON.stringify(metadata, null, 2));
-  console.log(`✅ Metadata saved: ${metadataPath}`);
+   (`✅ Metadata saved: ${metadataPath}`);
 
   return { audioPath, metadata };
 }
@@ -112,30 +111,29 @@ async function generateSampleRecording(word, targetAccuracy = 90) {
  * Main function
  */
 async function main() {
-  console.log('🎤 Generating sample audio files...\n');
+   ('🎤 Generating sample audio files...\n');
 
   // Generate "beautiful" with 90% accuracy
-  console.log('--- Generating: beautiful (90% accuracy) ---');
+   ('--- Generating: beautiful (90% accuracy) ---');
   const beautiful90 = await generateSampleRecording('beautiful', 90);
   
   // Generate more samples with different accuracies
-  console.log('\n--- Generating: beautiful (70% accuracy) ---');
+   ('\n--- Generating: beautiful (70% accuracy) ---');
   const beautiful70 = await generateSampleRecording('beautiful', 70);
   
-  console.log('\n--- Generating: beautiful (100% accuracy) ---');
+   ('\n--- Generating: beautiful (100% accuracy) ---');
   const beautiful100 = await generateSampleRecording('beautiful', 100);
 
-  console.log('\n✅ All sample files generated!');
-  console.log('\n📁 Location: backend/uploads/samples/');
-  console.log('\n📋 Usage:');
-  console.log('   - Use these files to test speech recognition endpoints');
-  console.log('   - Upload via Postman: POST /api/speech/analyze/:flashcardId');
-  console.log('   - Form-data: audio = @beautiful_90pct.webm');
+   ('\n✅ All sample files generated!');
+   ('\n📁 Location: backend/uploads/samples/');
+   ('\n📋 Usage:');
+   ('   - Use these files to test speech recognition endpoints');
+   ('   - Upload via Postman: POST /api/speech/analyze/:flashcardId');
+   ('   - Form-data: audio = @beautiful_90pct.webm');
 }
 
 // Run if executed directly
 if (require.main === module) {
-  main().catch(console.error);
 }
 
 module.exports = {

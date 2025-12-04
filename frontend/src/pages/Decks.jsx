@@ -1063,7 +1063,7 @@ const Decks = () => {
 
   return (
     <PageWrapper theme={theme}>
-      <LeftSidebar />
+      <LeftSidebar leftSideVar="decks" />
       <PageLayout>
         <FormWrapper>
           <MainContent>

@@ -46,7 +46,7 @@ exports.exportDeckCSV = async (req, res) => {
     }
 
     // Generate CSV
-    console.log('[Export CSV Controller] Generating CSV with options:', {
+     ('[Export CSV Controller] Generating CSV with options:', {
       includeStats: includeStats === 'true',
       includeMetadata: includeMetadata === 'true',
       tags: tags ? tags.split(',') : null,

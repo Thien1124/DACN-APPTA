@@ -266,7 +266,7 @@ const RoadmapStep = () => {
       const response = await roadmapTopicService.getStep(roadmapId, stepNumber);
       
       if (response.success) {
-        console.log('📦 Loaded step data:', response.data);
+         ('📦 Loaded step data:', response.data);
         
         // Kiểm tra nếu có exercises
         if (response.data.exercises && response.data.exercises.length > 0) {

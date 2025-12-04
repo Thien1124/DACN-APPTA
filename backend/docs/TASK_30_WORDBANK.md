@@ -960,7 +960,7 @@ const PersonalWordbank = () => {
         }
       );
       
-      console.log('Next review:', response.data.data.nextReviewDate);
+       ('Next review:', response.data.data.nextReviewDate);
       fetchWordbank();
     } catch (error) {
       console.error('Error updating progress:', error);

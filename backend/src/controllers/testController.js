@@ -201,7 +201,7 @@ exports.startTest = async (req, res) => {
       }
     });
 
-    console.log(`[INFO] User ${userId} started test ${testId}`);
+     (`[INFO] User ${userId} started test ${testId}`);
 
     res.json({
       success: true,
@@ -392,7 +392,7 @@ exports.completeTest = async (req, res) => {
       console.error('[ERROR] Failed to send notification:', notifError);
     }
 
-    console.log(`[SUCCESS] User ${req.user._id} completed test ${attempt.testId._id} - Score: ${attempt.percentage}%`);
+     (`[SUCCESS] User ${req.user._id} completed test ${attempt.testId._id} - Score: ${attempt.percentage}%`);
 
     res.json({
       success: true,
@@ -508,7 +508,7 @@ exports.createTest = async (req, res) => {
       createdBy: req.user._id
     });
     
-    console.log(`[SUCCESS] Admin ${req.user._id} created test ${test._id}`);
+     (`[SUCCESS] Admin ${req.user._id} created test ${test._id}`);
     
     res.status(201).json({
       success: true,
@@ -547,7 +547,7 @@ exports.updateTest = async (req, res) => {
       });
     }
     
-    console.log(`[SUCCESS] Admin ${req.user._id} updated test ${test._id}`);
+     (`[SUCCESS] Admin ${req.user._id} updated test ${test._id}`);
     
     res.status(200).json({
       success: true,
@@ -578,7 +578,7 @@ exports.deleteTest = async (req, res) => {
     
     await test.deleteOne();
     
-    console.log(`[SUCCESS] Admin ${req.user._id} deleted test ${req.params.id}`);
+     (`[SUCCESS] Admin ${req.user._id} deleted test ${req.params.id}`);
     
     res.status(200).json({
       success: true,
@@ -695,7 +695,7 @@ exports.togglePublishTest = async (req, res) => {
     test.isPublished = !test.isPublished;
     await test.save();
     
-    console.log(`[SUCCESS] Admin ${req.user._id} toggled publish status of test ${test._id} to ${test.isPublished}`);
+     (`[SUCCESS] Admin ${req.user._id} toggled publish status of test ${test._id} to ${test.isPublished}`);
     
     res.status(200).json({
       success: true,

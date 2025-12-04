@@ -34,7 +34,7 @@ const logAudit = async ({
     await auditLog.save();
     
     const statusIcon = status === 'SUCCESS' ? '✅' : status === 'FAILED' ? '❌' : '⏳';
-    console.log(`📝 Audit Log: ${statusIcon} ${action} - User: ${userId}`);
+     (`📝 Audit Log: ${statusIcon} ${action} - User: ${userId}`);
     
     return auditLog;
   } catch (error) {

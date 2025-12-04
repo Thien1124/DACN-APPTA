@@ -49,7 +49,7 @@ router.post(
       
       const audioBuffer = req.file.buffer;
       
-      console.log('🎤 Analyzing speech:', {
+       ('🎤 Analyzing speech:', {
         userId: req.user._id,
         targetText,
         audioSize: audioBuffer.length,
@@ -66,7 +66,7 @@ router.post(
         }
       );
       
-      console.log('📊 Analysis result:', result);
+       ('📊 Analysis result:', result);
       
       res.json({
         success: true,

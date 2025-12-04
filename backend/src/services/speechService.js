@@ -30,8 +30,8 @@ try {
       apiKey: process.env.OPENAI_API_KEY,
     });
     isWhisperConfigured = true;
-    console.log('🎤 OpenAI Whisper API configured');
-    console.log('📝 API Key:', process.env.OPENAI_API_KEY.substring(0, 10) + '...');
+     ('🎤 OpenAI Whisper API configured');
+     ('📝 API Key:', process.env.OPENAI_API_KEY.substring(0, 10) + '...');
   } else {
     console.warn('⚠️ OPENAI_API_KEY not found in .env');
   }
@@ -99,16 +99,16 @@ async function transcribeAudioWhisper(audioBuffer, language = 'en') {
   }
   
   try {
-    console.log('🔍 Starting Whisper transcription...');
-    console.log('📊 Audio buffer size:', audioBuffer.length, 'bytes');
+     ('🔍 Starting Whisper transcription...');
+     ('📊 Audio buffer size:', audioBuffer.length, 'bytes');
     
     // Tạo temp file
     const tempFilePath = path.join(__dirname, `temp_audio_${Date.now()}.webm`);
     await fsPromises.writeFile(tempFilePath, audioBuffer);
-    console.log('💾 Saved temp file:', tempFilePath);
+     ('💾 Saved temp file:', tempFilePath);
     
     // ✅ SỬA: Gọi API đúng cách
-    console.log('📤 Sending to Whisper API...');
+     ('📤 Sending to Whisper API...');
     const transcription = await openai.audio.transcriptions.create({
       file: fs.createReadStream(tempFilePath),
       model: 'whisper-1',
@@ -116,7 +116,7 @@ async function transcribeAudioWhisper(audioBuffer, language = 'en') {
       response_format: 'json'
     });
     
-    console.log('✅ Whisper response:', transcription);
+     ('✅ Whisper response:', transcription);
     
     // Cleanup
     await fsPromises.unlink(tempFilePath).catch(err => 
@@ -146,16 +146,16 @@ async function transcribeAudioWhisper(audioBuffer, language = 'en') {
  * Analyze pronunciation
  */
 function analyzePronunciation(targetText, transcribedText, targetIPA = null) {
-  console.log('📝 Analyzing pronunciation...');
-  console.log('Target:', targetText);
-  console.log('Transcribed:', transcribedText);
+   ('📝 Analyzing pronunciation...');
+   ('Target:', targetText);
+   ('Transcribed:', transcribedText);
   
   const normalizedTarget = targetText.toLowerCase().trim();
   const normalizedTranscribed = transcribedText.toLowerCase().trim();
   
   // Exact match
   if (normalizedTranscribed === normalizedTarget) {
-    console.log('✅ Exact match!');
+     ('✅ Exact match!');
     return {
       pronunciationScore: 100,
       accuracyScore: 100,
@@ -169,8 +169,8 @@ function analyzePronunciation(targetText, transcribedText, targetIPA = null) {
   const similarity = calculateSimilarity(normalizedTranscribed, normalizedTarget);
   const score = Math.round(similarity * 100);
   
-  console.log('📊 Similarity:', similarity);
-  console.log('📊 Score:', score);
+   ('📊 Similarity:', similarity);
+   ('📊 Score:', score);
   
   return {
     pronunciationScore: score,
@@ -366,9 +366,9 @@ class SpeechService {
     this.useMock = !this.useWhisper;
     
     if (this.useWhisper) {
-      console.log('🎤 Using OpenAI Whisper API');
+       ('🎤 Using OpenAI Whisper API');
     } else {
-      console.log('🧪 Using MOCK MODE');
+       ('🧪 Using MOCK MODE');
     }
   }
 
@@ -376,7 +376,7 @@ class SpeechService {
    * Mock transcribe audio
    */
   async transcribeAudio(audioBuffer, language = 'en-US') {
-    console.log('🧪 Mock transcribe');
+     ('🧪 Mock transcribe');
     
     // Giả lập delay
     await new Promise(resolve => setTimeout(resolve, 500));
@@ -392,19 +392,19 @@ class SpeechService {
    * Mock analyze speaking
    */
   async analyzeSpeaking(audioBuffer, targetText, options = {}) {
-    console.log('=' .repeat(50));
-    console.log('🎯 analyzeSpeaking called');
-    console.log('Target text:', targetText);
-    console.log('Buffer size:', audioBuffer.length);
-    console.log('Use Whisper:', this.useWhisper);
-    console.log('=' .repeat(50));
+     ('=' .repeat(50));
+     ('🎯 analyzeSpeaking called');
+     ('Target text:', targetText);
+     ('Buffer size:', audioBuffer.length);
+     ('Use Whisper:', this.useWhisper);
+     ('=' .repeat(50));
     
     if (this.useWhisper) {
       // Use real Whisper API
       return await analyzeSpeech(audioBuffer, targetText, options);
     } else {
       // Mock fallback
-      console.log('🧪 Mock analysis for:', targetText);
+       ('🧪 Mock analysis for:', targetText);
       
       await new Promise(resolve => setTimeout(resolve, 1000));
       

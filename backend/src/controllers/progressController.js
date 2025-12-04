@@ -46,8 +46,8 @@ exports.updateLessonProgress = async (req, res) => {
     const userId = req.user.id; // ✅ Sử dụng req.user.id
     const { completed, score, timeSpent } = req.body;
     
-    console.log(`📚 Updating lesson progress for user ${userId}, lesson ${lessonId}`);
-    console.log(`📊 Data: completed=${completed}, score=${score}, timeSpent=${timeSpent}`);
+     (`📚 Updating lesson progress for user ${userId}, lesson ${lessonId}`);
+     (`📊 Data: completed=${completed}, score=${score}, timeSpent=${timeSpent}`);
     
     // ✅ Validate lessonId
     if (!lessonId || lessonId === 'undefined' || lessonId === 'null') {
@@ -67,7 +67,7 @@ exports.updateLessonProgress = async (req, res) => {
         currentLesson: lessonId,
         lessonProgress: new Map()
       });
-      console.log('✅ Created new progress record');
+       ('✅ Created new progress record');
     }
     
     // Cập nhật lesson progress
@@ -91,13 +91,13 @@ exports.updateLessonProgress = async (req, res) => {
     // ✅ Nếu lesson hoàn thành, thêm vào completedLessons và đánh dấu từ vựng đã học
     if (completed && !progress.completedLessons.includes(lessonId)) {
       progress.completedLessons.push(lessonId);
-      console.log(`✅ Marked lesson ${lessonId} as completed`);
+       (`✅ Marked lesson ${lessonId} as completed`);
       
       // ✅ TỰ ĐỘNG ĐÁNH DẤU TẤT CẢ TỪ VỰNG TRONG LESSON LÀ ĐÃ HỌC
       try {
         const vocabularies = await Vocabulary.find({ lesson: lessonId });
         
-        console.log(`📖 Found ${vocabularies.length} vocabularies in lesson ${lessonId}`);
+         (`📖 Found ${vocabularies.length} vocabularies in lesson ${lessonId}`);
         
         let markedCount = 0;
         let alreadyLearnedCount = 0;
@@ -118,14 +118,14 @@ exports.updateLessonProgress = async (req, res) => {
             });
             await vocab.save();
             markedCount++;
-            console.log(`✅ Marked vocabulary "${vocab.word}" as learned`);
+             (`✅ Marked vocabulary "${vocab.word}" as learned`);
           } else {
             alreadyLearnedCount++;
-            console.log(`ℹ️ Vocabulary "${vocab.word}" already learned`);
+             (`ℹ️ Vocabulary "${vocab.word}" already learned`);
           }
         }
         
-        console.log(`📊 Auto-mark summary: ${markedCount} new, ${alreadyLearnedCount} already learned`);
+         (`📊 Auto-mark summary: ${markedCount} new, ${alreadyLearnedCount} already learned`);
       } catch (vocabError) {
         console.error('❌ Error auto-marking vocabularies:', vocabError);
         // Không throw error để không làm fail progress update
@@ -139,7 +139,7 @@ exports.updateLessonProgress = async (req, res) => {
     
     await progress.save();
     
-    console.log(`✅ Lesson progress updated successfully`);
+     (`✅ Lesson progress updated successfully`);
     
     res.json({
       success: true,

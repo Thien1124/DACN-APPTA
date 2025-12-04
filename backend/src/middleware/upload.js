@@ -6,7 +6,7 @@ const fs = require('fs');
 const uploadDir = 'uploads/avatars';
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
-  console.log(`Đã tạo thư mục: ${uploadDir}`);
+   (`Đã tạo thư mục: ${uploadDir}`);
 }
 
 // Cấu hình lưu trữ file

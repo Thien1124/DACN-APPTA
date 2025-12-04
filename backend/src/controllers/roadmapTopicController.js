@@ -11,10 +11,10 @@ const geminiService = require('../services/geminiService');
  * @access  Private
  */
 exports.getCurrentRoadmap = async (req, res) => {
-  console.log('🗺️ getCurrentRoadmap called with user:', req.user?.id);
+   ('🗺️ getCurrentRoadmap called with user:', req.user?.id);
   try {
     const userId = req.user.id;
-    console.log('🔍 Looking for roadmap with userId:', userId);
+     ('🔍 Looking for roadmap with userId:', userId);
 
     const roadmap = await LearningRoadmap.findOne({
       user: userId,
@@ -111,7 +111,7 @@ exports.completeStep = async (req, res) => {
 
     await roadmap.save();
 
-    console.log(`✅ Step ${stepNumber} completed with score ${score}`);
+     (`✅ Step ${stepNumber} completed with score ${score}`);
 
     res.status(200).json({
       success: true,
@@ -139,7 +139,7 @@ exports.getStepExercises = async (req, res) => {
     const userId = req.user.id;
     const { roadmapId, stepNumber } = req.params;
 
-    console.log('📥 Get step exercises:', { roadmapId, stepNumber, userId });
+     ('📥 Get step exercises:', { roadmapId, stepNumber, userId });
 
     const roadmap = await LearningRoadmap.findOne({
       _id: roadmapId,
@@ -162,11 +162,11 @@ exports.getStepExercises = async (req, res) => {
       });
     }
 
-    console.log('✅ Found step:', step.stepNumber, 'with exercises:', step.exercises?.length || 0);
+     ('✅ Found step:', step.stepNumber, 'with exercises:', step.exercises?.length || 0);
 
     // 🆕 Nếu step chưa có exercises, tự động generate
     if (!step.exercises || step.exercises.length === 0) {
-      console.log('⚠️ Step has no exercises. Auto-generating...');
+       ('⚠️ Step has no exercises. Auto-generating...');
       
       try {
         const skillMapping = {
@@ -207,7 +207,7 @@ exports.getStepExercises = async (req, res) => {
           );
           
           if (updated) {
-            console.log(`✅ Auto-generated ${exerciseData.length} exercises for step ${stepNumber}`);
+             (`✅ Auto-generated ${exerciseData.length} exercises for step ${stepNumber}`);
             // Cập nhật roadmap object để tiếp tục xử lý
             const stepIndex = roadmap.steps.findIndex(s => s.stepNumber === parseInt(stepNumber));
             if (stepIndex !== -1) {
@@ -215,7 +215,7 @@ exports.getStepExercises = async (req, res) => {
             }
           }
         } else {
-          console.log('⚠️ Could not generate exercises');
+           ('⚠️ Could not generate exercises');
         }
       } catch (genError) {
         console.error('❌ Auto-generate error:', genError);
@@ -230,7 +230,7 @@ exports.getStepExercises = async (req, res) => {
     });
 
     const updatedStep = roadmap.steps.find(s => s.stepNumber === parseInt(stepNumber));
-    console.log('✅ Final step exercises count:', updatedStep.exercises?.length || 0);
+     ('✅ Final step exercises count:', updatedStep.exercises?.length || 0);
 
     // Transform exercises cho frontend
     let transformedExercises = [];
@@ -259,7 +259,7 @@ exports.getStepExercises = async (req, res) => {
       });
     }
 
-    console.log('✅ Total transformed exercises:', transformedExercises.length);
+     ('✅ Total transformed exercises:', transformedExercises.length);
 
     res.status(200).json({
       success: true,
@@ -315,8 +315,8 @@ exports.generateRoadmap = async (req, res) => {
       topic = 'General English'
     } = req.body;
 
-    console.log(`🗺️ Generating comprehensive roadmap for user ${userId}`);
-    console.log(`📊 Config: ${startLevel} → ${endLevel}, 1 step per level with ALL skills & difficulties`);
+     (`🗺️ Generating comprehensive roadmap for user ${userId}`);
+     (`📊 Config: ${startLevel} → ${endLevel}, 1 step per level with ALL skills & difficulties`);
 
     const levels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
     const skills = ['vocabulary', 'grammar', 'listening', 'reading', 'speaking', 'writing', 'mixed'];
@@ -338,11 +338,11 @@ exports.generateRoadmap = async (req, res) => {
     let stepNumber = 1;
     let totalXP = 0;
 
-    console.log(`📈 Structure: Each level = 1 step containing (7 skills × 3 difficulties) exercises`);
-    console.log(`🔄 Processing ${selectedLevels.length} levels: ${selectedLevels.join(', ')}`);
+     (`📈 Structure: Each level = 1 step containing (7 skills × 3 difficulties) exercises`);
+     (`🔄 Processing ${selectedLevels.length} levels: ${selectedLevels.join(', ')}`);
 
     for (const level of selectedLevels) {
-      console.log(`\n🎯 Level ${level}: Generating 1 comprehensive step with ALL content...`);
+       (`\n🎯 Level ${level}: Generating 1 comprehensive step with ALL content...`);
       
       const levelXP = (40 * 7) + (60 * 7) + (80 * 7); // Easy + Medium + Hard for all skills
       totalXP += levelXP;
@@ -351,7 +351,7 @@ exports.generateRoadmap = async (req, res) => {
 
       stepPromises.push(
         (async () => {
-          console.log(`  📝 Step ${currentStepNumber}: Trình Độ ${level}`);
+           (`  📝 Step ${currentStepNumber}: Trình Độ ${level}`);
           
           // Generate exercises for ALL skills and ALL difficulties
           const allExercises = [];
@@ -359,7 +359,7 @@ exports.generateRoadmap = async (req, res) => {
           
           for (const skill of skills) {
             for (const difficulty of difficulties) {
-              console.log(`    🔹 Generating ${skill} - ${difficulty}...`);
+               (`    🔹 Generating ${skill} - ${difficulty}...`);
               
               const exerciseMetadata = await generateExercisesForStep(
                 skill, 
@@ -374,14 +374,14 @@ exports.generateRoadmap = async (req, res) => {
               
               // Generate vocabulary bank for vocabulary skill (only once per level)
               if (skill === 'vocabulary' && difficulty === 'easy' && !vocabularyBank) {
-                console.log(`    📚 Generating vocabulary bank for ${level}...`);
+                 (`    📚 Generating vocabulary bank for ${level}...`);
                 vocabularyBank = await generateVocabularyForLevel(level, topic, userId);
-                console.log(`    ✅ Vocabulary bank generated: ${vocabularyBank.length} words`);
+                 (`    ✅ Vocabulary bank generated: ${vocabularyBank.length} words`);
               }
             }
           }
 
-          console.log(`  ✅ Generated ${allExercises.length} exercises for ${level}`);
+           (`  ✅ Generated ${allExercises.length} exercises for ${level}`);
 
           return {
             stepNumber: currentStepNumber,
@@ -403,8 +403,8 @@ exports.generateRoadmap = async (req, res) => {
       );
     }
 
-    console.log(`\n🚀 Executing ${stepPromises.length} level generation tasks...`);
-    console.log(`⚡ Processing in batches to avoid overload...`);
+     (`\n🚀 Executing ${stepPromises.length} level generation tasks...`);
+     (`⚡ Processing in batches to avoid overload...`);
     
     // Process in batches (typically small number of levels, but keep batching for consistency)
     const batchSize = 3;
@@ -412,16 +412,16 @@ exports.generateRoadmap = async (req, res) => {
     
     for (let i = 0; i < stepPromises.length; i += batchSize) {
       const batch = stepPromises.slice(i, i + batchSize);
-      console.log(`  🔄 Processing batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(stepPromises.length / batchSize)} (${batch.length} levels)...`);
+       (`  🔄 Processing batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(stepPromises.length / batchSize)} (${batch.length} levels)...`);
       const batchResults = await Promise.all(batch);
       steps.push(...batchResults);
     }
     
     steps.sort((a, b) => a.stepNumber - b.stepNumber);
-    console.log(`\n✅ All ${steps.length} level steps generated and sorted.`);
+     (`\n✅ All ${steps.length} level steps generated and sorted.`);
 
     // Calculate statistics
-    console.log('\n📊 Roadmap Statistics:');
+     ('\n📊 Roadmap Statistics:');
     steps.forEach(step => {
       const skillCount = {};
       const difficultyCount = { easy: 0, medium: 0, hard: 0 };
@@ -431,16 +431,16 @@ exports.generateRoadmap = async (req, res) => {
         difficultyCount[ex.difficulty.toLowerCase()]++;
       });
       
-      console.log(`  ${step.level}: ${step.exercises.length} exercises`);
-      console.log(`    Skills: ${Object.entries(skillCount).map(([k,v]) => `${k}=${v}`).join(', ')}`);
-      console.log(`    Difficulties: Easy=${difficultyCount.easy}, Medium=${difficultyCount.medium}, Hard=${difficultyCount.hard}`);
+       (`  ${step.level}: ${step.exercises.length} exercises`);
+       (`    Skills: ${Object.entries(skillCount).map(([k,v]) => `${k}=${v}`).join(', ')}`);
+       (`    Difficulties: Easy=${difficultyCount.easy}, Medium=${difficultyCount.medium}, Hard=${difficultyCount.hard}`);
     });
 
-    console.log('\n⏳ Deactivating old roadmaps...');
+     ('\n⏳ Deactivating old roadmaps...');
     await LearningRoadmap.updateMany({ user: userId, isActive: true }, { isActive: false });
 
-    console.log('✅ Creating new comprehensive roadmap in database...');
-    console.log(`📋 Roadmap data: steps=${steps.length}, totalXP=${totalXP}, user=${userId}`);
+     ('✅ Creating new comprehensive roadmap in database...');
+     (`📋 Roadmap data: steps=${steps.length}, totalXP=${totalXP}, user=${userId}`);
     
     try {
       const roadmap = await LearningRoadmap.create({
@@ -456,11 +456,11 @@ exports.generateRoadmap = async (req, res) => {
         estimatedCompletionDate: new Date(Date.now() + (steps.length * 2 * 24 * 60 * 60 * 1000))
       });
 
-      console.log(`\n🎉 Successfully created comprehensive roadmap ${roadmap._id}:`);
-      console.log(`   📚 Total levels: ${steps.length}`);
-      console.log(`   🎯 Levels: ${selectedLevels.join(' → ')}`);
-      console.log(`   💎 Total XP: ${totalXP}`);
-      console.log(`   ⏱️ Estimated completion: ${roadmap.estimatedCompletionDate.toLocaleDateString('vi-VN')}`);
+       (`\n🎉 Successfully created comprehensive roadmap ${roadmap._id}:`);
+       (`   📚 Total levels: ${steps.length}`);
+       (`   🎯 Levels: ${selectedLevels.join(' → ')}`);
+       (`   💎 Total XP: ${totalXP}`);
+       (`   ⏱️ Estimated completion: ${roadmap.estimatedCompletionDate.toLocaleDateString('vi-VN')}`);
 
       res.status(201).json({
         success: true,
@@ -567,7 +567,7 @@ exports.getStepExercises = async (req, res) => {
     const userId = req.user.id;
     const { roadmapId, stepNumber } = req.params;
 
-    console.log('📥 Get step exercises:', { roadmapId, stepNumber, userId });
+     ('📥 Get step exercises:', { roadmapId, stepNumber, userId });
 
     const roadmap = await LearningRoadmap.findOne({
       _id: roadmapId,
@@ -590,11 +590,11 @@ exports.getStepExercises = async (req, res) => {
       });
     }
 
-    console.log('✅ Found step:', step.stepNumber, 'with exercises:', step.exercises?.length || 0);
+     ('✅ Found step:', step.stepNumber, 'with exercises:', step.exercises?.length || 0);
 
     // 🆕 Nếu step chưa có exercises, tự động generate
     if (!step.exercises || step.exercises.length === 0) {
-      console.log('⚠️ Step has no exercises. Auto-generating...');
+       ('⚠️ Step has no exercises. Auto-generating...');
       
       try {
         const skillMapping = {
@@ -635,7 +635,7 @@ exports.getStepExercises = async (req, res) => {
           );
           
           if (updated) {
-            console.log(`✅ Auto-generated ${exerciseData.length} exercises for step ${stepNumber}`);
+             (`✅ Auto-generated ${exerciseData.length} exercises for step ${stepNumber}`);
             // Cập nhật roadmap object để tiếp tục xử lý
             const stepIndex = roadmap.steps.findIndex(s => s.stepNumber === parseInt(stepNumber));
             if (stepIndex !== -1) {
@@ -643,7 +643,7 @@ exports.getStepExercises = async (req, res) => {
             }
           }
         } else {
-          console.log('⚠️ Could not generate exercises');
+           ('⚠️ Could not generate exercises');
         }
       } catch (genError) {
         console.error('❌ Auto-generate error:', genError);
@@ -658,7 +658,7 @@ exports.getStepExercises = async (req, res) => {
     });
 
     const updatedStep = roadmap.steps.find(s => s.stepNumber === parseInt(stepNumber));
-    console.log('✅ Final step exercises count:', updatedStep.exercises?.length || 0);
+     ('✅ Final step exercises count:', updatedStep.exercises?.length || 0);
 
     // Transform exercises cho frontend
     let transformedExercises = [];
@@ -687,7 +687,7 @@ exports.getStepExercises = async (req, res) => {
       });
     }
 
-    console.log('✅ Total transformed exercises:', transformedExercises.length);
+     ('✅ Total transformed exercises:', transformedExercises.length);
 
     res.status(200).json({
       success: true,
@@ -743,8 +743,8 @@ exports.generateRoadmap = async (req, res) => {
       topic = 'General English'
     } = req.body;
 
-    console.log(`🗺️ Generating comprehensive roadmap for user ${userId}`);
-    console.log(`📊 Config: ${startLevel} → ${endLevel}, 1 step per level with ALL skills & difficulties`);
+     (`🗺️ Generating comprehensive roadmap for user ${userId}`);
+     (`📊 Config: ${startLevel} → ${endLevel}, 1 step per level with ALL skills & difficulties`);
 
     const levels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
     const skills = ['vocabulary', 'grammar', 'listening', 'reading', 'speaking', 'writing', 'mixed'];
@@ -766,11 +766,11 @@ exports.generateRoadmap = async (req, res) => {
     let stepNumber = 1;
     let totalXP = 0;
 
-    console.log(`📈 Structure: Each level = 1 step containing (7 skills × 3 difficulties) exercises`);
-    console.log(`🔄 Processing ${selectedLevels.length} levels: ${selectedLevels.join(', ')}`);
+     (`📈 Structure: Each level = 1 step containing (7 skills × 3 difficulties) exercises`);
+     (`🔄 Processing ${selectedLevels.length} levels: ${selectedLevels.join(', ')}`);
 
     for (const level of selectedLevels) {
-      console.log(`\n🎯 Level ${level}: Generating 1 comprehensive step with ALL content...`);
+       (`\n🎯 Level ${level}: Generating 1 comprehensive step with ALL content...`);
       
       const levelXP = (40 * 7) + (60 * 7) + (80 * 7); // Easy + Medium + Hard for all skills
       totalXP += levelXP;
@@ -779,7 +779,7 @@ exports.generateRoadmap = async (req, res) => {
 
       stepPromises.push(
         (async () => {
-          console.log(`  📝 Step ${currentStepNumber}: Trình Độ ${level}`);
+           (`  📝 Step ${currentStepNumber}: Trình Độ ${level}`);
           
           // Generate exercises for ALL skills and ALL difficulties
           const allExercises = [];
@@ -787,7 +787,7 @@ exports.generateRoadmap = async (req, res) => {
           
           for (const skill of skills) {
             for (const difficulty of difficulties) {
-              console.log(`    🔹 Generating ${skill} - ${difficulty}...`);
+               (`    🔹 Generating ${skill} - ${difficulty}...`);
               
               const exerciseMetadata = await generateExercisesForStep(
                 skill, 
@@ -802,14 +802,14 @@ exports.generateRoadmap = async (req, res) => {
               
               // Generate vocabulary bank for vocabulary skill (only once per level)
               if (skill === 'vocabulary' && difficulty === 'easy' && !vocabularyBank) {
-                console.log(`    📚 Generating vocabulary bank for ${level}...`);
+                 (`    📚 Generating vocabulary bank for ${level}...`);
                 vocabularyBank = await generateVocabularyForLevel(level, topic, userId);
-                console.log(`    ✅ Vocabulary bank generated: ${vocabularyBank.length} words`);
+                 (`    ✅ Vocabulary bank generated: ${vocabularyBank.length} words`);
               }
             }
           }
 
-          console.log(`  ✅ Generated ${allExercises.length} exercises for ${level}`);
+           (`  ✅ Generated ${allExercises.length} exercises for ${level}`);
 
           return {
             stepNumber: currentStepNumber,
@@ -831,8 +831,8 @@ exports.generateRoadmap = async (req, res) => {
       );
     }
 
-    console.log(`\n🚀 Executing ${stepPromises.length} level generation tasks...`);
-    console.log(`⚡ Processing in batches to avoid overload...`);
+     (`\n🚀 Executing ${stepPromises.length} level generation tasks...`);
+     (`⚡ Processing in batches to avoid overload...`);
     
     // Process in batches (typically small number of levels, but keep batching for consistency)
     const batchSize = 3;
@@ -840,16 +840,16 @@ exports.generateRoadmap = async (req, res) => {
     
     for (let i = 0; i < stepPromises.length; i += batchSize) {
       const batch = stepPromises.slice(i, i + batchSize);
-      console.log(`  🔄 Processing batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(stepPromises.length / batchSize)} (${batch.length} levels)...`);
+       (`  🔄 Processing batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(stepPromises.length / batchSize)} (${batch.length} levels)...`);
       const batchResults = await Promise.all(batch);
       steps.push(...batchResults);
     }
     
     steps.sort((a, b) => a.stepNumber - b.stepNumber);
-    console.log(`\n✅ All ${steps.length} level steps generated and sorted.`);
+     (`\n✅ All ${steps.length} level steps generated and sorted.`);
 
     // Calculate statistics
-    console.log('\n📊 Roadmap Statistics:');
+     ('\n📊 Roadmap Statistics:');
     steps.forEach(step => {
       const skillCount = {};
       const difficultyCount = { easy: 0, medium: 0, hard: 0 };
@@ -859,16 +859,16 @@ exports.generateRoadmap = async (req, res) => {
         difficultyCount[ex.difficulty.toLowerCase()]++;
       });
       
-      console.log(`  ${step.level}: ${step.exercises.length} exercises`);
-      console.log(`    Skills: ${Object.entries(skillCount).map(([k,v]) => `${k}=${v}`).join(', ')}`);
-      console.log(`    Difficulties: Easy=${difficultyCount.easy}, Medium=${difficultyCount.medium}, Hard=${difficultyCount.hard}`);
+       (`  ${step.level}: ${step.exercises.length} exercises`);
+       (`    Skills: ${Object.entries(skillCount).map(([k,v]) => `${k}=${v}`).join(', ')}`);
+       (`    Difficulties: Easy=${difficultyCount.easy}, Medium=${difficultyCount.medium}, Hard=${difficultyCount.hard}`);
     });
 
-    console.log('\n⏳ Deactivating old roadmaps...');
+     ('\n⏳ Deactivating old roadmaps...');
     await LearningRoadmap.updateMany({ user: userId, isActive: true }, { isActive: false });
 
-    console.log('✅ Creating new comprehensive roadmap in database...');
-    console.log(`📋 Roadmap data: steps=${steps.length}, totalXP=${totalXP}, user=${userId}`);
+     ('✅ Creating new comprehensive roadmap in database...');
+     (`📋 Roadmap data: steps=${steps.length}, totalXP=${totalXP}, user=${userId}`);
     
     try {
       const roadmap = await LearningRoadmap.create({
@@ -884,11 +884,11 @@ exports.generateRoadmap = async (req, res) => {
         estimatedCompletionDate: new Date(Date.now() + (steps.length * 2 * 24 * 60 * 60 * 1000))
       });
 
-      console.log(`\n🎉 Successfully created comprehensive roadmap ${roadmap._id}:`);
-      console.log(`   📚 Total levels: ${steps.length}`);
-      console.log(`   🎯 Levels: ${selectedLevels.join(' → ')}`);
-      console.log(`   💎 Total XP: ${totalXP}`);
-      console.log(`   ⏱️ Estimated completion: ${roadmap.estimatedCompletionDate.toLocaleDateString('vi-VN')}`);
+       (`\n🎉 Successfully created comprehensive roadmap ${roadmap._id}:`);
+       (`   📚 Total levels: ${steps.length}`);
+       (`   🎯 Levels: ${selectedLevels.join(' → ')}`);
+       (`   💎 Total XP: ${totalXP}`);
+       (`   ⏱️ Estimated completion: ${roadmap.estimatedCompletionDate.toLocaleDateString('vi-VN')}`);
 
       res.status(201).json({
         success: true,
@@ -922,13 +922,13 @@ exports.generateRoadmap = async (req, res) => {
 const generateExercisesForStep = async (skill, level, topic, stepDifficulty, userId) => {
   try {
     const exerciseCount = 5; // Lấy 5 bài tập cho mỗi step
-    console.log(`    - Finding ${exerciseCount} exercises for Step: [Skill: ${skill}, Level: ${level}, Difficulty: ${stepDifficulty}]`);
+     (`    - Finding ${exerciseCount} exercises for Step: [Skill: ${skill}, Level: ${level}, Difficulty: ${stepDifficulty}]`);
 
     // 1. Ưu tiên lấy bài tập có sẵn từ database
     const existingExercises = await getExistingExercises(skill, stepDifficulty, level, exerciseCount);
     
     if (existingExercises.length >= exerciseCount) {
-      console.log(`    - ✅ Found ${existingExercises.length} existing exercises in DB. Using them.`);
+       (`    - ✅ Found ${existingExercises.length} existing exercises in DB. Using them.`);
       return existingExercises.map(e => ({
         exerciseId: e._id,
         skill: e.skill,
@@ -939,7 +939,7 @@ const generateExercisesForStep = async (skill, level, topic, stepDifficulty, use
 
     // 2. Nếu không đủ, lấy tất cả có sẵn + tạo thêm bằng AI
     const neededCount = exerciseCount - existingExercises.length;
-    console.log(`    - ⚠️ Only ${existingExercises.length} existing exercises. Need ${neededCount} more from AI...`);
+     (`    - ⚠️ Only ${existingExercises.length} existing exercises. Need ${neededCount} more from AI...`);
 
     // Tạo thêm với AI
     const aiExercises = await generateExercisesWithAI(skill, stepDifficulty, level, topic, neededCount, userId);
@@ -955,7 +955,7 @@ const generateExercisesForStep = async (skill, level, topic, stepDifficulty, use
       ...aiExercises
     ];
 
-    console.log(`    - 🎯 Total exercises for this step: ${allExercises.length} (${existingExercises.length} from DB + ${aiExercises.length} from AI)`);
+     (`    - 🎯 Total exercises for this step: ${allExercises.length} (${existingExercises.length} from DB + ${aiExercises.length} from AI)`);
     return allExercises;
     
   } catch (error) {
@@ -964,7 +964,7 @@ const generateExercisesForStep = async (skill, level, topic, stepDifficulty, use
     try {
       const fallbackExercises = await getExistingExercises(skill, stepDifficulty, level, 1);
       if (fallbackExercises.length > 0) {
-        console.log(`    - 🔄 Fallback: Using ${fallbackExercises.length} existing exercises`);
+         (`    - 🔄 Fallback: Using ${fallbackExercises.length} existing exercises`);
         return fallbackExercises.map(e => ({
           exerciseId: e._id,
           skill: e.skill,
@@ -1028,7 +1028,7 @@ exports.generateExercisesForRoadmap = async (req, res) => {
 const generateVocabularyForLevel = async (level, topic, userId) => {
   try {
     const count = 20; // 20 words per vocabulary step
-    console.log(`    - Generating ${count} vocabulary words for level ${level}...`);
+     (`    - Generating ${count} vocabulary words for level ${level}...`);
     
     let vocabularyList = [];
     try {
@@ -1039,7 +1039,7 @@ const generateVocabularyForLevel = async (level, topic, userId) => {
     }
 
     if (!vocabularyList || vocabularyList.length === 0) {
-      console.log(`    - AI service returned no vocabulary. Skipping.`);
+       (`    - AI service returned no vocabulary. Skipping.`);
       return [];
     }
     
@@ -1068,7 +1068,7 @@ const generateVocabularyForLevel = async (level, topic, userId) => {
         // Continue with next vocabulary
       }
     }
-    console.log(`    - Created ${vocabularies.length} vocabulary entries.`);
+     (`    - Created ${vocabularies.length} vocabulary entries.`);
     return vocabularies;
   } catch (error) {
     console.error(`Error generating vocabulary for ${level}:`, error);
@@ -1079,7 +1079,7 @@ const generateVocabularyForLevel = async (level, topic, userId) => {
 // 🆕 Thêm function lấy bài tập có sẵn từ database
 const getExistingExercises = async (skill, difficulty, level, limit = 10) => {
   try {
-    console.log(`🔍 Looking for existing exercises: ${skill} ${difficulty} ${level}, limit: ${limit}`);
+     (`🔍 Looking for existing exercises: ${skill} ${difficulty} ${level}, limit: ${limit}`);
     
     const exercises = await Exercise.find({
       skill: skill.toUpperCase(),
@@ -1091,7 +1091,7 @@ const getExistingExercises = async (skill, difficulty, level, limit = 10) => {
     .select('_id skill difficulty level type question')
     .lean();
 
-    console.log(`✅ Found ${exercises.length} existing exercises in DB`);
+     (`✅ Found ${exercises.length} existing exercises in DB`);
     return exercises;
   } catch (error) {
     console.error(`❌ Error getting existing exercises for ${skill} ${difficulty} ${level}:`, error);
@@ -1102,16 +1102,16 @@ const getExistingExercises = async (skill, difficulty, level, limit = 10) => {
 // 🆕 Thêm function tạo bài tập với AI khi cần
 const generateExercisesWithAI = async (skill, difficulty, level, topic, count, userId) => {
   try {
-    console.log(`🤖 Generating ${count} exercises with AI for ${skill} ${difficulty} ${level}`);
+     (`🤖 Generating ${count} exercises with AI for ${skill} ${difficulty} ${level}`);
     
     const exercises = await geminiService.generateExercises(skill, level, topic, count, difficulty);
     
     if (!exercises || exercises.length === 0) {
-      console.log(`❌ AI returned no exercises`);
+       (`❌ AI returned no exercises`);
       return [];
     }
 
-    console.log(`✅ AI generated ${exercises.length} exercises`);
+     (`✅ AI generated ${exercises.length} exercises`);
 
     // Lưu vào database và trả về metadata
     const savedExercises = [];
@@ -1158,7 +1158,7 @@ const generateExercisesWithAI = async (skill, difficulty, level, topic, count, u
       }
     }
 
-    console.log(`💾 Saved ${savedExercises.length} AI-generated exercises to DB`);
+     (`💾 Saved ${savedExercises.length} AI-generated exercises to DB`);
     return savedExercises;
     
   } catch (error) {

@@ -356,7 +356,6 @@ const Worldbank = () => {
         // ✅ Call API để lấy vocabulary bank
         const response = await vocabularyBankService.getAll();
         
-        console.log('✅ Vocabulary bank response:', response);
         
         if (response.success) {
           const vocabs = response.data || [];
@@ -407,8 +406,6 @@ const Worldbank = () => {
           vocabularyBankService.getAll().catch(() => ({ success: false, data: [] }))
         ]);
         
-        console.log('✅ Vocabulary service response:', vocabularyResponse);
-        console.log('✅ Vocabulary bank response:', bankResponse);
         
         // ✅ Merge data từ cả 2 nguồn
         const vocabulariesFromService = vocabularyResponse.data || [];
@@ -461,13 +458,10 @@ const Worldbank = () => {
           index === self.findIndex(v => v.word.toLowerCase() === vocab.word.toLowerCase())
         );
         
-        console.log(`✅ Merged ${uniqueVocabs.length} vocabularies (${vocabulariesFromService.length} from service, ${vocabulariesFromBank.length} from bank)`);
-        
         setVocabularies(uniqueVocabs);
         updateStats(uniqueVocabs);
         
       } catch (error) {
-        console.error('❌ Error fetching vocabularies:', error);
         showToast('error', 'Lỗi', 'Không thể tải sổ tay từ vựng');
         setVocabularies([]);
         updateStats([]);
@@ -557,7 +551,6 @@ const Worldbank = () => {
 
   // ✅ Hàm chọn giọng ENGLISH tốt nhất
   const getEnglishVoice = (voices) => {
-    console.log('📋 Available voices:', voices.map(v => `${v.name} (${v.lang})`));
 
     // ✅ 1. Ưu tiên Google US English
     let voice = voices.find(v => 
@@ -565,7 +558,6 @@ const Worldbank = () => {
       v.name.toLowerCase().includes('google')
     );
     if (voice) {
-      console.log('✅ Chọn Google US:', voice.name);
       return voice;
     }
 
@@ -575,7 +567,6 @@ const Worldbank = () => {
       (v.name.includes('David') || v.name.includes('Zira'))
     );
     if (voice) {
-      console.log('✅ Chọn Microsoft:', voice.name);
       return voice;
     }
 
@@ -585,21 +576,18 @@ const Worldbank = () => {
       v.name.includes('Samantha')
     );
     if (voice) {
-      console.log('✅ Chọn Samantha:', voice.name);
       return voice;
     }
 
     // ✅ 4. BẤT KỲ giọng en-US nào (KHÔNG phải en-GB)
     voice = voices.find(v => v.lang === 'en-US');
     if (voice) {
-      console.log('✅ Chọn en-US:', voice.name);
       return voice;
     }
 
     // ✅ 5. Bất kỳ giọng English nào (en-GB, en-AU...)
     voice = voices.find(v => v.lang && v.lang.startsWith('en-'));
     if (voice) {
-      console.log('✅ Chọn English:', voice.name);
       return voice;
     }
 
@@ -610,7 +598,6 @@ const Worldbank = () => {
       !v.name.toLowerCase().includes('vietnam')
     );
     if (voice) {
-      console.log('⚠️ Fallback voice:', voice.name);
       return voice;
     }
 
@@ -636,18 +623,13 @@ const Worldbank = () => {
     utterance.volume = 1.0; // Âm lượng (0 - 1)
 
     utterance.onstart = () => {
-      console.log(`🔊 Đang đọc: "${text}"`);
-      console.log(`   Voice: ${utterance.voice?.name || 'default'}`);
-      console.log(`   Lang: ${utterance.lang}`);
     };
 
     utterance.onend = () => {
-      console.log('✅ Hoàn thành');
     };
 
     utterance.onerror = (err) => {
       if (err.error !== 'canceled') {
-        console.error('❌ Lỗi:', err.error);
       }
     };
 
@@ -662,13 +644,9 @@ const Worldbank = () => {
     const englishVoice = getEnglishVoice(voices);
     doSpeak(englishVoice);
   } else {
-    // ✅ Chưa load xong, đợi event
-    console.log('⏳ Đang chờ voices load...');
-    
     // ✅ Chỉ set event 1 lần
     window.speechSynthesis.onvoiceschanged = () => {
       voices = window.speechSynthesis.getVoices();
-      console.log(`✅ Loaded ${voices.length} voices`);
       
       const englishVoice = getEnglishVoice(voices);
       doSpeak(englishVoice);
@@ -681,7 +659,7 @@ const Worldbank = () => {
 
   return (
     <PageWrapper>
-      <LeftSidebar />
+      <LeftSidebar leftSideVar="worldbank" />
       <MainContent>
         <Header>
           <Title>

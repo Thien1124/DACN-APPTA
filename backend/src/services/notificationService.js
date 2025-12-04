@@ -68,14 +68,14 @@ const createNotification = async ({
             notification.channels.emailSentAt = new Date();
             await notification.save();
 
-            console.log(`📧 Email notification sent to ${user.email}`);
+             (`📧 Email notification sent to ${user.email}`);
           }
         } catch (emailError) {
           console.error('❌ Failed to send notification email:', emailError);
         }
       }
 
-      console.log(`🔔 Notification created: ${type} for user ${uid}`);
+       (`🔔 Notification created: ${type} for user ${uid}`);
     }
 
     return notifications.length === 1 ? notifications[0] : notifications;

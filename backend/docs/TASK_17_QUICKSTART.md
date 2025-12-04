@@ -107,7 +107,7 @@ Thêm vào **Scripts > Post-response** của Login request:
 if (pm.response.code === 200) {
     const jsonData = pm.response.json();
     pm.environment.set('token', jsonData.token);
-    console.log('Token saved!');
+     ('Token saved!');
 }
 ```
 

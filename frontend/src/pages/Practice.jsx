@@ -463,7 +463,7 @@ const Practice = () => {
 
   return (
     <PageWrapper>
-      <LeftSidebar />
+      <LeftSidebar leftSideVar="practice" />
       <MainContent>
         <ContentInner>
           <Header>

@@ -572,7 +572,7 @@ const Shop = () => {
   if (isLoading) {
     return (
       <PageWrapper>
-        <LeftSidebar />
+        <LeftSidebar leftSideVar="shop" />
         <MainContent>
           <LoadingOverlay>
             <LoadingSpinner />
@@ -592,7 +592,7 @@ const Shop = () => {
   return (
     <PageWrapper>
       <Toast toast={toast} onClose={hideToast} />
-      <LeftSidebar />
+      <LeftSidebar leftSideVar="shop" />
       
       <MainContent>
         <Container>

@@ -149,7 +149,7 @@ require('dotenv').config();
 async function updateUsers() {
   try {
     await mongoose.connect(process.env.MONGO_URI);
-    console.log('✅ Connected to MongoDB');
+     ('✅ Connected to MongoDB');
     
     const result = await User.updateMany(
       { xp: { $exists: false } },
@@ -166,7 +166,7 @@ async function updateUsers() {
       }
     );
     
-    console.log(`✅ Updated ${result.modifiedCount} users`);
+     (`✅ Updated ${result.modifiedCount} users`);
     process.exit(0);
   } catch (error) {
     console.error('❌ Error:', error);
@@ -199,6 +199,6 @@ updateUsers();
  * Nếu không cần, có thể bỏ qua file này.
  */
 
-console.log('This file contains optional User model updates for gamification.');
-console.log('Read the comments inside to understand what to add.');
-console.log('These fields are NOT required for the flashcard system to work!');
+ ('This file contains optional User model updates for gamification.');
+ ('Read the comments inside to understand what to add.');
+ ('These fields are NOT required for the flashcard system to work!');

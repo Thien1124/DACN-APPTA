@@ -184,7 +184,7 @@ const sendOTPEmail = async (email, otp, name) => {
     };
     
     const info = await transporter.sendMail(mailOptions);
-    console.log(' Email OTP đã gửi thành công:', info.messageId);
+     (' Email OTP đã gửi thành công:', info.messageId);
     return { success: true, messageId: info.messageId };
     
   } catch (error) {
@@ -383,7 +383,7 @@ const sendPasswordResetOTP = async (email, otp, name) => {
     };
     
     const info = await transporter.sendMail(mailOptions);
-    console.log(' Email reset password OTP đã gửi thành công:', info.messageId);
+     (' Email reset password OTP đã gửi thành công:', info.messageId);
     return { success: true, messageId: info.messageId };
     
   } catch (error) {
@@ -600,7 +600,7 @@ const sendNotificationEmail = async ({ to, name, title, message, actionUrl, prio
     };
     
     const info = await transporter.sendMail(mailOptions);
-    console.log(' Email notification đã gửi thành công:', info.messageId);
+     (' Email notification đã gửi thành công:', info.messageId);
     return { success: true, messageId: info.messageId };
     
   } catch (error) {

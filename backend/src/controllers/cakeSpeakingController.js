@@ -167,7 +167,7 @@ const submitSentencePractice = async (req, res) => {
  */
 const processSentenceAudio = async (attemptId, audioPath, originalSentence) => {
   try {
-    console.log(`[INFO] Processing sentence audio for attempt ${attemptId}`);
+     (`[INFO] Processing sentence audio for attempt ${attemptId}`);
 
     // 1. Transcribe audio
     const transcriptionResult = await speechService.transcribeAudio(audioPath);
@@ -230,7 +230,7 @@ const processSentenceAudio = async (attemptId, audioPath, originalSentence) => {
       { $inc: { xp: xpEarned } }
     );
 
-    console.log(`[SUCCESS] Processed sentence attempt ${attemptId} - Score: ${overallScore}`);
+     (`[SUCCESS] Processed sentence attempt ${attemptId} - Score: ${overallScore}`);
   } catch (error) {
     console.error('[ERROR] Process sentence audio:', error);
     
@@ -414,7 +414,7 @@ const createVideoWithSentences = async (req, res) => {
  */
 const saveLocalAttempt = async (req, res) => {
   try {
-    console.log('[INFO] Starting save local attempt');
+     ('[INFO] Starting save local attempt');
 
     const {
       videoId,
@@ -429,7 +429,7 @@ const saveLocalAttempt = async (req, res) => {
       feedback
     } = req.body;
 
-    console.log('[DEBUG] Request body:', { videoId, sentenceIndex, transcription, overallScore });
+     ('[DEBUG] Request body:', { videoId, sentenceIndex, transcription, overallScore });
 
     // Validation
     if (!videoId || sentenceIndex === undefined || !transcription) {
@@ -441,31 +441,31 @@ const saveLocalAttempt = async (req, res) => {
 
     // Ensure the request is authenticated (we need a user to associate the attempt)
     if (!req.user || !req.user._id) {
-      console.log('[ERROR] No user in request');
+       ('[ERROR] No user in request');
       return res.status(401).json({
         success: false,
         message: 'Unauthorized: Vui lòng đăng nhập để lưu kết quả'
       });
     }
 
-    console.log('[INFO] User authenticated:', req.user._id);
+     ('[INFO] User authenticated:', req.user._id);
 
     // Kiểm tra video tồn tại
     const video = await SpeakingVideo.findById(videoId);
     if (!video) {
-      console.log('[ERROR] Video not found:', videoId);
+       ('[ERROR] Video not found:', videoId);
       return res.status(404).json({
         success: false,
         message: 'Không tìm thấy video'
       });
     }
 
-    console.log('[INFO] Video found:', videoId);
+     ('[INFO] Video found:', videoId);
 
     // Tính XP
     const xpEarned = Math.max(5, Math.round(overallScore / 5));
 
-    console.log('[INFO] XP to earn:', xpEarned);
+     ('[INFO] XP to earn:', xpEarned);
 
     // Tạo attempt
     let attempt;
@@ -488,7 +488,7 @@ const saveLocalAttempt = async (req, res) => {
         duration: 0,
         status: 'completed'
       });
-      console.log('[SUCCESS] Attempt created:', attempt._id);
+       ('[SUCCESS] Attempt created:', attempt._id);
     } catch (createError) {
       console.error('[ERROR] Failed to create attempt:', createError);
       return res.status(500).json({
@@ -503,7 +503,7 @@ const saveLocalAttempt = async (req, res) => {
         req.user._id,
         { $inc: { xp: xpEarned } }
       );
-      console.log('[SUCCESS] User XP updated');
+       ('[SUCCESS] User XP updated');
     } catch (xpError) {
       console.warn('[WARN] Failed to update user XP:', xpError.message);
     }
@@ -513,7 +513,7 @@ const saveLocalAttempt = async (req, res) => {
       await SpeakingVideo.findByIdAndUpdate(videoId, {
         $inc: { totalAttempts: 1 }
       });
-      console.log('[SUCCESS] Video stats updated');
+       ('[SUCCESS] Video stats updated');
     } catch (videoError) {
       console.warn('[WARN] Failed to update video stats:', videoError.message);
     }
@@ -533,12 +533,12 @@ const saveLocalAttempt = async (req, res) => {
           xpEarned
         }
       });
-      console.log('[SUCCESS] Audit logged');
+       ('[SUCCESS] Audit logged');
     } catch (auditError) {
       console.warn('[WARN] Audit log failed:', auditError.message);
     }
 
-    console.log('[SUCCESS] Save local attempt completed');
+     ('[SUCCESS] Save local attempt completed');
 
     res.status(201).json({
       success: true,

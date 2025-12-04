@@ -31,8 +31,8 @@ const exportDeckToCSV = async (deckId, options = {}) => {
     .sort({ createdAt: 1 })
     .lean();
 
-  console.log(`[Export CSV] Found ${flashcards.length} flashcards for deck ${deckId}`);
-  console.log(`[Export CSV] Query:`, JSON.stringify(query));
+   (`[Export CSV] Found ${flashcards.length} flashcards for deck ${deckId}`);
+   (`[Export CSV] Query:`, JSON.stringify(query));
 
   if (flashcards.length === 0) {
     throw new Error(`Không có thẻ nào để export (tìm thấy 0 thẻ với filter: tags=${tags}, status=${status})`);

@@ -131,7 +131,7 @@ const submitSpeakingAttempt = async (req, res) => {
  */
 const processAudio = async (attemptId, audioPath, originalTranscript) => {
   try {
-    console.log(`[INFO] Processing audio for attempt ${attemptId}`);
+     (`[INFO] Processing audio for attempt ${attemptId}`);
 
     // 1. Transcribe audio
     const transcriptionResult = await speechService.transcribeAudio(audioPath);
@@ -190,7 +190,7 @@ const processAudio = async (attemptId, audioPath, originalTranscript) => {
       { $inc: { xp: xpEarned } }
     );
 
-    console.log(`[SUCCESS] Processed attempt ${attemptId} - Score: ${overallScore}`);
+     (`[SUCCESS] Processed attempt ${attemptId} - Score: ${overallScore}`);
   } catch (error) {
     console.error('[ERROR] Process audio:', error);
     

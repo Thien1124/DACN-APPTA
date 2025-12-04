@@ -20,7 +20,7 @@ async function login() {
   
   const data = await response.json();
   authToken = data.data.token;
-  console.log('✅ Logged in, token:', authToken);
+   ('✅ Logged in, token:', authToken);
   return authToken;
 }
 
@@ -29,21 +29,21 @@ async function login() {
 async function browseDecks() {
   const response = await fetch(`${API_URL}/decks/browse?category=ACADEMIC&level=B1&sort=popular&limit=10`);
   const data = await response.json();
-  console.log('📚 Browse Decks:', data);
+   ('📚 Browse Decks:', data);
   return data.data.decks;
 }
 
 async function getFeaturedDecks() {
   const response = await fetch(`${API_URL}/decks/featured?limit=5`);
   const data = await response.json();
-  console.log('⭐ Featured Decks:', data);
+   ('⭐ Featured Decks:', data);
   return data.data;
 }
 
 async function getCategories() {
   const response = await fetch(`${API_URL}/decks/categories`);
   const data = await response.json();
-  console.log('📂 Categories:', data);
+   ('📂 Categories:', data);
   return data.data;
 }
 
@@ -65,7 +65,7 @@ async function startStudySession(deckId) {
   });
   
   const data = await response.json();
-  console.log('🎮 Session Started:', data);
+   ('🎮 Session Started:', data);
   return data.data;
 }
 
@@ -89,7 +89,7 @@ async function submitAnswer(sessionId, flashcardId, userAnswer, isCorrect) {
   });
   
   const data = await response.json();
-  console.log('✅ Answer Submitted:', data);
+   ('✅ Answer Submitted:', data);
   return data.data;
 }
 
@@ -104,7 +104,7 @@ async function completeSession(sessionId) {
   });
   
   const data = await response.json();
-  console.log('🎉 Session Completed:', data);
+   ('🎉 Session Completed:', data);
   return data.data;
 }
 
@@ -118,7 +118,7 @@ async function getDeckProgress(deckId) {
   });
   
   const data = await response.json();
-  console.log('📊 Deck Progress:', data);
+   ('📊 Deck Progress:', data);
   return data.data;
 }
 
@@ -130,7 +130,7 @@ async function getStudyStats() {
   });
   
   const data = await response.json();
-  console.log('📈 Study Stats:', data);
+   ('📈 Study Stats:', data);
   return data.data;
 }
 
@@ -139,52 +139,52 @@ async function getStudyStats() {
 async function fullStudyFlow() {
   try {
     // 1. Login
-    console.log('\n=== Step 1: Login ===');
+     ('\n=== Step 1: Login ===');
     await login();
     
     // 2. Browse decks
-    console.log('\n=== Step 2: Browse Decks ===');
+     ('\n=== Step 2: Browse Decks ===');
     const decks = await browseDecks();
     const selectedDeck = decks[0];
-    console.log('Selected Deck:', selectedDeck.title);
+     ('Selected Deck:', selectedDeck.title);
     
     // 3. Start session
-    console.log('\n=== Step 3: Start Study Session ===');
+     ('\n=== Step 3: Start Study Session ===');
     const session = await startStudySession(selectedDeck._id);
     const sessionId = session.session.sessionId;
     const flashcards = session.flashcards;
     
     // 4. Study cards (simulate)
-    console.log('\n=== Step 4: Studying Cards ===');
+     ('\n=== Step 4: Studying Cards ===');
     for (let i = 0; i < flashcards.length; i++) {
       const card = flashcards[i];
-      console.log(`\nCard ${i + 1}/${flashcards.length}`);
-      console.log(`Front: ${card.front}`);
-      console.log(`Back: ${card.back}`);
+       (`\nCard ${i + 1}/${flashcards.length}`);
+       (`Front: ${card.front}`);
+       (`Back: ${card.back}`);
       
       // Simulate user answer (50% correct for demo)
       const isCorrect = Math.random() > 0.5;
       const userAnswer = isCorrect ? card.back : 'wrong answer';
       
       await submitAnswer(sessionId, card._id, userAnswer, isCorrect);
-      console.log(`Answer: ${isCorrect ? '✅ Correct' : '❌ Wrong'}`);
+       (`Answer: ${isCorrect ? '✅ Correct' : '❌ Wrong'}`);
       
       // Wait 1 second between cards
       await new Promise(resolve => setTimeout(resolve, 1000));
     }
     
     // 5. Complete session
-    console.log('\n=== Step 5: Complete Session ===');
+     ('\n=== Step 5: Complete Session ===');
     const result = await completeSession(sessionId);
     
-    console.log('\n🎉 Study Session Complete!');
-    console.log(`Score: ${result.session.score}%`);
-    console.log(`XP Earned: ${result.session.xpEarned}`);
-    console.log(`Duration: ${result.session.duration}s`);
-    console.log(`Max Streak: ${result.session.maxStreak}`);
+     ('\n🎉 Study Session Complete!');
+     (`Score: ${result.session.score}%`);
+     (`XP Earned: ${result.session.xpEarned}`);
+     (`Duration: ${result.session.duration}s`);
+     (`Max Streak: ${result.session.maxStreak}`);
     
     // 6. Check progress
-    console.log('\n=== Step 6: Check Progress ===');
+     ('\n=== Step 6: Check Progress ===');
     await getDeckProgress(selectedDeck._id);
     await getStudyStats();
     
@@ -215,7 +215,7 @@ if (typeof module !== 'undefined' && module.exports) {
 // Uncomment to run:
 // fullStudyFlow();
 
-console.log(`
+ (`
 ╔════════════════════════════════════════════════════════════╗
 ║  Flashcard Study System - Test Examples                   ║
 ╚════════════════════════════════════════════════════════════╝

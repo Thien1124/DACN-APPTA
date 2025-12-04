@@ -201,17 +201,17 @@ exports.createBulkExercises = async (req, res) => {
 // @access  Private/Admin
 exports.importExercisesFromExcel = async (req, res) => {
   try {
-    console.log('🚀 Starting Excel import...');
+     ('🚀 Starting Excel import...');
     
     if (!req.file) {
-      console.log('❌ No file uploaded');
+       ('❌ No file uploaded');
       return res.status(400).json({
         success: false,
         message: 'Vui lòng tải lên file Excel'
       });
     }
 
-    console.log('📄 File received:', {
+     ('📄 File received:', {
       originalname: req.file.originalname,
       mimetype: req.file.mimetype,
       size: req.file.size
@@ -224,7 +224,7 @@ exports.importExercisesFromExcel = async (req, res) => {
     ];
     
     if (!allowedTypes.includes(req.file.mimetype)) {
-      console.log('❌ Invalid file type:', req.file.mimetype);
+       ('❌ Invalid file type:', req.file.mimetype);
       return res.status(400).json({
         success: false,
         message: 'Chỉ chấp nhận file Excel (.xlsx hoặc .xls)'
@@ -235,7 +235,7 @@ exports.importExercisesFromExcel = async (req, res) => {
     let workbook;
     try {
       workbook = xlsx.read(req.file.buffer, { type: 'buffer' });
-      console.log('📊 Workbook loaded successfully');
+       ('📊 Workbook loaded successfully');
     } catch (readError) {
       console.error('❌ XLSX read error:', readError);
       return res.status(400).json({
@@ -245,10 +245,10 @@ exports.importExercisesFromExcel = async (req, res) => {
       });
     }
 
-    console.log('📋 Sheet names:', workbook.SheetNames);
+     ('📋 Sheet names:', workbook.SheetNames);
     
     if (workbook.SheetNames.length === 0) {
-      console.log('❌ No sheets in workbook');
+       ('❌ No sheets in workbook');
       return res.status(400).json({
         success: false,
         message: 'File Excel không có sheet nào'
@@ -256,11 +256,11 @@ exports.importExercisesFromExcel = async (req, res) => {
     }
 
     const sheetName = workbook.SheetNames[0];
-    console.log('📋 Using sheet:', sheetName);
+     ('📋 Using sheet:', sheetName);
     
     const worksheet = workbook.Sheets[sheetName];
     if (!worksheet) {
-      console.log('❌ Worksheet is null');
+       ('❌ Worksheet is null');
       return res.status(400).json({
         success: false,
         message: 'Sheet đầu tiên trong file Excel trống'
@@ -268,10 +268,10 @@ exports.importExercisesFromExcel = async (req, res) => {
     }
 
     const jsonData = xlsx.utils.sheet_to_json(worksheet);
-    console.log('📋 Parsed data rows:', jsonData.length);
+     ('📋 Parsed data rows:', jsonData.length);
 
     if (jsonData.length === 0) {
-      console.log('❌ No data in Excel file');
+       ('❌ No data in Excel file');
       return res.status(400).json({
         success: false,
         message: 'File Excel không có dữ liệu'
@@ -279,8 +279,8 @@ exports.importExercisesFromExcel = async (req, res) => {
     }
 
     // ✅ Log sample data để debug
-    console.log('📋 First row sample:', JSON.stringify(jsonData[0], null, 2));
-    console.log('📋 Column headers:', Object.keys(jsonData[0]));
+     ('📋 First row sample:', JSON.stringify(jsonData[0], null, 2));
+     ('📋 Column headers:', Object.keys(jsonData[0]));
 
     // Validate và transform data
     const exercises = [];
@@ -291,7 +291,7 @@ exports.importExercisesFromExcel = async (req, res) => {
       const rowNumber = i + 2; // Excel rows start at 2 (header at 1)
 
       try {
-        console.log(`🔍 Processing row ${rowNumber}:`, row);
+         (`🔍 Processing row ${rowNumber}:`, row);
 
         // Validate required fields
         if (!row['Lesson ID'] || !row['Question'] || !row['Type']) {
@@ -314,7 +314,7 @@ exports.importExercisesFromExcel = async (req, res) => {
           explanation: row['Explanation'] || ''
         };
 
-        console.log(`✅ Base exercise for row ${rowNumber}:`, exercise);
+         (`✅ Base exercise for row ${rowNumber}:`, exercise);
 
         // Handle multiple-choice type
         if (exercise.type === 'multiple-choice') {
@@ -335,7 +335,7 @@ exports.importExercisesFromExcel = async (req, res) => {
           }
 
           exercise.options = options;
-          console.log(`📝 Options for row ${rowNumber}:`, options);
+           (`📝 Options for row ${rowNumber}:`, options);
         }
 
         // Handle fill-in-blank, translation types
@@ -348,23 +348,23 @@ exports.importExercisesFromExcel = async (req, res) => {
         }
 
         exercises.push(exercise);
-        console.log(`✅ Exercise added for row ${rowNumber}`);
+         (`✅ Exercise added for row ${rowNumber}`);
       } catch (error) {
         console.error(`❌ Error processing row ${rowNumber}:`, error);
         errors.push(`Row ${rowNumber}: ${error.message}`);
       }
     }
 
-    console.log(`📊 Processing complete: ${exercises.length} valid, ${errors.length} errors`);
+     (`📊 Processing complete: ${exercises.length} valid, ${errors.length} errors`);
 
     // Insert valid exercises
     let createdCount = 0;
     if (exercises.length > 0) {
       try {
-        console.log('💾 Inserting exercises to database...');
+         ('💾 Inserting exercises to database...');
         const created = await Exercise.insertMany(exercises, { ordered: false });
         createdCount = created.length;
-        console.log(`✅ Inserted ${createdCount} exercises`);
+         (`✅ Inserted ${createdCount} exercises`);
       } catch (insertError) {
         console.error('❌ Database insert error:', insertError);
         errors.push(`Database error: ${insertError.message}`);
@@ -382,7 +382,7 @@ exports.importExercisesFromExcel = async (req, res) => {
       }
     };
 
-    console.log('🎉 Import result:', result);
+     ('🎉 Import result:', result);
     res.status(200).json(result);
 
   } catch (error) {
@@ -401,7 +401,7 @@ exports.importExercisesFromExcel = async (req, res) => {
 // @access  Private/Admin
 exports.downloadExcelTemplate = async (req, res) => {
   try {
-    console.log('📄 Generating Excel template...');
+     ('📄 Generating Excel template...');
     
     // Create template data - ✅ Đơn giản hóa
     const templateData = [
@@ -420,26 +420,26 @@ exports.downloadExcelTemplate = async (req, res) => {
       }
     ];
 
-    console.log('📊 Template data created:', templateData.length, 'rows');
+     ('📊 Template data created:', templateData.length, 'rows');
 
     // Create workbook
     const ws = xlsx.utils.json_to_sheet(templateData);
     const wb = xlsx.utils.book_new();
     xlsx.utils.book_append_sheet(wb, ws, 'Exercises');
 
-    console.log('📋 Workbook created');
+     ('📋 Workbook created');
 
     // Generate buffer
     const buffer = xlsx.write(wb, { type: 'buffer', bookType: 'xlsx' });
 
-    console.log('💾 Buffer generated, size:', buffer.length);
+     ('💾 Buffer generated, size:', buffer.length);
 
     // Set headers
     res.setHeader('Content-Disposition', 'attachment; filename=exercise_template.xlsx');
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.setHeader('Content-Length', buffer.length);
     
-    console.log('📤 Sending file...');
+     ('📤 Sending file...');
     res.send(buffer);
 
   } catch (error) {
@@ -470,8 +470,8 @@ const handleImportExcel = async (file) => {
   }
 
   // ✅ Add debug logging
-  console.log('🚀 Frontend: Starting import');
-  console.log('📄 File info:', {
+   ('🚀 Frontend: Starting import');
+   ('📄 File info:', {
     name: file.name,
     type: file.type,
     size: file.size
@@ -483,9 +483,9 @@ const handleImportExcel = async (file) => {
     const formData = new FormData();
     formData.append('file', file);
     
-    console.log('📤 Sending to server...');
+     ('📤 Sending to server...');
     const response = await adminService.exercises.importFromExcel(formData);
-    console.log('📥 Server response:', response);
+     ('📥 Server response:', response);
     
     // ...existing success handling...
 

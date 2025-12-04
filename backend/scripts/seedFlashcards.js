@@ -13,9 +13,8 @@ const User = require('../src/models/User');
 const connectDB = async () => {
   try {
     await mongoose.connect(process.env.MONGO_URI);
-    console.log('✅ MongoDB connected');
+     ('✅ MongoDB connected');
   } catch (error) {
-    console.error('❌ MongoDB connection error:', error);
     process.exit(1);
   }
 };
@@ -76,14 +75,14 @@ const seedFlashcards = async () => {
   try {
     await connectDB();
 
-    console.log('🗑️  Cleaning existing data...');
+     ('🗑️  Cleaning existing data...');
     // await Flashcard.deleteMany({});
     // await Deck.deleteMany({});
 
     // Get or create admin user
     let admin = await User.findOne({ role: 'admin' });
     if (!admin) {
-      console.log('⚠️  No admin user found. Creating one...');
+       ('⚠️  No admin user found. Creating one...');
       admin = await User.create({
         name: 'Admin',
         email: 'admin@englishmaster.com',
@@ -91,10 +90,10 @@ const seedFlashcards = async () => {
         role: 'admin',
         isVerified: true
       });
-      console.log('✅ Admin user created');
+       ('✅ Admin user created');
     }
 
-    console.log('📦 Creating decks and flashcards...');
+     ('📦 Creating decks and flashcards...');
 
     // Deck 1: IELTS A1
     const deck1 = await Deck.create({
@@ -114,7 +113,7 @@ const seedFlashcards = async () => {
     for (const cardData of flashcardsData.IELTS_VOCABULARY_A1) {
       await Flashcard.create({ ...cardData, deck: deck1._id });
     }
-    console.log(`✅ Created deck: ${deck1.title} (${deck1.totalCards} cards)`);
+     (`✅ Created deck: ${deck1.title} (${deck1.totalCards} cards)`);
 
     // Deck 2: IELTS B1
     const deck2 = await Deck.create({
@@ -134,7 +133,7 @@ const seedFlashcards = async () => {
     for (const cardData of flashcardsData.IELTS_VOCABULARY_B1) {
       await Flashcard.create({ ...cardData, deck: deck2._id });
     }
-    console.log(`✅ Created deck: ${deck2.title} (${deck2.totalCards} cards)`);
+     (`✅ Created deck: ${deck2.title} (${deck2.totalCards} cards)`);
 
     // Deck 3: Business English
     const deck3 = await Deck.create({
@@ -154,7 +153,7 @@ const seedFlashcards = async () => {
     for (const cardData of flashcardsData.BUSINESS_ENGLISH) {
       await Flashcard.create({ ...cardData, deck: deck3._id });
     }
-    console.log(`✅ Created deck: ${deck3.title} (${deck3.totalCards} cards)`);
+     (`✅ Created deck: ${deck3.title} (${deck3.totalCards} cards)`);
 
     // Deck 4: Travel English
     const deck4 = await Deck.create({
@@ -174,17 +173,17 @@ const seedFlashcards = async () => {
     for (const cardData of flashcardsData.TRAVEL_ENGLISH) {
       await Flashcard.create({ ...cardData, deck: deck4._id });
     }
-    console.log(`✅ Created deck: ${deck4.title} (${deck4.totalCards} cards)`);
+     (`✅ Created deck: ${deck4.title} (${deck4.totalCards} cards)`);
 
     // Summary
     const totalDecks = await Deck.countDocuments();
     const totalFlashcards = await Flashcard.countDocuments();
 
-    console.log('\n🎉 Seed completed successfully!');
-    console.log(`📊 Summary:`);
-    console.log(`   - Total Decks: ${totalDecks}`);
-    console.log(`   - Total Flashcards: ${totalFlashcards}`);
-    console.log(`   - Admin User: ${admin.email}`);
+     ('\n🎉 Seed completed successfully!');
+     (`📊 Summary:`);
+     (`   - Total Decks: ${totalDecks}`);
+     (`   - Total Flashcards: ${totalFlashcards}`);
+     (`   - Admin User: ${admin.email}`);
 
     process.exit(0);
   } catch (error) {

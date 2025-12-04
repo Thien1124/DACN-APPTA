@@ -112,7 +112,7 @@ router.put('/profile', authenticate, async (req, res) => {
         userAgent: getUserAgent(req)
       });
 
-      console.log(`✅ User ${user.email} đã đổi mật khẩu thành công`);
+       (`✅ User ${user.email} đã đổi mật khẩu thành công`);
     }
 
     user.updatedAt = Date.now();
@@ -131,7 +131,7 @@ router.put('/profile', authenticate, async (req, res) => {
         }
       });
 
-      console.log(`✅ User ${user.email} đã cập nhật profile: ${changedFields.join(', ')}`);
+       (`✅ User ${user.email} đã cập nhật profile: ${changedFields.join(', ')}`);
     }
 
     res.json({
@@ -179,7 +179,7 @@ router.post('/avatar', authenticate, upload.single('avatar'), async (req, res) =
       const oldAvatarPath = path.join(__dirname, '../../', user.avatar);
       if (fs.existsSync(oldAvatarPath)) {
         fs.unlinkSync(oldAvatarPath);
-        console.log('Đã xóa avatar cũ:', oldAvatarPath);
+         ('Đã xóa avatar cũ:', oldAvatarPath);
       }
     }
 
@@ -203,7 +203,7 @@ router.post('/avatar', authenticate, upload.single('avatar'), async (req, res) =
       }
     });
 
-    console.log(`✅ User ${user.email} đã upload avatar: ${user.avatar}`);
+     (`✅ User ${user.email} đã upload avatar: ${user.avatar}`);
 
     res.json({
       success: true,
@@ -266,7 +266,7 @@ router.delete('/avatar', authenticate, async (req, res) => {
       const avatarPath = path.join(__dirname, '../../', user.avatar);
       if (fs.existsSync(avatarPath)) {
         fs.unlinkSync(avatarPath);
-        console.log('Đã xóa avatar:', avatarPath);
+         ('Đã xóa avatar:', avatarPath);
       }
     }
 
@@ -287,7 +287,7 @@ router.delete('/avatar', authenticate, async (req, res) => {
       }
     });
 
-    console.log(`✅ User ${user.email} đã xóa avatar`);
+     (`✅ User ${user.email} đã xóa avatar`);
 
     res.json({
       success: true,
@@ -418,7 +418,7 @@ router.patch('/:id/toggle-active', authenticate, authorize('admin'), async (req,
       }
     });
 
-    console.log(`✅ Admin ${req.user.email} đã ${user.isActive ? 'kích hoạt' : 'vô hiệu hóa'} tài khoản ${user.email}`);
+     (`✅ Admin ${req.user.email} đã ${user.isActive ? 'kích hoạt' : 'vô hiệu hóa'} tài khoản ${user.email}`);
 
     res.json({
       success: true,
@@ -478,7 +478,7 @@ router.patch('/:id/change-role', authenticate, authorize('admin'), async (req, r
       }
     });
 
-    console.log(`✅ Admin ${req.user.email} đã đổi role của ${user.email} từ ${previousRole} → ${role}`);
+     (`✅ Admin ${req.user.email} đã đổi role của ${user.email} từ ${previousRole} → ${role}`);
 
     res.json({
       success: true,
@@ -546,7 +546,7 @@ router.delete('/:id', authenticate, authorize('admin'), async (req, res) => {
       }
     });
 
-    console.log(`✅ Admin ${req.user.email} đã xóa user ${deletedUserInfo.email}`);
+     (`✅ Admin ${req.user.email} đã xóa user ${deletedUserInfo.email}`);
 
     res.json({
       success: true,

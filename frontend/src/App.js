@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import { store } from './store/store';
 
+import TypeRacer from './pages/TypeRacer';
 // Import pages
 import Home from './pages/Home';
 import Login from './pages/Login';
@@ -121,7 +122,11 @@ function App() {
               <Practice />
             </ProtectedRoute>
           } />
-
+<Route path="/game/type-racer" element={
+  <ProtectedRoute>
+    <TypeRacer />
+  </ProtectedRoute>
+} />
           <Route path="/progress" element={
             <ProtectedRoute>
               <Progress />

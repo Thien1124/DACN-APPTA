@@ -1697,15 +1697,15 @@ const Lesson = () => {
         recognition.onstart = () => {
           setRecording(true);
           setIsListening(true);
-          console.log('🎤 Speech recognition started');
+           console.log('🎤 Speech recognition started');
         };
         
         recognition.onresult = (event) => {
           const transcript = event.results[0][0].transcript;
           const confidence = event.results[0][0].confidence;
           
-          console.log('📝 Transcript:', transcript);
-          console.log('📊 Confidence:', confidence);
+           console.log('📝 Transcript:', transcript);
+           console.log('📊 Confidence:', confidence);
           
           // ✅ Phân tích pronunciation ngay trên browser
           analyzePronunciationLocal(transcript, confidence);
@@ -1729,7 +1729,7 @@ const Lesson = () => {
         recognition.onend = () => {
           setRecording(false);
           setIsListening(false);
-          console.log('✅ Speech recognition ended');
+           console.log('✅ Speech recognition ended');
         };
         
         recognition.start();
@@ -1744,7 +1744,7 @@ const Lesson = () => {
       }
     } else {
       // ✅ Fallback: Dùng MediaRecorder + Backend API
-      console.log('🎤 Using MediaRecorder + Backend API');
+       console.log('🎤 Using MediaRecorder + Backend API');
       startRecordingWithMediaRecorder();
     }
   };
@@ -1768,7 +1768,7 @@ const Lesson = () => {
         mimeType = '';
       }
       
-      console.log('🎤 Using mimeType:', mimeType || 'default');
+       console.log('🎤 Using mimeType:', mimeType || 'default');
       
       mediaRecorderRef.current = new MediaRecorder(stream, mimeType ? { mimeType } : {});
       chunksRef.current = [];
@@ -1786,7 +1786,7 @@ const Lesson = () => {
         setAudioBlob(blob);
         stream.getTracks().forEach(track => track.stop());
         
-        console.log('🎤 Recording stopped:', {
+         console.log('🎤 Recording stopped:', {
           blobSize: blob.size,
           blobType: blob.type
         });
@@ -1832,14 +1832,14 @@ const Lesson = () => {
     const targetText = (question.correctAnswer || question.question).toLowerCase().trim();
     const transcribedText = transcript.toLowerCase().trim();
     
-    console.log('📊 Analyzing locally:', { targetText, transcribedText });
+     console.log('📊 Analyzing locally:', { targetText, transcribedText });
     
     // ✅ Calculate similarity
     const similarity = calculateSimilarity(transcribedText, targetText);
     const score = Math.round(similarity * 100);
     const passed = score >= 80; // 80% trở lên = pass
     
-    console.log('✅ Local analysis result:', {
+     console.log('✅ Local analysis result:', {
       score,
       similarity,
       passed,
@@ -1899,7 +1899,7 @@ const Lesson = () => {
 
   // Hàm mock analyze pronunciation
   const mockAnalyzePronunciation = async (audioBlob) => {
-    console.log('🧪 Frontend Mock: Analyzing pronunciation');
+     console.log('🧪 Frontend Mock: Analyzing pronunciation');
     
     // Giả lập delay
     await new Promise(resolve => setTimeout(resolve, 1500));
@@ -1933,7 +1933,7 @@ const Lesson = () => {
       await syncUseHeart();
     }
     
-    console.log('🧪 Mock result:', { score, passed, transcription });
+     console.log('🧪 Mock result:', { score, passed, transcription });
   };
 
   const autoAnalyzePronunciation = async (blob) => {
@@ -1943,7 +1943,7 @@ const Lesson = () => {
       return;
     }
 
-    console.log('🔍 Starting analysis with blob:', {
+     console.log('🔍 Starting analysis with blob:', {
       size: blob.size,
       type: blob.type,
       targetText: question.correctAnswer
@@ -1958,7 +1958,7 @@ const Lesson = () => {
       
       const token = localStorage.getItem('token');
       
-      console.log('📤 Sending to API:', {
+       console.log('📤 Sending to API:', {
         url: `${process.env.REACT_APP_API_URL}/speech/analyze-speaking`,
         targetText: question.correctAnswer,
         blobSize: blob.size,
@@ -1975,10 +1975,10 @@ const Lesson = () => {
       });
 
       const result = await response.json();
-      console.log('🔍 Full API Response:', result);
-  console.log('📊 Analysis:', result.analysis);
-  console.log('💯 Score:', result.analysis?.pronunciationScore);
-  console.log('✅ Passed:', result.analysis?.pronunciationScore >= 50);
+       console.log('🔍 Full API Response:', result);
+   console.log('📊 Analysis:', result.analysis);
+   console.log('💯 Score:', result.analysis?.pronunciationScore);
+   console.log('✅ Passed:', result.analysis?.pronunciationScore >= 50);
   
       if (result.success) {
         const analysis = result.analysis;
@@ -2008,7 +2008,7 @@ const Lesson = () => {
           }
         }
         
-        console.log('✅ Analysis complete:', {
+         console.log('✅ Analysis complete:', {
           score: analysis.pronunciationScore,
           passed,
           transcription: analysis.transcription
@@ -2142,11 +2142,11 @@ const Lesson = () => {
 
       try {
         setIsLoadingLesson(true);
-        console.log("📚 Fetching lesson:", lessonId);
+         console.log('📚 Fetching lesson:', lessonId);
 
         // 1. Lấy lesson details
         const lessonResponse = await lessonService.getLessonById(lessonId);
-        console.log("✅ Lesson response:", lessonResponse);
+         console.log('✅ Lesson response:', lessonResponse);
         const lesson = lessonResponse.data;
 
         if (!lesson) {
@@ -2157,12 +2157,12 @@ const Lesson = () => {
 
         // 2. Lấy vocabularies
         const vocabResponse = await vocabularyService.getByLesson(lessonId);
-        console.log("📖 Vocabularies:", vocabResponse.data?.length || 0);
+         console.log('📖 Vocabularies:', vocabResponse.data?.length || 0);
         const vocabularies = vocabResponse.data || [];
 
         // 3. Lấy exercises
         const exerciseResponse = await exerciseService.getByLesson(lessonId);
-        console.log("✏️ Exercises:", exerciseResponse.data?.length || 0);
+         console.log('✏️ Exercises:', exerciseResponse.data?.length || 0);
         const exercises = exerciseResponse.data || [];
 
         // ✅ Kiểm tra nếu không có vocab và exercise
@@ -2321,8 +2321,8 @@ const Lesson = () => {
 
         const transformedQuestions = [...vocabQuestions, ...exerciseQuestions];
 
-        console.log("🎯 Total questions:", transformedQuestions.length);
-        console.log("📋 Sample question:", transformedQuestions[0]);
+         console.log('🎯 Total questions:', transformedQuestions.length);
+         console.log('📋 Sample question:', transformedQuestions[0]);
 
         // ✅ Set questions
         if (transformedQuestions.length > 0) {
@@ -2376,7 +2376,7 @@ const Lesson = () => {
     }
 
     const audio = new Audio(audioSrc);
-    audio.play().catch((err) => console.log("Không thể phát âm thanh:", err));
+    audio.play().catch((err) =>  ("Không thể phát âm thanh:", err));
   };
 
   // Sync Hearts when used
@@ -2385,7 +2385,7 @@ const Lesson = () => {
       setIsSyncing(true);
       const response = await heartService.useHeart();
 
-      console.log("Use heart response:", response);
+       console.log('Use heart response:', response);
 
       // Xử lý nhiều format response
       let currentHearts = 0;
@@ -2402,7 +2402,7 @@ const Lesson = () => {
         currentHearts = response.remaining;
       }
 
-      console.log("Hearts after use:", currentHearts);
+       console.log('Hearts after use:', currentHearts);
       setHearts(currentHearts);
 
       if (currentHearts === 1) {
@@ -2446,7 +2446,7 @@ const Lesson = () => {
         const response = await heartService.refillHearts();
 
         // LOG để debug - xem response trả về gì
-        console.log("Heart refill response:", response);
+         console.log('Heart refill response:', response);
 
         // Xử lý nhiều format response khác nhau
         let currentHearts = 5; // default
@@ -2461,14 +2461,14 @@ const Lesson = () => {
           currentHearts = response.current;
         }
 
-        console.log("Setting hearts to:", currentHearts);
+         console.log('Setting hearts to:', currentHearts);
         setHearts(currentHearts);
       } catch (error) {
         console.error("Error loading hearts:", error);
         // Nếu lỗi, thử get hearts hiện tại
         try {
           const currentData = await heartService.getHearts();
-          console.log("Get hearts response:", currentData);
+           console.log('Get hearts response:', currentData);
 
           const currentHearts =
             currentData?.hearts ?? currentData?.current ?? 5;
@@ -2558,8 +2558,7 @@ const Lesson = () => {
 
     // ✅ Hàm chọn giọng ENGLISH tốt nhất (giữ nguyên)
     const getEnglishVoice = (voices) => {
-      console.log(
-        "📋 Available voices:",
+       console.log('📋 Available voices:',
         voices.map((v) => `${v.name} (${v.lang})`)
       );
 
@@ -2567,7 +2566,7 @@ const Lesson = () => {
         (v) => v.lang === "en-US" && v.name.toLowerCase().includes("google")
       );
       if (voice) {
-        console.log("✅ Chọn Google US:", voice.name);
+         console.log('✅ Chọn Google US:', voice.name);
         return voice;
       }
 
@@ -2577,7 +2576,7 @@ const Lesson = () => {
           (v.name.includes("David") || v.name.includes("Zira"))
       );
       if (voice) {
-        console.log("✅ Chọn Microsoft:", voice.name);
+         console.log('✅ Chọn Microsoft:', voice.name);
         return voice;
       }
 
@@ -2585,19 +2584,19 @@ const Lesson = () => {
         (v) => v.lang === "en-US" && v.name.includes("Samantha")
       );
       if (voice) {
-        console.log("✅ Chọn Samantha:", voice.name);
+         console.log('✅ Chọn Samantha:', voice.name);
         return voice;
       }
 
       voice = voices.find((v) => v.lang === "en-US");
       if (voice) {
-        console.log("✅ Chọn en-US:", voice.name);
+         console.log('✅ Chọn en-US:', voice.name);
         return voice;
       }
 
       voice = voices.find((v) => v.lang && v.lang.startsWith("en-"));
       if (voice) {
-        console.log("✅ Chọn English:", voice.name);
+         console.log('✅ Chọn English:', voice.name);
         return voice;
       }
 
@@ -2608,7 +2607,7 @@ const Lesson = () => {
           !v.name.toLowerCase().includes("vietnam")
       );
       if (voice) {
-        console.log("⚠️ Fallback voice:", voice.name);
+         console.log('⚠️ Fallback voice:', voice.name);
         return voice;
       }
 
@@ -2630,17 +2629,17 @@ const Lesson = () => {
       utterance.volume = 1.0;
 
       utterance.onstart = () => {
-        console.log(`🔊 Đang đọc: "${text}"`);
-        console.log(`   Voice: ${utterance.voice?.name || "default"}`);
-        console.log(`   Lang: ${utterance.lang}`);
+         console.log(`🔊 Đang đọc: "${text}"`);
+         console.log(`   Voice: ${utterance.voice?.name || "default"}`);
+         console.log(`   Lang: ${utterance.lang}`);
       };
 
       utterance.onend = () => {
-        console.log("✅ Hoàn thành phát âm");
+         console.log('✅ Hoàn thành phát âm');
 
         // ✅ THÊM: Tự động bật ghi âm nếu đang ở câu hỏi speaking
         if (options.autoRecord && question.type === "speaking") {
-          console.log("🎤 Tự động bắt đầu ghi âm...");
+           console.log('🎤 Tự động bắt đầu ghi âm...');
           setTimeout(() => {
             startRecording();
           }, 500); // Đợi 0.5s sau khi đọc xong
@@ -2665,7 +2664,7 @@ const Lesson = () => {
     } else {
       window.speechSynthesis.onvoiceschanged = () => {
         voices = window.speechSynthesis.getVoices();
-        console.log(`✅ Loaded ${voices.length} voices`);
+         console.log(`✅ Loaded ${voices.length} voices`);
 
         const englishVoice = getEnglishVoice(voices);
         doSpeak(englishVoice);
@@ -2801,7 +2800,7 @@ const Lesson = () => {
       isCorrect = answer === question.correctAnswer;
     }
 
-    console.log("🔍 Check answer:", {
+     console.log("🔍 Check answer:", {
       answer,
       correctAnswer: question.correctAnswer,
       isCorrect,
@@ -2986,7 +2985,7 @@ const Lesson = () => {
   // Thêm function để update progress khi hoàn thành lesson
   const handleCompleteLessonSuccess = async () => {
     try {
-      console.log("🎉 Completing lesson:", lessonId);
+       console.log("🎉 Completing lesson:", lessonId);
 
       const progressData = {
         completed: true,
@@ -2994,7 +2993,7 @@ const Lesson = () => {
         timeSpent: Math.floor((Date.now() - lessonStartTime) / 1000), // seconds
       };
 
-      console.log("📊 Progress data:", progressData);
+       console.log("📊 Progress data:", progressData);
 
       // ✅ Update progress: mark lesson as completed
       const response = await progressService.updateLessonProgress(
@@ -3003,13 +3002,13 @@ const Lesson = () => {
       );
       // ✅ 2. Lấy XP reward từ lesson data
     const xpReward = lessonData?.xpReward || 10; // Default 10 XP nếu không có
-    console.log(`💎 Earning ${xpReward} XP from lesson`);
+     console.log(`💎 Earning ${xpReward} XP from lesson`);
 
     // ✅ 3. Update XP qua API
     const xpResult = await xpService.updateXP(xpReward);
-    console.log("✅ XP updated:", xpResult);
+     console.log("✅ XP updated:", xpResult);
 
-      console.log("✅ Progress updated:", response);
+       console.log("✅ Progress updated:", response);
 
       // Show success toast
       showToast("success", "Thành công", "Đã lưu tiến độ học tập!");
@@ -3423,7 +3422,7 @@ const Lesson = () => {
       {/* ✅ Nút phát âm mẫu */}
       <PlaySampleButton
         onClick={() => {
-          console.log('🔊 Playing sample:', question.correctAnswer);
+           console.log('🔊 Playing sample:', question.correctAnswer);
           speakText(question.correctAnswer || question.question);
         }}
         disabled={recording || analyzing}

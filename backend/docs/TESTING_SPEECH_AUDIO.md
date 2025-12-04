@@ -99,12 +99,12 @@ Tạo file HTML để record:
       };
 
       mediaRecorder.start();
-      console.log('Recording started...');
+       ('Recording started...');
     };
 
     document.getElementById('stop').onclick = () => {
       mediaRecorder.stop();
-      console.log('Recording stopped');
+       ('Recording stopped');
     };
   </script>
 </body>
@@ -205,7 +205,7 @@ const result = {
   }
 };
 
-console.log('Mock Result:', result);
+ ('Mock Result:', result);
 ```
 
 ---
@@ -286,7 +286,7 @@ const testCases = [
 // Run tests
 for (const test of testCases) {
   const result = await testSpeechRecognition(test);
-  console.log(`${test.word}: ${result.score}% (expected ${test.expectedScore.min}-${test.expectedScore.max}%)`);
+   (`${test.word}: ${result.score}% (expected ${test.expectedScore.min}-${test.expectedScore.max}%)`);
 }
 ```
 

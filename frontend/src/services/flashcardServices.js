@@ -167,6 +167,17 @@ export const flashcardService = {
       throw error;
     }
   },
+
+  // Get random flashcards for TypeRacer game
+  getRandomForTypeRacer: async (limit = 10) => {
+    try {
+      const response = await axiosInstance.get(`/flashcards/typeracer/random?limit=${limit}`);
+      return response.data;
+    } catch (error) {
+      console.error('Get random flashcards for TypeRacer error:', error);
+      throw error;
+    }
+  },
 };
 
 export default flashcardService;

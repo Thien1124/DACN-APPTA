@@ -374,7 +374,7 @@ exports.batchCreateFlashcards = async (req, res) => {
       });
     }
 
-    console.log(`🤖 Batch creating ${words.length} flashcards for deck: ${deck.title}`);
+     (`🤖 Batch creating ${words.length} flashcards for deck: ${deck.title}`);
 
     // Analyze all words with AI
     const aiResults = await geminiService.batchAnalyze(words);
@@ -440,7 +440,7 @@ exports.batchCreateFlashcards = async (req, res) => {
         });
 
         flashcards.push(flashcard);
-        console.log(`✅ Created flashcard ${i + 1}/${aiResults.length}: ${aiData.word}`);
+         (`✅ Created flashcard ${i + 1}/${aiResults.length}: ${aiData.word}`);
       } catch (createError) {
         console.error(`❌ Error creating flashcard ${i + 1}:`, createError.message);
         errors.push({ word: words[i], error: createError.message });
@@ -465,7 +465,7 @@ exports.batchCreateFlashcards = async (req, res) => {
       response.errors = errors;
     }
 
-    console.log(`✅ Batch create completed: ${flashcards.length} successful, ${errors.length} errors`);
+     (`✅ Batch create completed: ${flashcards.length} successful, ${errors.length} errors`);
 
     res.status(201).json(response);
 
@@ -495,7 +495,7 @@ exports.generateVocabulary = async (req, res) => {
       });
     }
 
-    console.log(`🤖 Generating ${count} vocabulary words for topic: ${topic || category}`);
+     (`🤖 Generating ${count} vocabulary words for topic: ${topic || category}`);
 
     // ✅ Call Gemini to generate vocabulary list
     const vocabularyList = await geminiService.generateVocabularyList(
@@ -529,7 +529,7 @@ exports.batchCreateWithImages = async (req, res) => {
   try {
     const { deckId, words } = req.body;
 
-    console.log('🖼️ BATCH CREATE WITH DALL-E IMAGES called with:', { deckId, wordsCount: words?.length });
+     ('🖼️ BATCH CREATE WITH DALL-E IMAGES called with:', { deckId, wordsCount: words?.length });
 
     if (!deckId || !words || words.length === 0) {
       return res.status(400).json({
@@ -555,7 +555,7 @@ exports.batchCreateWithImages = async (req, res) => {
       return exports.batchCreateFlashcards(req, res);
     }
 
-    console.log(`🤖 Batch creating ${words.length} flashcards with DALL-E images...`);
+     (`🤖 Batch creating ${words.length} flashcards with DALL-E images...`);
 
     const flashcards = [];
     const errors = [];
@@ -567,11 +567,11 @@ exports.batchCreateWithImages = async (req, res) => {
       try {
         const word = words[i];
         
-        console.log(`🔄 Processing word ${i + 1}/${words.length}: ${word}`);
+         (`🔄 Processing word ${i + 1}/${words.length}: ${word}`);
         
         // Step 1: Analyze word with AI
         const aiData = await geminiService.analyzeWord(word);
-        console.log(`✅ AI analyzed ${word}`);
+         (`✅ AI analyzed ${word}`);
         
         // Step 2: Try generate image with DALL-E (với error handling)
         let localImageUrl = '';
@@ -580,7 +580,7 @@ exports.batchCreateWithImages = async (req, res) => {
         if (!dalleBillingLimitReached && i < 3) { // Test với 3 từ đầu tiên
           try {
             imageTotalAttempts++;
-            console.log(`🎨 Attempting DALL-E image for ${word}...`);
+             (`🎨 Attempting DALL-E image for ${word}...`);
             
             const dalleUrl = await generateDalleImage(word, aiData.meanings?.[0]?.definition);
             
@@ -588,7 +588,7 @@ exports.batchCreateWithImages = async (req, res) => {
               const filename = `flashcard_${word.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}.png`;
               localImageUrl = await downloadAndSaveImage(dalleUrl, filename);
               imageSuccessCount++;
-              console.log(`✅ Local image URL for ${word}:`, localImageUrl);
+               (`✅ Local image URL for ${word}:`, localImageUrl);
             } else {
               console.warn(`⚠️ No DALL-E image generated for ${word} (likely billing issue)`);
             }
@@ -625,7 +625,7 @@ exports.batchCreateWithImages = async (req, res) => {
         });
 
         flashcards.push(flashcard);
-        console.log(`✅ Created flashcard ${i + 1}/${words.length}: ${word} (image: ${!!localImageUrl})`);
+         (`✅ Created flashcard ${i + 1}/${words.length}: ${word} (image: ${!!localImageUrl})`);
 
       } catch (error) {
         console.error(`❌ Error creating flashcard ${i + 1}:`, error.message);
@@ -662,7 +662,7 @@ exports.batchCreateWithImages = async (req, res) => {
       response.errors = errors;
     }
 
-    console.log(`✅ Batch create completed: ${flashcards.length} successful, ${errors.length} errors, ${imageSuccessCount}/${imageTotalAttempts} images`);
+     (`✅ Batch create completed: ${flashcards.length} successful, ${errors.length} errors, ${imageSuccessCount}/${imageTotalAttempts} images`);
 
     res.status(201).json(response);
 
@@ -679,7 +679,7 @@ exports.batchCreateWithImages = async (req, res) => {
 // Helper: Generate image with DALL-E (với better error handling)
 async function generateDalleImage(word, context = '') {
   try {
-    console.log(`🎨 Generating DALL-E image for "${word}"...`);
+     (`🎨 Generating DALL-E image for "${word}"...`);
     
     // ✅ CHECK: API key có sẵn không
     if (!process.env.OPENAI_API_KEY) {
@@ -700,7 +700,7 @@ async function generateDalleImage(word, context = '') {
     });
 
     const imageUrl = response.data[0].url;
-    console.log(`✅ DALL-E generated image for "${word}"`);
+     (`✅ DALL-E generated image for "${word}"`);
     
     return imageUrl;
     

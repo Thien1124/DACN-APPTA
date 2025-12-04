@@ -283,7 +283,7 @@ exports.submitAnswer = async (req, res) => {
     // Get updated user stats
     const user = await User.findById(userId).select('totalXP gems');
 
-    console.log(`${isCorrect ? '✅' : '❌'} User ${userId} answered exercise ${id}: ${isCorrect ? 'Correct' : 'Wrong'}`);
+     (`${isCorrect ? '✅' : '❌'} User ${userId} answered exercise ${id}: ${isCorrect ? 'Correct' : 'Wrong'}`);
 
     res.status(200).json({
       success: true,

@@ -38,8 +38,8 @@ const shopItems = [
 
 async function seedShopItems() {
   try {
-    console.log('🔗 Connecting to database...');
-    console.log('MONGODB_URI:', process.env.MONGODB_URI ? 'Set' : 'Not set');
+     ('🔗 Connecting to database...');
+     ('MONGODB_URI:', process.env.MONGODB_URI ? 'Set' : 'Not set');
     
     // ✅ Check if MONGODB_URI exists (note: it's MONGODB_URI, not MONGO_URI)
     if (!process.env.MONGODB_URI) {
@@ -48,23 +48,23 @@ async function seedShopItems() {
     
     // ✅ Wait for database connection or connect directly
     if (mongoose.connection.readyState !== 1) {
-      console.log('Database not connected, connecting directly...');
+       ('Database not connected, connecting directly...');
       await mongoose.connect(process.env.MONGODB_URI);
     } else {
-      console.log('Database already connected');
+       ('Database already connected');
     }
     
-    console.log('✅ Connected to MongoDB');
+     ('✅ Connected to MongoDB');
     
     // Clear existing items
     await ShopItem.deleteMany({});
-    console.log('🧹 Cleared existing shop items');
+     ('🧹 Cleared existing shop items');
     
     // Insert new items
     await ShopItem.insertMany(shopItems);
-    console.log(`✅ Inserted ${shopItems.length} shop items`);
+     (`✅ Inserted ${shopItems.length} shop items`);
     
-    console.log('🎉 Shop items seeded successfully');
+     ('🎉 Shop items seeded successfully');
     process.exit(0);
   } catch (error) {
     console.error('❌ Error seeding shop items:', error);

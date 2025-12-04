@@ -22,7 +22,9 @@ import {
   BiMap,
   BiVideo
 } from 'react-icons/bi';
+import { GiKeyboard } from 'react-icons/gi';
 import { BiBell } from 'react-icons/bi';
+import { authService } from '../services/authService';
 
 // ========== ANIMATIONS ==========
 const fadeIn = keyframes`
@@ -33,7 +35,7 @@ const fadeIn = keyframes`
 // ========== STYLED COMPONENTS ==========
 const SidebarContainer = styled.div`
   width: 280px;
-  background: white;
+  background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(245,245,246,0.9));
   border-right: 2px solid #e5e7eb;
   padding: 1.5rem 1rem;
   position: fixed;
@@ -91,7 +93,7 @@ const LogoImage = styled.img`
 const LogoText = styled.h1`
   font-size: 1.5rem;
   font-weight: 800;
-  background: linear-gradient(135deg, #58CC02 0%, #45a302 100%);
+  background: linear-gradient(135deg, #FFD54F 0%, #FFB300 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   margin: 0;
@@ -111,8 +113,8 @@ const NavItem = styled.div`
   border-radius: 16px;
   cursor: pointer;
   transition: all 0.3s ease;
-  background: ${props => props.active ? '#DDF4FF' : 'transparent'};
-  border: 2px solid ${props => props.active ? '#84D8FF' : 'transparent'};
+  background: ${props => props.active ? 'linear-gradient(90deg, rgba(79,70,229,0.06), rgba(6,182,212,0.04))' : 'transparent'};
+  border: 2px solid ${props => props.active ? 'rgba(79,70,229,0.12)' : 'transparent'};
   position: relative;
 
   &:hover {
@@ -192,6 +194,34 @@ const SidebarFooter = styled.div`
   border-top: 2px solid #e5e7eb;
 `;
 
+const GameBanner = styled.div`
+  background: linear-gradient(135deg, #7C3AED 0%, #06B6D4 100%);
+  color: white;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 8px 20px rgba(255, 122, 24, 0.2);
+`;
+
+const GameButton = styled.button`
+  margin-left: auto;
+  background: white;
+  color: #7C3AED;
+  border: none;
+  font-weight: 800;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+  }
+`;
+
 const FooterText = styled.div`
   font-size: 0.75rem;
   color: #9ca3af;
@@ -267,7 +297,7 @@ const MoreItemSub = styled.div`
 `;
 
 // ========== COMPONENT ==========
-const LeftSidebar = () => {
+const LeftSidebar = ({ leftSideVar = null }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [moreOpen, setMoreOpen] = useState(false);
@@ -275,7 +305,9 @@ const LeftSidebar = () => {
   const moreMenuRef = useRef(null);
   const [moreStyle, setMoreStyle] = useState({ top: 120, left: 300 });
 
+  const isAuthenticated = authService.isAuthenticated();
   const navItems = [
+      // only show game menu to logged-in users
     {
       id: 'learn',
       icon: <BiHomeAlt2 size={24} />,
@@ -313,6 +345,13 @@ const LeftSidebar = () => {
       icon: <BiVideo size={24} />,
       text: 'Luyện nói',
       path: '/speaking'
+    },
+    {
+      id: 'type-racer',
+      icon: <GiKeyboard size={24} />,
+      text: 'Trò chơi đánh máy',
+      path: '/game/type-racer',
+      requiresAuth: true
     },
     {
       id: 'flashcards',
@@ -443,7 +482,9 @@ const LeftSidebar = () => {
     };
   }, [moreOpen, moreStyle.top]);
 
-  const isActive = (path) => {
+  const isActive = (path, id) => {
+    // If leftSideVar is provided, use it to mark specific item as active
+    if (leftSideVar && leftSideVar === id) return true;
     return location.pathname === path || location.pathname.startsWith(path + '/');
   };
 
@@ -455,18 +496,21 @@ const LeftSidebar = () => {
         <LogoText>EnglishMaster</LogoText>
       </Logo>
 
+
       <NavMenu>
-        {navItems.map((item, index) => (
+        {navItems
+          .filter(item => !item.requiresAuth || isAuthenticated)
+          .map((item, index) => (
           <React.Fragment key={item.id}>
             <NavItem
-              active={isActive(item.path)}
+              active={isActive(item.path, item.id)}
               onClick={() => handleNavClick(item)}
               ref={item.id === 'settings' ? moreAnchorRef : null}
             >
-              <NavIcon active={isActive(item.path)}>
+              <NavIcon active={isActive(item.path, item.id)}>
                 {item.icon}
               </NavIcon>
-              <NavText active={isActive(item.path)}>{item.text}</NavText>
+              <NavText active={isActive(item.path, item.id)}>{item.text}</NavText>
               {item.badge && (
                 <NavBadge variant={item.variant}>
                   {item.badge}

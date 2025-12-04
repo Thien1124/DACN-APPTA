@@ -82,7 +82,7 @@ const register = async (req, res) => {
 
       try {
         await sendOTPEmail(email, otp, user.name);
-        console.log(`[INFO] OTP đã gửi đến ${email}: ${otp}`);
+         (`[INFO] OTP đã gửi đến ${email}: ${otp}`);
 
         await logAudit({
           userId: user._id,
@@ -266,13 +266,13 @@ const verifyOTP = async (req, res) => {
         isSuspicious: session.suspiciousActivity?.isSuspicious || false,
         riskLevel: session.suspiciousActivity?.riskLevel || 'low'
       };
-      console.log(`[INFO] Device session created for new user: ${session._id}`);
+       (`[INFO] Device session created for new user: ${session._id}`);
     } catch (deviceError) {
       console.error('[ERROR] Failed to create device session:', deviceError);
       // Continue verification even if device session fails
     }
 
-    console.log(`[SUCCESS] User ${user.email} đã xác thực OTP thành công`);
+     (`[SUCCESS] User ${user.email} đã xác thực OTP thành công`);
 
     res.json({
       success: true,
@@ -347,7 +347,7 @@ const resendOTP = async (req, res) => {
       }
     });
 
-    console.log(`[INFO] OTP mới đã gửi đến ${email}: ${otp}`);
+     (`[INFO] OTP mới đã gửi đến ${email}: ${otp}`);
 
     res.json({
       success: true,
@@ -436,7 +436,7 @@ const login = async (req, res) => {
     // ===== TASK 10: CHECK 2FA =====
     // If user has 2FA enabled, require 2FA verification
     if (user.twoFactorAuth && user.twoFactorAuth.enabled) {
-      console.log(`[INFO] User ${user.email} has 2FA enabled, requiring verification`);
+       (`[INFO] User ${user.email} has 2FA enabled, requiring verification`);
       
       // Log partial login (password correct, waiting for 2FA)
       await logAudit({
@@ -481,7 +481,7 @@ const login = async (req, res) => {
         isSuspicious: session.suspiciousActivity?.isSuspicious || false,
         riskLevel: session.suspiciousActivity?.riskLevel || 'low'
       };
-      console.log(`[INFO] Device session created: ${session._id}`);
+       (`[INFO] Device session created: ${session._id}`);
     } catch (deviceError) {
       console.error('[ERROR] Failed to create device session:', deviceError);
       // Continue login even if device session fails
@@ -503,7 +503,7 @@ const login = async (req, res) => {
       }
     });
 
-    console.log(`[SUCCESS] User ${user.email} đăng nhập thành công`);
+     (`[SUCCESS] User ${user.email} đăng nhập thành công`);
 
     res.json({
       success: true,
@@ -670,7 +670,7 @@ const verify2FAForLogin = async (req, res) => {
         errorMessage: 'Invalid 2FA code'
       });
 
-      console.log(`[FAILED] User ${user.email} - Invalid 2FA code`);
+       (`[FAILED] User ${user.email} - Invalid 2FA code`);
 
       return res.status(401).json({
         success: false,
@@ -681,7 +681,7 @@ const verify2FAForLogin = async (req, res) => {
     }
 
     // 2FA verification successful - Generate JWT token
-    console.log(`[SUCCESS] User ${user.email} - 2FA verification successful`);
+     (`[SUCCESS] User ${user.email} - 2FA verification successful`);
     const token = generateToken(user._id);
 
     // Task 33: Create device session for tracking
@@ -699,7 +699,7 @@ const verify2FAForLogin = async (req, res) => {
         isSuspicious: session.suspiciousActivity?.isSuspicious || false,
         riskLevel: session.suspiciousActivity?.riskLevel || 'low'
       };
-      console.log(`[INFO] Device session created: ${session._id}`);
+       (`[INFO] Device session created: ${session._id}`);
     } catch (deviceError) {
       console.error('[ERROR] Failed to create device session:', deviceError);
       // Continue login even if device session fails
@@ -722,7 +722,7 @@ const verify2FAForLogin = async (req, res) => {
       }
     });
 
-    console.log(`[SUCCESS] User ${user.email} đăng nhập thành công với 2FA`);
+     (`[SUCCESS] User ${user.email} đăng nhập thành công với 2FA`);
 
     res.json({
       success: true,
@@ -793,7 +793,7 @@ const logout = async (req, res) => {
       const session = req.session; // Attached by auth middleware
       if (session) {
         await deviceService.revokeSession(session._id, 'User logout');
-        console.log(`[INFO] Device session revoked on logout: ${session._id}`);
+         (`[INFO] Device session revoked on logout: ${session._id}`);
       }
     } catch (deviceError) {
       console.error('[ERROR] Failed to revoke device session:', deviceError);
@@ -808,7 +808,7 @@ const logout = async (req, res) => {
       userAgent: getUserAgent(req)
     });
 
-    console.log(`[SUCCESS] User ${req.user.email} đã đăng xuất - Token added to blacklist`);
+     (`[SUCCESS] User ${req.user.email} đã đăng xuất - Token added to blacklist`);
 
     res.json({
       success: true,
@@ -901,7 +901,7 @@ const forgotPassword = async (req, res) => {
       }
     });
 
-    console.log(`[SUCCESS] Password reset OTP sent to ${email}: ${otp}`);
+     (`[SUCCESS] Password reset OTP sent to ${email}: ${otp}`);
 
     res.json({
       success: true,
@@ -993,7 +993,7 @@ const resetPassword = async (req, res) => {
       }
     });
 
-    console.log(`[SUCCESS] User ${email} đã đặt lại mật khẩu thành công`);
+     (`[SUCCESS] User ${email} đã đặt lại mật khẩu thành công`);
 
     res.json({
       success: true,
@@ -1013,68 +1013,69 @@ const resetPassword = async (req, res) => {
  */
 const oauthSuccessRedirect = async (req, res) => {
   try {
-
-    let user = req.user;
+    const user = req.user;
+    
     if (!user) {
-      user = req.user;
-      if (!user) {
-        return res.redirect(`${process.env.CLIENT_URL}/login?error=no_user`);
-      }
-
-      user.isActive = true;
-      user.emailVerified = true;
-      await user.save();
-
-      await logAudit({
-        userId: user._id,
-        action: 'OAUTH_LOGIN',
-        status: 'SUCCESS',
-        ipAddress: getIpAddress(req),
-        userAgent: getUserAgent(req),
-        details: {
-          provider: user.provider,
-          email: user.email,
-          name: user.name
-        }
-      });
-
-      const token = generateToken(user._id);
-
-      // Task 33: Create device session for OAuth login
-      try {
-        const session = await deviceService.createDeviceSession(
-          user._id,
-          token,
-          req,
-          30 // 30 days expiration
-        );
-        console.log(`[INFO] Device session created for OAuth login: ${session._id}`);
-      } catch (deviceError) {
-        console.error('[ERROR] Failed to create device session for OAuth:', deviceError);
-        // Continue OAuth flow even if device session fails
-      }
-
-      const userData = {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        avatar: user.avatar,
-        provider: user.provider,
-        isActive: true,
-        emailVerified: true,
-        createdAt: user.createdAt
-      };
-
-      const encodedUser = encodeURIComponent(JSON.stringify(userData));
-      const timestamp = Date.now();
-      const redirectUrl = `${process.env.CLIENT_URL}/oauth/success?token=${token}&user=${encodedUser}&t=${timestamp}`;
-
-
-      return res.redirect(redirectUrl);
-
+      console.error('[ERROR] No user found in OAuth callback');
+      return res.redirect(`${process.env.CLIENT_URL}/login?error=no_user`);
     }
+
+    console.log(`[INFO] OAuth success for user: ${user.email}`);
+
+    user.isActive = true;
+    user.emailVerified = true;
+    await user.save();
+
+    await logAudit({
+      userId: user._id,
+      action: 'OAUTH_LOGIN',
+      status: 'SUCCESS',
+      ipAddress: getIpAddress(req),
+      userAgent: getUserAgent(req),
+      details: {
+        provider: user.provider,
+        email: user.email,
+        name: user.name
+      }
+    });
+
+    const token = generateToken(user._id);
+
+    // Task 33: Create device session for OAuth login
+    try {
+      const session = await deviceService.createDeviceSession(
+        user._id,
+        token,
+        req,
+        30 // 30 days expiration
+      );
+      console.log(`[INFO] Device session created for OAuth login: ${session._id}`);
+    } catch (deviceError) {
+      console.error('[ERROR] Failed to create device session for OAuth:', deviceError);
+      // Continue OAuth flow even if device session fails
+    }
+
+    const userData = {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      avatar: user.avatar,
+      provider: user.provider,
+      isActive: true,
+      emailVerified: true,
+      createdAt: user.createdAt
+    };
+
+    const encodedUser = encodeURIComponent(JSON.stringify(userData));
+    const timestamp = Date.now();
+    const redirectUrl = `${process.env.CLIENT_URL}/oauth/success?token=${token}&user=${encodedUser}&t=${timestamp}`;
+
+    console.log(`[INFO] Redirecting to: ${process.env.CLIENT_URL}/oauth/success`);
+    return res.redirect(redirectUrl);
+
   } catch (err) {
+    console.error('[ERROR] OAuth redirect error:', err);
     return res.redirect(`${process.env.CLIENT_URL}/login?error=server_error`);
   }
 };

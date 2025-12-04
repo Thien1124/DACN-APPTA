@@ -319,7 +319,7 @@ const updateSessionActivity = async (sessionId, action = 'activity', ip = '') =>
  */
 const revokeSession = async (userId, sessionId, reason = 'Manual revocation by user') => {
   try {
-    console.log(`[DEBUG] Revoking session: ${sessionId} for user: ${userId}`);
+     (`[DEBUG] Revoking session: ${sessionId} for user: ${userId}`);
     
     // First, check if session exists (without user filter for debugging)
     const sessionExists = await DeviceSession.findById(sessionId);
@@ -329,7 +329,7 @@ const revokeSession = async (userId, sessionId, reason = 'Manual revocation by u
       throw new Error(`Session not found with ID: ${sessionId}`);
     }
     
-    console.log(`[DEBUG] Session found: ${sessionExists._id}, belongs to user: ${sessionExists.user}`);
+     (`[DEBUG] Session found: ${sessionExists._id}, belongs to user: ${sessionExists.user}`);
     
     // Check if session belongs to the user
     if (sessionExists.user.toString() !== userId.toString()) {
@@ -345,7 +345,7 @@ const revokeSession = async (userId, sessionId, reason = 'Manual revocation by u
     
     // Revoke the session
     await sessionExists.revoke(reason);
-    console.log(`[SUCCESS] Session ${sessionId} revoked successfully`);
+     (`[SUCCESS] Session ${sessionId} revoked successfully`);
     
     return sessionExists;
     

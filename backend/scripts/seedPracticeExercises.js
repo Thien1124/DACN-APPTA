@@ -83,10 +83,10 @@ const exercises = [
 const seedExercises = async () => {
   try {
     await PracticeExercise.deleteMany({});
-    console.log('🗑️  Deleted old exercises');
+     ('🗑️  Deleted old exercises');
 
     await PracticeExercise.insertMany(exercises);
-    console.log(`✅ Seeded ${exercises.length} practice exercises`);
+     (`✅ Seeded ${exercises.length} practice exercises`);
 
     process.exit(0);
   } catch (error) {

@@ -356,7 +356,7 @@ const Guidebook = () => {
   return (
     <PageWrapper>
       {/* Left Sidebar */}
-      <LeftSidebar />
+      <LeftSidebar leftSideVar="learn" />
 
       {/* Main Content */}
       <MainContent>

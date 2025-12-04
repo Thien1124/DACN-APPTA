@@ -488,7 +488,7 @@ const keywords = ['business', 'travel', 'grammar', 'vocabulary', 'speaking'];
 const randomKeyword = keywords[Math.floor(Math.random() * keywords.length)];
 pm.environment.set('test_keyword', randomKeyword);
 
-console.log('Testing with keyword:', randomKeyword);
+ ('Testing with keyword:', randomKeyword);
 ```
 
 ---

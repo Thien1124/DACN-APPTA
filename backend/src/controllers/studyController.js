@@ -15,7 +15,7 @@ exports.startStudySession = async (req, res) => {
     const userId = req.user._id;
     
     // ✅ Enhanced validation logging
-    console.log('📚 Starting study session:', {
+     ('📚 Starting study session:', {
       userId,
       deckId,
       studyMode,
@@ -49,7 +49,7 @@ exports.startStudySession = async (req, res) => {
     
     if (existingSession) {
       // ✅ UNCOMMENT để tự động abandon session cũ
-      console.log('⚠️ Auto-abandoning existing session:', existingSession._id);
+       ('⚠️ Auto-abandoning existing session:', existingSession._id);
       existingSession.status = 'ABANDONED';
       existingSession.endTime = Date.now();
       existingSession.duration = Math.round((existingSession.endTime - existingSession.startTime) / 1000);
@@ -102,7 +102,7 @@ exports.startStudySession = async (req, res) => {
     }
     
     if (flashcards.length === 0) {
-      console.log('⚠️ No flashcards found for session');
+       ('⚠️ No flashcards found for session');
       return res.status(400).json({
         success: false,
         message: 'Không có thẻ nào để học. Hãy thử lại sau!',
@@ -115,7 +115,7 @@ exports.startStudySession = async (req, res) => {
       });
     }
     
-    console.log(`✅ Found ${flashcards.length} flashcards for session`);
+     (`✅ Found ${flashcards.length} flashcards for session`);
     
     // Shuffle cards for better learning
     flashcards = shuffleArray(flashcards);

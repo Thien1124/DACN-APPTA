@@ -264,14 +264,14 @@ exports.batchAnalyze = async (words) => {
       throw new Error('Invalid words array');
     }
 
-    console.log(`🤖 Batch analyzing ${words.length} words...`);
+     (`🤖 Batch analyzing ${words.length} words...`);
     
     const results = [];
     
     // ✅ Process in batches of 3 with 2s delay (giảm từ 5 xuống 3)
     for (let i = 0; i < words.length; i += 3) {
       const batch = words.slice(i, i + 3);
-      console.log(`📦 Processing batch ${Math.floor(i / 3) + 1}/${Math.ceil(words.length / 3)}: ${batch.join(', ')}`);
+       (`📦 Processing batch ${Math.floor(i / 3) + 1}/${Math.ceil(words.length / 3)}: ${batch.join(', ')}`);
       
       try {
         const batchPromises = batch.map(word => 
@@ -298,7 +298,7 @@ exports.batchAnalyze = async (words) => {
         
         // ✅ Delay 2s between batches (giảm từ 1s xuống 2s)
         if (i + 3 < words.length) {
-          console.log('⏳ Waiting 2s before next batch...');
+           ('⏳ Waiting 2s before next batch...');
           await new Promise(resolve => setTimeout(resolve, 2000));
         }
       } catch (batchError) {
@@ -306,7 +306,7 @@ exports.batchAnalyze = async (words) => {
       }
     }
     
-    console.log(`✅ Batch analysis completed: ${results.length}/${words.length} words`);
+     (`✅ Batch analysis completed: ${results.length}/${words.length} words`);
     return results;
     
   } catch (error) {
@@ -430,7 +430,7 @@ DO NOT include any explanations, definitions, or other text. ONLY the JSON array
 
     const finalWords = words.slice(0, count);
     
-    console.log(`✅ Generated ${finalWords.length} ${cefrLevel} words for "${topic}"`);
+     (`✅ Generated ${finalWords.length} ${cefrLevel} words for "${topic}"`);
     
     return finalWords;
 
@@ -469,7 +469,7 @@ exports.generateExercises = async (skill, level, topic, count = 5, difficulty = 
     const result = await model.generateContent(prompt);
     const response = result.response;
     const text = response.text();
-    console.log(`  🤖 Gemini raw response for ${skill} (${difficulty}):\n`, text); // Log phản hồi thô từ Gemini
+     (`  🤖 Gemini raw response for ${skill} (${difficulty}):\n`, text); // Log phản hồi thô từ Gemini
     
     let jsonText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
     let exercises = [];
