@@ -1,4 +1,6 @@
 const User = require('../models/User');
+const Mission = require('../models/Mission');
+const UserMission = require('../models/UserMission');
 
 /**
  * ==========================================
@@ -37,8 +39,12 @@ const User = require('../models/User');
  */
 exports.updateXP = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user?._id || req.user?.id;
     const { xpEarned } = req.body;
+    
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'User ID không hợp lệ' });
+    }
     
     if (!xpEarned || xpEarned < 0) {
       return res.status(400).json({ success: false, message: 'XP không hợp lệ' });
@@ -64,6 +70,48 @@ exports.updateXP = async (req, res) => {
     user.xp.level = newLevel;
     
     await user.save();
+    
+    // ✅ TỰ ĐỘNG CẬP NHẬT MISSION PROGRESS KHI KIẾM XP
+    try {
+      // Tìm các mission với requirement type = 'xp_earned'
+      const xpMissions = await Mission.find({
+        isActive: true,
+        'requirement.type': 'xp_earned'
+      });
+      
+      for (const mission of xpMissions) {
+        // Tìm hoặc tạo UserMission
+        let userMission = await UserMission.findOne({
+          userId: userId,
+          missionId: mission._id
+        });
+        
+        if (!userMission) {
+          userMission = new UserMission({
+            userId: userId,
+            missionId: mission._id,
+            progress: 0
+          });
+        }
+        
+        // Nếu chưa hoàn thành, cập nhật progress
+        if (!userMission.isCompleted && !userMission.rewardClaimed) {
+          userMission.progress = user.xp.total; // Set progress = total XP earned
+          
+          // Kiểm tra nếu đạt yêu cầu
+          if (userMission.progress >= mission.requirement.count) {
+            userMission.isCompleted = true;
+            userMission.completedAt = new Date();
+            console.log(`✅ Mission "${mission.title}" completed for user ${userId}`);
+          }
+          
+          await userMission.save();
+        }
+      }
+    } catch (missionError) {
+      console.error('❌ Error updating mission progress:', missionError);
+      // Không throw error để không làm fail XP update
+    }
     
     return res.status(200).json({ 
       success: true, 
@@ -98,7 +146,12 @@ exports.updateXP = async (req, res) => {
  */
 exports.getXP = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user?._id || req.user?.id;
+    
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'User ID không hợp lệ' });
+    }
+    
     const user = await User.findById(userId).select('xp');
     
     if (!user) {

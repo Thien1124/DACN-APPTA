@@ -115,7 +115,11 @@ exports.deleteMission = async (req, res) => {
  */
 exports.getMissions = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user?._id || req.user?.id;
+    
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'User ID không hợp lệ' });
+    }
     
     // Lấy tất cả nhiệm vụ đang hoạt động
     const missions = await Mission.find({ isActive: true });
@@ -179,8 +183,12 @@ exports.getMissions = async (req, res) => {
  */
 exports.updateMissionProgress = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user?._id || req.user?.id;
     const { missionId, progress } = req.body;
+    
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'User ID không hợp lệ' });
+    }
     
     if (!missionId) {
       return res.status(400).json({ success: false, message: 'ID nhiệm vụ không hợp lệ' });
@@ -268,8 +276,12 @@ exports.updateMissionProgress = async (req, res) => {
  */
 exports.claimReward = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user?._id || req.user?.id;
     const { missionId } = req.body;
+    
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'User ID không hợp lệ' });
+    }
     
     // Kiểm tra nhiệm vụ và tiến độ
     const userMission = await UserMission.findOne({ userId, missionId });

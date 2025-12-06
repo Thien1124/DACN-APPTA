@@ -2258,20 +2258,42 @@ const Lesson = () => {
                   ? JSON.parse(exercise.correctAnswer)
                   : exercise.correctAnswer || {};
 
-              const leftColumn = Object.keys(pairs).map((leftText, index) => ({
-                id: `left-${index}`,
-                text: leftText,
+              // ✅ Tạo array các cặp để shuffle
+              const pairsArray = Object.keys(pairs).map((leftText, index) => ({
+                leftId: `left-${index}`,
+                leftText: leftText,
+                rightText: pairs[leftText],
               }));
 
-              const rightColumn = Object.values(pairs).map(
-                (rightText, index) => ({
+              // ✅ Shuffle array các cặp
+              const shuffledPairs = [...pairsArray].sort(() => Math.random() - 0.5);
+
+              // ✅ Tạo leftColumn từ shuffled pairs
+              const leftColumn = shuffledPairs.map((pair, index) => ({
+                id: pair.leftId,
+                text: pair.leftText,
+              }));
+
+              // ✅ Shuffle rightColumn riêng biệt
+              const rightColumnTemp = shuffledPairs.map((pair) => ({
+                text: pair.rightText,
+                matchWithText: pair.leftText, // Lưu text để tìm matchWith sau
+              }));
+              
+              const shuffledRight = [...rightColumnTemp].sort(() => Math.random() - 0.5);
+
+              // ✅ Tạo rightColumn với matchWith đúng
+              const rightColumn = shuffledRight.map((item, index) => {
+                // Tìm index của leftColumn có text tương ứng
+                const matchIndex = leftColumn.findIndex(
+                  (left) => left.text === item.matchWithText
+                );
+                return {
                   id: `right-${index}`,
-                  text: rightText,
-                  matchWith: `left-${Object.keys(pairs).findIndex(
-                    (key) => pairs[key] === rightText
-                  )}`,
-                })
-              );
+                  text: item.text,
+                  matchWith: matchIndex >= 0 ? leftColumn[matchIndex].id : null,
+                };
+              });
 
               questionObj.leftColumn = leftColumn;
               questionObj.rightColumn = rightColumn;
