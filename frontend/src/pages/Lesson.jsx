@@ -23,6 +23,7 @@ import { lessonService } from "../services/lessonService";
 import { vocabularyService } from "../services/vocabularyService";
 import { exerciseService } from "../services/exerciseService";
 import progressService from "../services/progressService";
+import { missionService } from "../services/missionService";
 
 import { xpService } from "../services/xpService"; 
 // ========== ANIMATIONS ==========
@@ -3029,6 +3030,39 @@ const Lesson = () => {
     // ✅ 3. Update XP qua API
     const xpResult = await xpService.updateXP(xpReward);
      console.log("✅ XP updated:", xpResult);
+
+    // ✅ 4. Cập nhật tiến độ nhiệm vụ
+    try {
+      const missionsResponse = await missionService.getMissions();
+      if (missionsResponse.success && missionsResponse.missions) {
+        // Tìm nhiệm vụ "lesson_complete" chưa hoàn thành
+        const lessonMissions = missionsResponse.missions.filter(
+          m => m.requirement.type === 'lesson_complete' && !m.isCompleted
+        );
+        
+        // Tìm nhiệm vụ "xp_earn" chưa hoàn thành
+        const xpMissions = missionsResponse.missions.filter(
+          m => m.requirement.type === 'xp_earn' && !m.isCompleted
+        );
+        
+        // Cập nhật tiến độ cho nhiệm vụ hoàn thành bài học
+        for (const mission of lessonMissions) {
+          const newProgress = (mission.progress || 0) + 1;
+          await missionService.updateProgress(mission._id, newProgress);
+          console.log(`🎯 Updated mission "${mission.title}" progress: ${newProgress}/${mission.requirement.count}`);
+        }
+        
+        // Cập nhật tiến độ cho nhiệm vụ kiếm XP
+        for (const mission of xpMissions) {
+          const newProgress = (mission.progress || 0) + xpReward;
+          await missionService.updateProgress(mission._id, newProgress);
+          console.log(`💎 Updated XP mission "${mission.title}" progress: ${newProgress}/${mission.requirement.count}`);
+        }
+      }
+    } catch (missionError) {
+      console.error("⚠️ Error updating mission progress:", missionError);
+      // Không chặn tiến trình chính nếu lỗi mission
+    }
 
        console.log("✅ Progress updated:", response);
 

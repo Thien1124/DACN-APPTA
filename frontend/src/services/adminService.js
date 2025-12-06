@@ -613,6 +613,34 @@ export const adminService = {
       }
     },
   },
+
+  // ========== MISSIONS (ADMIN) ==========
+  missions: {
+    getAll: async () => {
+      const response = await axiosInstance.get("/missions");
+      return response.data;
+    },
+
+    getById: async (id) => {
+      const response = await axiosInstance.get(`/missions/${id}`);
+      return response.data;
+    },
+
+    create: async (data) => {
+      const response = await axiosInstance.post("/missions", data);
+      return response.data;
+    },
+
+    update: async (id, data) => {
+      const response = await axiosInstance.put(`/missions/${id}`, data);
+      return response.data;
+    },
+
+    delete: async (id) => {
+      const response = await axiosInstance.delete(`/missions/${id}`);
+      return response.data;
+    },
+  },
 };
 
 export default adminService;

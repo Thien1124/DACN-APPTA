@@ -62,6 +62,7 @@ import AdminTests from './pages/AdminTests';
 import AdminDecks from './pages/AdminDecks';
 import AdminFlashcards from './pages/AdminFlashcards';
 import AdminLeaderboard from './pages/AdminLeaderboard';
+import AdminMission from './pages/AdminMission';
 
 // Admin CRUD Forms
 import AdminCourseForm from './pages/AdminCourseForm';
@@ -370,6 +371,12 @@ function App() {
           <Route path="/admin/leaderboard" element={
             <ProtectedRoute requireAdmin={true}>
               <AdminLeaderboard />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/admin/missions" element={
+            <ProtectedRoute requireAdmin={true}>
+              <AdminMission />
             </ProtectedRoute>
           } />
 

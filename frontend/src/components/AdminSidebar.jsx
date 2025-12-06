@@ -8,7 +8,7 @@ import { BsStack, BsCardText, BsTrophy } from 'react-icons/bs';
 import { AiOutlineSetting, AiOutlineAudit } from 'react-icons/ai';
 import { IoNotificationsOutline } from 'react-icons/io5';
 import { FaCrown } from 'react-icons/fa';
-import {  MdOutlineLeaderboard } from 'react-icons/md';
+import {  MdOutlineLeaderboard, MdTask } from 'react-icons/md';
 
 // ========== STYLED COMPONENTS ==========
 
@@ -449,6 +449,12 @@ const AdminSidebar = ({ theme = 'light', onThemeToggle }) => {
           icon: <MdOutlineLeaderboard size={20} />,
           text: 'Bảng xếp hạng',
           path: '/admin/leaderboard',
+          badge: null,
+        },
+        {
+          icon: <MdTask size={20} />,
+          text: 'Nhiệm vụ',
+          path: '/admin/missions',
           badge: null,
         },
       ],

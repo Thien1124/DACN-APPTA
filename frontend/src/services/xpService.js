@@ -27,13 +27,14 @@ export const xpService = {
       
       return {
         success: true,
+        xp: response.data.xp || { total: 0, level: 1 },
         totalXP: response.data.xp?.total || 0,
         level: response.data.xp?.level || 1,
         nextLevelXP: response.data.nextLevelXP || 100,
         xpNeeded: response.data.xpNeeded || 100
       };
     } catch (error) {
-      console.error('Error updating XP:', error);
+      console.error('Error getting XP:', error);
       throw error;
     }
   }
