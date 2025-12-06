@@ -4,7 +4,17 @@ const Vocabulary = require('../models/Vocabulary');
 
 exports.getUserProgress = async (req, res) => {
   try {
-    const userId = req.user.id; // ✅ Sử dụng req.user.id
+    const userId = req.user?._id || req.user?.id; // ✅ Sử dụng _id hoặc id
+    
+    if (!userId) {
+      console.error('❌ No userId found in req.user:', req.user);
+      return res.status(401).json({
+        success: false,
+        message: 'User ID không hợp lệ'
+      });
+    }
+    
+    console.log(`📖 Getting progress for user: ${userId}`);
     
     // Tìm progress từ Progress model
     let progress = await Progress.findOne({ user: userId });
@@ -17,6 +27,7 @@ exports.getUserProgress = async (req, res) => {
         currentLesson: null,
         lessonProgress: new Map()
       });
+      console.log('✅ Created new progress record for user:', userId);
     }
     
     res.status(200).json({
@@ -43,11 +54,20 @@ exports.getUserProgress = async (req, res) => {
 exports.updateLessonProgress = async (req, res) => {
   try {
     const { lessonId } = req.params;
-    const userId = req.user.id; // ✅ Sử dụng req.user.id
+    const userId = req.user?._id || req.user?.id; // ✅ Sử dụng _id hoặc id
     const { completed, score, timeSpent } = req.body;
     
-     (`📚 Updating lesson progress for user ${userId}, lesson ${lessonId}`);
-     (`📊 Data: completed=${completed}, score=${score}, timeSpent=${timeSpent}`);
+    // ✅ Validate userId first
+    if (!userId) {
+      console.error('❌ No userId found in req.user:', req.user);
+      return res.status(401).json({
+        success: false,
+        message: 'User ID không hợp lệ'
+      });
+    }
+    
+    console.log(`📚 Updating lesson progress for user ${userId}, lesson ${lessonId}`);
+    console.log(`📊 Data: completed=${completed}, score=${score}, timeSpent=${timeSpent}`);
     
     // ✅ Validate lessonId
     if (!lessonId || lessonId === 'undefined' || lessonId === 'null') {

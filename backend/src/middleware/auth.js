@@ -102,6 +102,7 @@ const authenticate = async (req, res, next) => {
 
     // Bước 8: Gán user vào request object
     req.user = user;
+    console.log(`✅ Auth middleware: User authenticated - ID: ${user._id}, Email: ${user.email}`);
     next();
 
   } catch (error) {

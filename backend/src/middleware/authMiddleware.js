@@ -48,6 +48,7 @@ exports.protect = async (req, res, next) => {
 
     // Lưu thông tin người dùng vào request
     req.user = user;
+    console.log(`✅ Protect middleware: User authenticated - ID: ${user._id}, Email: ${user.email}`);
     next();
   } catch (error) {
     return res.status(401).json({
