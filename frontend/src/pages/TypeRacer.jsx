@@ -6,7 +6,7 @@ import LeftSidebar from '../components/LeftSidebar';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import { Speed, EmojiEvents, Psychology, Autorenew } from '@mui/icons-material';
-import { flashcardService } from '../services/flashcardServices';
+import api from '../utils/api';
 
 const socket = io('http://localhost:1124');
 
@@ -319,6 +319,71 @@ const InputField = styled.input`
   }
 `;
 
+const WordBankContainer = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 1.5rem;
+  background: #f8f9fa;
+  border-radius: 15px;
+  min-height: 120px;
+  margin-bottom: 1.5rem;
+  border: 2px dashed #d1d5db;
+`;
+
+const WordButton = styled(motion.button)`
+  padding: 0.75rem 1.5rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: ${props => props.disabled ? '#9ca3af' : '#1f2937'};
+  background: ${props => props.disabled ? '#f3f4f6' : 'white'};
+  border: 2px solid ${props => props.disabled ? '#e5e7eb' : '#667eea'};
+  border-radius: 12px;
+  cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
+  transition: all 0.2s ease;
+  opacity: ${props => props.disabled ? 0.4 : 1};
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    background: #667eea;
+    color: white;
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+`;
+
+const AnswerArea = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 1.5rem;
+  background: white;
+  border: 3px solid #667eea;
+  border-radius: 15px;
+  min-height: 80px;
+  margin-bottom: 1.5rem;
+  align-items: center;
+`;
+
+const SelectedWord = styled(motion.div)`
+  padding: 0.75rem 1.5rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: white;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    transform: scale(0.95);
+    opacity: 0.8;
+  }
+`;
+
 const ResultContainer = styled(motion.div)`
   text-align: center;
   padding: 3rem;
@@ -368,9 +433,10 @@ const TypeRacer = () => {
   // Use safe access to avoid destructuring `undefined` when auth slice is not populated
   const user = useSelector((state) => state.auth?.user);
   const [status, setStatus] = useState('idle'); // idle, searching, playing, finished
-  const [flashcards, setFlashcards] = useState([]);
+  const [exercises, setExercises] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [input, setInput] = useState('');
+  const [selectedWords, setSelectedWords] = useState([]);
+  const [availableWords, setAvailableWords] = useState([]);
   const [myProgress, setMyProgress] = useState(0);
   const [opponentProgress, setOpponentProgress] = useState(0);
   const [result, setResult] = useState(null);
@@ -387,15 +453,19 @@ const TypeRacer = () => {
       setRoomID(data.roomID);
       setMyProgress(0);
       setOpponentProgress(0);
-      setInput('');
+      setSelectedWords([]);
       setResult(null);
       setCurrentIndex(0);
       
-      // Nếu server gửi flashcards, dùng nó; nếu không thì lấy từ API
-      if (data.flashcards && data.flashcards.length > 0) {
-        setFlashcards(data.flashcards);
+      // Nếu server gửi exercises, dùng nó; nếu không thì lấy từ API
+      if (data.exercises && data.exercises.length > 0) {
+        setExercises(data.exercises);
+        // Shuffle word bank cho exercise đầu tiên
+        if (data.exercises[0]?.wordBank) {
+          setAvailableWords([...data.exercises[0].wordBank].sort(() => Math.random() - 0.5));
+        }
       } else {
-        await loadFlashcards();
+        await loadExercises();
       }
     });
 
@@ -429,28 +499,37 @@ const TypeRacer = () => {
     return () => clearTimeout(t);
   }, [showConfetti]);
 
-  const loadFlashcards = async () => {
+  const loadExercises = async () => {
     try {
       setLoading(true);
-      const response = await flashcardService.getRandomForTypeRacer(10);
-      if (response.success && response.flashcards) {
-        setFlashcards(response.flashcards);
+      const response = await api.get('/exercises/typeracer/random?limit=10');
+      if (response.data.success && response.data.exercises) {
+        setExercises(response.data.exercises);
+        // Shuffle word bank cho exercise đầu tiên
+        if (response.data.exercises[0]?.wordBank) {
+          setAvailableWords([...response.data.exercises[0].wordBank].sort(() => Math.random() - 0.5));
+        }
       }
     } catch (error) {
-      console.error('Error loading flashcards:', error);
+      console.error('Error loading exercises:', error);
       // Fallback data
-      setFlashcards([
-        { id: '1', vietnamese: 'Xin chào', english: 'Hello' },
-        { id: '2', vietnamese: 'Cảm ơn', english: 'Thank you' },
-        { id: '3', vietnamese: 'Tạm biệt', english: 'Goodbye' },
-        { id: '4', vietnamese: 'Vui lòng', english: 'Please' },
-        { id: '5', vietnamese: 'Xin lỗi', english: 'Sorry' },
-        { id: '6', vietnamese: 'Yêu', english: 'Love' },
-        { id: '7', vietnamese: 'Bạn', english: 'Friend' },
-        { id: '8', vietnamese: 'Nhà', english: 'House' },
-        { id: '9', vietnamese: 'Nước', english: 'Water' },
-        { id: '10', vietnamese: 'Thức ăn', english: 'Food' },
+      setExercises([
+        { 
+          id: '1', 
+          vietnamese: 'Họ thích thể thao', 
+          wordBank: ['They', 'like', 'sports'],
+          correctAnswer: 'They like sports'
+        },
+        { 
+          id: '2', 
+          vietnamese: 'Tôi đang học tiếng Anh', 
+          wordBank: ['I', 'am', 'learning', 'English'],
+          correctAnswer: 'I am learning English'
+        },
       ]);
+      if (exercises[0]?.wordBank) {
+        setAvailableWords([...exercises[0].wordBank].sort(() => Math.random() - 0.5));
+      }
     } finally {
       setLoading(false);
     }
@@ -458,42 +537,51 @@ const TypeRacer = () => {
 
   const findMatch = async () => {
     setStatus('searching');
-    await loadFlashcards();
+    await loadExercises();
     socket.emit('find_match', { name: user?.name || 'Guest' });
   };
 
-  const handleInputChange = (e) => {
-    const val = e.target.value;
-    setInput(val);
-
-    const currentFlashcard = flashcards[currentIndex];
-    if (!currentFlashcard) return;
-
-    const correctAnswer = currentFlashcard.english.toLowerCase().trim();
-    const userAnswer = val.toLowerCase().trim();
-
-    // Tính toán % tiến độ dựa trên số từ đã hoàn thành
-    const percent = Math.floor((currentIndex / flashcards.length) * 100);
-    setMyProgress(percent);
+  const handleWordClick = (word) => {
+    // Thêm từ vào câu trả lời
+    setSelectedWords([...selectedWords, word]);
+    // Xóa từ khỏi word bank
+    setAvailableWords(availableWords.filter(w => w !== word));
     
-    // Gửi tiến độ lên server
-    socket.emit('update_progress', { roomID, progress: percent });
-
-    // Kiểm tra nếu nhập đúng (so sánh không phân biệt hoa thường)
-    if (userAnswer === correctAnswer) {
-      if (currentIndex < flashcards.length - 1) {
-        // Chuyển sang từ tiếp theo
+    // Check answer sau khi thêm từ
+    const newAnswer = [...selectedWords, word].join(' ');
+    const currentExercise = exercises[currentIndex];
+    
+    if (newAnswer === currentExercise.correctAnswer) {
+      // Đúng rồi!
+      const percent = Math.floor(((currentIndex + 1) / exercises.length) * 100);
+      setMyProgress(percent);
+      socket.emit('update_progress', { roomID, progress: percent });
+      
+      if (currentIndex < exercises.length - 1) {
+        // Chuyển câu tiếp theo
         setTimeout(() => {
           setCurrentIndex(currentIndex + 1);
-          setInput('');
-        }, 200);
+          setSelectedWords([]);
+          // Shuffle word bank mới
+          if (exercises[currentIndex + 1]?.wordBank) {
+            setAvailableWords([...exercises[currentIndex + 1].wordBank].sort(() => Math.random() - 0.5));
+          }
+        }, 500);
       } else {
-        // Hoàn thành tất cả
+        // Hoàn thành!
         setMyProgress(100);
         socket.emit('update_progress', { roomID, progress: 100 });
         socket.emit('player_won', { roomID });
       }
     }
+  };
+
+  const handleRemoveWord = (index) => {
+    const word = selectedWords[index];
+    // Xóa từ khỏi câu trả lời
+    setSelectedWords(selectedWords.filter((_, i) => i !== index));
+    // Thêm lại vào word bank
+    setAvailableWords([...availableWords, word]);
   };
 
   const isAuthenticated = !!user;
@@ -620,26 +708,48 @@ const TypeRacer = () => {
               </ProgressSection>
 
               <div style={{textAlign: 'center', marginBottom: '1rem', fontSize: '1.2rem', fontWeight: '600', color: '#667eea'}}>
-                Từ {currentIndex + 1} / {flashcards.length}
+                Câu {currentIndex + 1} / {exercises.length}
               </div>
 
               <SentenceDisplay>
                 <div style={{ fontSize: '1.8rem', fontWeight: '700', color: '#764ba2', marginBottom: '1rem' }}>
-                  🇻🇳 {flashcards[currentIndex]?.vietnamese || ''}
+                  🇻🇳 {exercises[currentIndex]?.vietnamese || ''}
                 </div>
-                
-                
               </SentenceDisplay>
 
-              <InputField
-                type="text"
-                value={input}
-                onChange={handleInputChange}
-                disabled={status === 'finished' || loading}
-                placeholder="Nhập từ tiếng Anh..."
-                autoFocus
-                onPaste={(e) => e.preventDefault()}
-              />
+              <AnswerArea>
+                {selectedWords.length === 0 ? (
+                  <div style={{ color: '#9ca3af', fontStyle: 'italic' }}>
+                    Nhấn vào các từ bên dưới để xếp thành câu...
+                  </div>
+                ) : (
+                  selectedWords.map((word, index) => (
+                    <SelectedWord
+                      key={index}
+                      onClick={() => handleRemoveWord(index)}
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      exit={{ scale: 0 }}
+                    >
+                      {word}
+                    </SelectedWord>
+                  ))
+                )}
+              </AnswerArea>
+
+              <WordBankContainer>
+                {availableWords.map((word, index) => (
+                  <WordButton
+                    key={index}
+                    onClick={() => handleWordClick(word)}
+                    disabled={status === 'finished' || loading}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    {word}
+                  </WordButton>
+                ))}
+              </WordBankContainer>
 
               {status === 'finished' && (
                 <ResultContainer

@@ -21,7 +21,7 @@ const exerciseSchema = new mongoose.Schema({
   type: {
     type: String,
     required: [true, 'Vui lòng chọn loại bài tập'],
-    enum: ['multiple-choice', 'fill-in-blank', 'matching', 'listening', 'speaking', 'translation'],
+    enum: ['multiple-choice', 'fill-in-blank', 'matching', 'listening', 'speaking', 'translation', 'translate_build'],
     default: 'multiple-choice'
   },
   options: [optionSchema],

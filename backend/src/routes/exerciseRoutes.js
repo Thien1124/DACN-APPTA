@@ -1,8 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const exerciseController = require('../controllers/exerciseController');
+const typeRacerController = require('../controllers/typeRacerController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 const upload = require('../middleware/upload');
+
+// ✅ Public route for TypeRacer (không cần admin)
+router.get('/typeracer/random', protect, typeRacerController.getRandomForTypeRacer);
 
 // Tất cả routes đều yêu cầu đăng nhập và quyền admin
 router.use(protect);
