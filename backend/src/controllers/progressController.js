@@ -111,7 +111,55 @@ exports.updateLessonProgress = async (req, res) => {
     // ✅ Nếu lesson hoàn thành, thêm vào completedLessons và đánh dấu từ vựng đã học
     if (completed && !progress.completedLessons.includes(lessonId)) {
       progress.completedLessons.push(lessonId);
-       (`✅ Marked lesson ${lessonId} as completed`);
+      console.log(`✅ Marked lesson ${lessonId} as completed`);
+      
+      // ✅ TỰ ĐỘNG CẬP NHẬT STREAK KHI HOÀN THÀNH LESSON
+      try {
+        const user = await User.findById(userId);
+        if (user) {
+          // Khởi tạo streak nếu chưa có
+          if (!user.streak) {
+            user.streak = { count: 0, lastActivityDate: null };
+          }
+
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const lastActivity = user.streak.lastActivityDate ? new Date(user.streak.lastActivityDate) : null;
+          if (lastActivity) {
+            lastActivity.setHours(0, 0, 0, 0);
+          }
+
+          // Kiểm tra nếu chưa học trong ngày hôm nay
+          if (!lastActivity || lastActivity.getTime() !== today.getTime()) {
+            if (!lastActivity) {
+              // Lần đầu tiên học
+              user.streak.count = 1;
+            } else {
+              // Tính số ngày chênh lệch
+              const diffMs = today.getTime() - lastActivity.getTime();
+              const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+              if (diffDays === 1) {
+                // Học liên tiếp, tăng streak
+                user.streak.count += 1;
+              } else {
+                // Bỏ lỡ ít nhất một ngày, reset streak về 1
+                user.streak.count = 1;
+              }
+            }
+
+            // Cập nhật ngày hoạt động cuối cùng
+            user.streak.lastActivityDate = today;
+            await user.save();
+            console.log(`🔥 Streak updated to ${user.streak.count} for user ${userId}`);
+          } else {
+            console.log(`ℹ️ Streak already updated today: ${user.streak.count}`);
+          }
+        }
+      } catch (streakError) {
+        console.error('❌ Error updating streak:', streakError);
+        // Không throw error để không làm fail progress update
+      }
       
       // ✅ TỰ ĐỘNG ĐÁNH DẤU TẤT CẢ TỪ VỰNG TRONG LESSON LÀ ĐÃ HỌC
       try {

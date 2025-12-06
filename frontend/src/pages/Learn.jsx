@@ -757,6 +757,8 @@ useEffect(() => {
           shopService.getGems().catch(() => ({ gems: 0 }))
         ]);
 
+        console.log('📊 Loaded streak data:', streakData); // Debug log
+
         const totalXP = xpData.totalXP || 0;
         const level = calculateLevel(totalXP);
 
@@ -768,6 +770,8 @@ useEffect(() => {
           gems: gemsData.gems || 0,
           flag: US
         });
+        
+        console.log('✅ Stats updated - Streak:', streakData.currentStreak); // Debug log
       } catch (error) {
         console.error('Error loading stats:', error);
       }
