@@ -25,7 +25,7 @@ import {
   FavoriteBorder,
   Notifications,
   NotificationsOff,
-  Whatshot, // Thêm cho tab Thịnh hành
+  Whatshot, 
 } from "@mui/icons-material";
 import BeachAccessIcon from "@mui/icons-material/BeachAccess";
 import { useToast } from "../hooks/useToast";
@@ -35,7 +35,6 @@ import { deckManagementService } from "../services/deckManagementService";
 import { geminiService } from "../services/geminiService";
 import { Mic } from "@mui/icons-material";
 
-// Update PageWrapper and add FormWrapper
 const PageWrapper = styled.div`
   display: flex;
   min-height: 100vh;
@@ -44,7 +43,7 @@ const PageWrapper = styled.div`
       ? "linear-gradient(135deg, #1a1f2c 0%, #2d3748 50%, #4a5568 100%)"
       : "linear-gradient(135deg, #EBF4FF 0%, #E6FFFA 50%, #F0FFF4 100%)"};
 `;
-// Thêm sau ActionButton
+
 const PublicBadge = styled.div`
   position: absolute;
   top: 1rem;
@@ -67,7 +66,6 @@ const PublicBadge = styled.div`
     font-size: 14px;
   }
 `;
-// Thêm sau AddButton
 const HeaderButtons = styled.div`
   display: flex;
   gap: 1rem;
@@ -140,7 +138,7 @@ const FormWrapper = styled.div`
   min-width: 0; // Prevent content from overflowing
 `;
 
-// Update MainContent styling
+
 const MainContent = styled.div`
   padding: 2.5rem;
   min-width: 0;
@@ -165,7 +163,7 @@ const Title = styled.h1`
   margin-bottom: 2rem;
 `;
 
-// Update TopicsGrid for better responsiveness
+
 const TopicsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(
@@ -176,7 +174,7 @@ const TopicsGrid = styled.div`
   width: 100%;
 `;
 
-// Make TopicCard more compact
+
 const TopicCard = styled.div`
   background: ${(props) =>
     props.theme === "dark" ? "rgba(31, 41, 55, 0.95)" : "white"};
@@ -266,7 +264,7 @@ const AddButton = styled.button`
     transform: translateY(0);
   }
 `;
-// Add this with other styled components in Topics.jsx
+
 const Button = styled.button`
   padding: 0.75rem 1.5rem;
   border: none;
@@ -315,7 +313,7 @@ const Form = styled.form`
   gap: 1rem;
 `;
 
-// Add styled checkbox
+
 const CheckboxContainer = styled.div`
   display: flex;
   align-items: center;
@@ -358,7 +356,7 @@ const ButtonGroup = styled.div`
   margin-top: 1rem;
 `;
 
-// Make TopicActions more compact
+
 const TopicActions = styled.div`
   display: grid;
   grid-template-columns: repeat(2, 1fr); // Giữ nguyên 2 cột
@@ -386,7 +384,7 @@ const ActionButton = styled.button.withConfig({
       case "ai":
         return "#1CB0F6";
       case "review":
-        return "#FF9500"; // ← Thêm màu cam cho review
+        return "#FF9500"; 
       case "edit":
         return "#FFA116";
       case "delete":
@@ -430,17 +428,17 @@ const Decks = () => {
     imageUrl: "/images/default-deck.png",
   });
 
-  // ========== NEW STATE ==========
+ 
   const [publicDecks, setPublicDecks] = useState([]);
   const [trendingDecks, setTrendingDecks] = useState([]);
   const [favoriteDecks, setFavoriteDecks] = useState([]);
   const [subscribedDecks, setSubscribedDecks] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeTab, setActiveTab] = useState("my-decks"); // my-decks, public, trending, favorites, subscribed
+  const [activeTab, setActiveTab] = useState("my-decks"); 
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  // Update fetchTopics to use getMyDecks
+
   const fetchTopics = async () => {
     try {
       setLoading(true);
@@ -458,9 +456,7 @@ const Decks = () => {
     }
   };
 
-  // ========== NEW FETCH FUNCTIONS ==========
-
-  // Fetch public decks
+  
   const fetchPublicDecks = async (page = 1) => {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -624,7 +620,7 @@ const Decks = () => {
 
   useEffect(() => {
     fetchTopics();
-    // Fix: Remove API calls from initial useEffect to prevent 403 errors when not logged in
+    
     // fetchPublicDecks(1);
     // fetchTrendingDecks();
     // fetchFavoriteDecks();
@@ -665,7 +661,7 @@ const Decks = () => {
     // Navigate đến AI Generator để tạo deck mới
     navigate("/ai-flashcards", {
       state: {
-        isNewDeck: true, // Flag để biết là tạo deck mới
+        isNewDeck: true, 
       },
     });
   };
@@ -821,11 +817,11 @@ const Decks = () => {
   };
   const handleReview = (deckId) => {
     navigate(`/flashcards/review/${deckId}`);
-    // Optionally increment study count
+
     deckService.incrementStudy(deckId).catch(console.error);
   };
 
-  // Add delete functionality
+
   const handleDelete = async (deckId) => {
     if (window.confirm("Bạn có chắc chắn muốn xóa bộ thẻ này?")) {
       try {
@@ -842,9 +838,7 @@ const Decks = () => {
     navigate(`/decks/${deckId}/reviews`);
   };
 
-  // ========== DECK MANAGEMENT FUNCTIONS ==========
 
-  // Clone deck
   const handleCloneDeck = async (deck) => {
     try {
       showToast("info", "Đang xử lý", "🔄 Đang sao chép bộ thẻ...");
@@ -861,7 +855,7 @@ const Decks = () => {
     }
   };
 
-  // Share deck
+  
   const handleShareDeck = async (deck) => {
     try {
       const shareSettings = {
@@ -1025,7 +1019,7 @@ const Decks = () => {
     }
   };
 
-  // Clone deck (enhanced)
+  
   const handleCloneDeckEnhanced = async (deck) => {
     try {
       showToast("info", "Đang xử lý", "🔄 Đang sao chép bộ thẻ...");
@@ -1043,7 +1037,7 @@ const Decks = () => {
     }
   };
 
-  // Get current deck list based on active tab
+  
   const getCurrentDeckList = () => {
     switch (activeTab) {
       case "my-decks":
