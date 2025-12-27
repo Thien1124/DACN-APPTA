@@ -5,6 +5,7 @@ import LeftSidebar from '../components/LeftSidebar';
 import RightSidebar from '../components/RightSidebar';
 import Toast from '../components/Toast';
 import useToast from '../hooks/useToast';
+import { missionService } from '../services/missionService';
 
 import {
   AccessTime,
@@ -380,12 +381,87 @@ const dailyQuests = [
 const Quests = () => {
   const navigate = useNavigate();
   const { toast, showToast, hideToast } = useToast();
-  const [quests, setQuests] = useState(dailyQuests);
+  const [quests, setQuests] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [monthlyProgress, setMonthlyProgress] = useState(monthlyQuestData);
 
-  const handleQuestClick = (quest) => {
-    if (quest.completed) {
-      showToast('info', 'Đã hoàn thành', 'Nhiệm vụ này đã hoàn thành!');
+  useEffect(() => {
+    fetchMissions();
+  }, []);
+
+  const fetchMissions = async () => {
+    try {
+      setLoading(true);
+      const response = await missionService.getMissions();
+      
+      if (response.success && response.missions) {
+        // Map API data to component format
+        const mappedQuests = response.missions.map((mission, index) => ({
+          id: mission._id,
+          icon: getIconForMissionType(mission.requirement.type, index),
+          name: mission.title,
+          description: mission.description,
+          current: mission.progress || 0,
+          target: mission.requirement.count,
+          reward: mission.rewards.gems || 50,
+          completed: mission.isCompleted || false,
+          rewardClaimed: mission.rewardClaimed || false,
+          color: getColorForMissionType(mission.type, index),
+          type: mission.type,
+          missionId: mission._id
+        }));
+        
+        setQuests(mappedQuests);
+        
+        // Update monthly progress based on completed missions
+        const completedCount = mappedQuests.filter(m => m.completed).length;
+        setMonthlyProgress(prev => ({
+          ...prev,
+          current: completedCount
+        }));
+      }
+    } catch (error) {
+      console.error('Error fetching missions:', error);
+      showToast('error', 'Lỗi', 'Không thể tải danh sách nhiệm vụ');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getIconForMissionType = (type, index) => {
+    const icons = {
+      lesson_complete: <Bolt sx={{ fontSize: 24, color: 'white' }} />,
+      exercise_complete: <Diamond sx={{ fontSize: 24, color: 'white' }} />,
+      streak_days: <Timer sx={{ fontSize: 24, color: 'white' }} />,
+      xp_earn: <Bolt sx={{ fontSize: 24, color: 'white' }} />,
+      flashcard_review: <Diamond sx={{ fontSize: 24, color: 'white' }} />
+    };
+    return icons[type] || <Bolt sx={{ fontSize: 24, color: 'white' }} />;
+  };
+
+  const getColorForMissionType = (type, index) => {
+    const colors = {
+      daily: ['#fbbf24', '#1CB0F6', '#8b5cf6'],
+      weekly: ['#10b981', '#f59e0b', '#ef4444'],
+      achievement: ['#8b5cf6', '#ec4899', '#06b6d4']
+    };
+    return colors[type]?.[index % 3] || '#8b5cf6';
+  };
+
+  const handleQuestClick = async (quest) => {
+    if (quest.completed && !quest.rewardClaimed) {
+      // Claim reward
+      try {
+        const response = await missionService.claimReward(quest.missionId);
+        if (response.success) {
+          showToast('success', 'Thành công', `Đã nhận ${quest.reward} 💎!`);
+          fetchMissions(); // Refresh missions
+        }
+      } catch (error) {
+        showToast('error', 'Lỗi', error.response?.data?.message || 'Không thể nhận phần thưởng');
+      }
+    } else if (quest.rewardClaimed) {
+      showToast('info', 'Đã hoàn thành', 'Nhiệm vụ này đã nhận phần thưởng!');
     } else {
       showToast('info', 'Nhiệm vụ', `Hãy hoàn thành: ${quest.name}`);
       navigate('/learn');
@@ -441,38 +517,54 @@ const Quests = () => {
               Nhiệm vụ hàng ngày
             </SectionTitle>
             
-            <QuestsList>
-              {quests.map(quest => {
-                const questProgress = (quest.current / quest.target) * 100;
-                return (
-                  <QuestItem 
-                    key={quest.id} 
-                    completed={quest.completed}
-                    onClick={() => handleQuestClick(quest)}
-                  >
-                    <QuestIconWrapper color={quest.color}>
-                      {quest.icon}
-                    </QuestIconWrapper>
-                    <QuestInfo>
-                      <QuestName>{quest.name}</QuestName>
-                      <QuestProgress>
-                        {quest.current} / {quest.target}
-                      </QuestProgress>
-                      <QuestProgressBar>
-                        <QuestProgressFill 
-                          progress={questProgress} 
-                          completed={quest.completed}
-                        />
-                      </QuestProgressBar>
-                    </QuestInfo>
-                    <QuestReward completed={quest.completed}>
-                      {quest.completed ? '✓' : `+${quest.reward}`}
-                      {!quest.completed && <Diamond sx={{ fontSize: 24, color: 'white' }} />}
-                    </QuestReward>
-                  </QuestItem>
-                );
-              })}
-            </QuestsList>
+            {loading ? (
+              <div style={{ textAlign: 'center', padding: '2rem', color: '#6b7280' }}>
+                Đang tải nhiệm vụ...
+              </div>
+            ) : quests.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '2rem', color: '#6b7280' }}>
+                Chưa có nhiệm vụ nào
+              </div>
+            ) : (
+              <QuestsList>
+                {quests.map(quest => {
+                  const questProgress = (quest.current / quest.target) * 100;
+                  return (
+                    <QuestItem 
+                      key={quest.id} 
+                      completed={quest.completed}
+                      onClick={() => handleQuestClick(quest)}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <QuestIconWrapper color={quest.color}>
+                        {quest.icon}
+                      </QuestIconWrapper>
+                      <QuestInfo>
+                        <QuestName>{quest.name}</QuestName>
+                        {quest.description && (
+                          <div style={{ fontSize: '0.8125rem', color: '#9ca3af', marginBottom: '0.25rem' }}>
+                            {quest.description}
+                          </div>
+                        )}
+                        <QuestProgress>
+                          {quest.current} / {quest.target}
+                        </QuestProgress>
+                        <QuestProgressBar>
+                          <QuestProgressFill 
+                            progress={questProgress} 
+                            completed={quest.completed}
+                          />
+                        </QuestProgressBar>
+                      </QuestInfo>
+                      <QuestReward completed={quest.completed}>
+                        {quest.rewardClaimed ? '✓ Đã nhận' : quest.completed ? '🎁 Nhận' : `+${quest.reward}`}
+                        {!quest.completed && !quest.rewardClaimed && <Diamond sx={{ fontSize: 24, color: 'white' }} />}
+                      </QuestReward>
+                    </QuestItem>
+                  );
+                })}
+              </QuestsList>
+            )}
           </QuestsSection>
         </Container>
       </MainContent>

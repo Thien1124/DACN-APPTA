@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const api = axios.create({
   baseURL: process.env.REACT_APP_API_URL || 'http://localhost:1124/api',
-  withCredentials: true, // Đảm bảo cookies được gửi
+  withCredentials: true, 
   timeout: 300000,
   headers: {
     'Content-Type': 'application/json',
@@ -16,7 +16,7 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    console.log('API Request Config:', config); // Add this log
+    console.log('API Request Config:', config); 
     return config;
   },
   (error) => {
@@ -45,7 +45,6 @@ api.interceptors.response.use(
       }
     }
     
-    // ✅ Luôn reject để component có thể catch
     return Promise.reject(error);
   }
 );

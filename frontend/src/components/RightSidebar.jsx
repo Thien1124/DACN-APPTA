@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import styled, { keyframes, css } from 'styled-components';
 import { authService } from '../services/authService';
 import { streakService } from '../services/streakService';
+import { missionService } from '../services/missionService';
+import { xpService } from '../services/xpService';
 import Swal from 'sweetalert2';
 
 // Import icons
@@ -442,7 +444,7 @@ const LogoutButton = styled.button`
 // ========== COMPONENT ==========
 const RightSidebar = ({ 
   lessonsToUnlock = 8,
-  dailyGoal = { current: 10, target: 10, label: 'Kiếm 10 KN' },
+  dailyGoal: propDailyGoal,
   streak: initialStreakCount = 0,
   showProfile = true
 }) => {
@@ -457,11 +459,56 @@ const RightSidebar = ({
   const [isLoadingStreak, setIsLoadingStreak] = useState(false);
   const [streakError, setStreakError] = useState(null);
 
+  // State for daily goal from missions
+  const [dailyGoal, setDailyGoal] = useState(
+    propDailyGoal || { current: 0, target: 10, label: 'Kiếm 10 KN' }
+  );
+  const [userXP, setUserXP] = useState(0);
+
   // Check authentication
   const isLoggedIn = authService.isAuthenticated();
 
   const progress = (dailyGoal.current / dailyGoal.target) * 100;
   const isCompleted = progress >= 100;
+
+  // Load missions and XP
+  useEffect(() => {
+    const loadDailyGoal = async () => {
+      if (!isLoggedIn) return;
+
+      try {
+        // Lấy thông tin XP của user
+        const xpData = await xpService.getXP();
+        const currentXP = xpData.xp?.total || 0;
+        setUserXP(currentXP);
+
+        // Lấy danh sách nhiệm vụ
+        const response = await missionService.getMissions();
+        if (response.success && response.missions) {
+          // Tìm nhiệm vụ "Kiếm 10 KN" (xp_earn)
+          const xpMission = response.missions.find(
+            m => m.requirement.type === 'xp_earn' && m.type === 'daily'
+          );
+
+          if (xpMission) {
+            setDailyGoal({
+              current: xpMission.progress || 0,
+              target: xpMission.requirement.count,
+              label: xpMission.title
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error loading daily goal:', error);
+      }
+    };
+
+    loadDailyGoal();
+    
+    // Refresh mỗi 5 giây để cập nhật realtime
+    const interval = setInterval(loadDailyGoal, 5000);
+    return () => clearInterval(interval);
+  }, [isLoggedIn]);
 
   // Load streak from API on component mount
   useEffect(() => {

@@ -4,7 +4,7 @@ const Vocabulary = require('../models/Vocabulary');
 
 exports.getUserProgress = async (req, res) => {
   try {
-    const userId = req.user?._id || req.user?.id; // ✅ Sử dụng _id hoặc id
+    const userId = req.user?._id || req.user?.id; 
     
     if (!userId) {
       console.error('❌ No userId found in req.user:', req.user);
