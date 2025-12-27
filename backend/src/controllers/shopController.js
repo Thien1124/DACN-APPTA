@@ -4,6 +4,41 @@ const User = require('../models/User');
 const Heart = require('../models/Heart');
 
 /**
+ * Helper function: Thêm outfit mặc định cho user nếu chưa có
+ */
+const ensureDefaultOutfit = async (userId) => {
+  try {
+    const defaultOutfit = await ShopItem.findOne({ isDefault: true, type: 'outfit' });
+    
+    if (!defaultOutfit) return;
+
+    const existingOutfit = await UserInventory.findOne({
+      userId,
+      itemId: defaultOutfit._id
+    });
+
+    if (!existingOutfit) {
+      await UserInventory.create({
+        userId,
+        itemId: defaultOutfit._id,
+        purchasedAt: new Date(),
+        isActive: true
+      });
+
+      const user = await User.findById(userId);
+      if (!user.currentOutfit) {
+        user.currentOutfit = defaultOutfit._id;
+        await user.save();
+      }
+
+      console.log('[INFO] Đã thêm outfit mặc định cho user:', userId);
+    }
+  } catch (error) {
+    console.error('[ERROR] Lỗi khi thêm outfit mặc định:', error);
+  }
+};
+
+/**
  * ==========================================
  * TASK 15: SHOP SYSTEM - Cửa hàng vật phẩm
  * ==========================================
@@ -119,6 +154,22 @@ exports.purchaseItem = async (req, res) => {
     
     if (!user) {
       return res.status(404).json({ success: false, message: 'Không tìm thấy người dùng' });
+    }
+    
+    // Kiểm tra nếu là outfit, user đã sở hữu chưa
+    if (item.type === 'outfit') {
+      const existingOutfit = await UserInventory.findOne({
+        userId,
+        itemId,
+        isActive: true
+      });
+      
+      if (existingOutfit) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Bạn đã sở hữu trang phục này rồi' 
+        });
+      }
     }
     
     // Kiểm tra số gems
@@ -326,6 +377,9 @@ exports.getUserInventory = async (req, res) => {
     const userId = req.user.id;
     const { type } = req.query;
     
+    // Đảm bảo user có outfit mặc định
+    await ensureDefaultOutfit(userId);
+    
     // Tìm kiếm vật phẩm trong kho đồ
     const query = { userId, isActive: true };
     
@@ -386,3 +440,133 @@ exports.getUserInventory = async (req, res) => {
       return res.status(500).json({ success: false, message: 'Lỗi server' });
     }
   };
+
+/**
+ * Trang bị outfit đã mua
+ * 
+ * API Test:
+ * POST /api/shop/equip-outfit
+ * Headers: Authorization: Bearer {token}
+ * Body: {
+ *   "outfitId": "60f7b3b3b3b3b3b3b3b3b3b3"
+ * }
+ * 
+ * Response Success:
+ * {
+ *   "success": true,
+ *   "message": "Đã trang bị outfit thành công",
+ *   "currentOutfit": {
+ *     "_id": "...",
+ *     "name": "Kimono Nhật Bản",
+ *     "outfitData": {
+ *       "category": "fantasy",
+ *       "rarity": "epic",
+ *       "color": "#E91E63",
+ *       "iconEmoji": "👘"
+ *     }
+ *   }
+ * }
+ * 
+ * Response Error:
+ * {
+ *   "success": false,
+ *   "message": "Bạn chưa sở hữu outfit này"
+ * }
+ */
+exports.equipOutfit = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { outfitId } = req.body;
+
+    // Không cho phép tháo outfit (luôn phải có 1 outfit)
+    if (outfitId === null || outfitId === undefined) {
+      return res.status(400).json({
+        success: false,
+        message: 'Bạn phải luôn mặc một trang phục. Hãy chọn trang phục khác để thay thế.'
+      });
+    }
+
+    // Kiểm tra outfit có tồn tại không
+    const outfit = await ShopItem.findById(outfitId);
+    
+    if (!outfit || outfit.type !== 'outfit') {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Outfit không tồn tại' 
+      });
+    }
+
+    // Kiểm tra user đã mua outfit này chưa
+    const ownedOutfit = await UserInventory.findOne({
+      userId,
+      itemId: outfitId,
+      isActive: true
+    });
+
+    if (!ownedOutfit) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Bạn chưa sở hữu outfit này. Vui lòng mua trước khi trang bị.' 
+      });
+    }
+
+    // Cập nhật currentOutfit của user
+    const user = await User.findById(userId);
+    user.currentOutfit = outfitId;
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Đã trang bị outfit thành công',
+      currentOutfit: outfit
+    });
+    
+  } catch (error) {
+    console.error('Lỗi khi trang bị outfit:', error);
+    return res.status(500).json({ success: false, message: 'Lỗi server' });
+  }
+};
+
+/**
+ * Lấy outfit hiện tại đang mặc
+ * 
+ * API Test:
+ * GET /api/shop/current-outfit
+ * Headers: Authorization: Bearer {token}
+ * 
+ * Response:
+ * {
+ *   "success": true,
+ *   "currentOutfit": {
+ *     "_id": "...",
+ *     "name": "Kimono Nhật Bản",
+ *     "outfitData": {...}
+ *   }
+ * }
+ */
+exports.getCurrentOutfit = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    // Đảm bảo user có outfit mặc định
+    await ensureDefaultOutfit(userId);
+    
+    const user = await User.findById(userId).populate('currentOutfit');
+    
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Không tìm thấy người dùng' 
+      });
+    }
+    
+    return res.status(200).json({
+      success: true,
+      currentOutfit: user.currentOutfit || null
+    });
+    
+  } catch (error) {
+    console.error('Lỗi khi lấy outfit hiện tại:', error);
+    return res.status(500).json({ success: false, message: 'Lỗi server' });
+  }
+};

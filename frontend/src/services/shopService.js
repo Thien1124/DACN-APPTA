@@ -23,6 +23,17 @@ export const shopService = {
     const response = await api.get('/shop/inventory', { params });
     return response.data;
   },
+  
+  equipOutfit: async (outfitId) => {
+    const response = await api.post('/shop/equip-outfit', { outfitId });
+    return response.data;
+  },
+  
+  getCurrentOutfit: async () => {
+    const response = await api.get('/shop/current-outfit');
+    return response.data;
+  },
+  
   getGems: async () => {
     try {
       const response = await api.get('/shop/gems');

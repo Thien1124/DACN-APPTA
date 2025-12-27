@@ -15,7 +15,7 @@ const shopItemSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['heart', 'boost', 'theme', 'avatar', 'other'],
+    enum: ['heart', 'boost', 'theme', 'avatar', 'outfit', 'other'],
     required: [true, 'Vui lòng chọn loại vật phẩm']
   },
   price: {
@@ -39,6 +39,27 @@ const shopItemSchema = new mongoose.Schema({
       default: false
     }
   },
+  // Outfit-specific fields
+  outfitData: {
+    category: {
+      type: String,
+      enum: ['casual', 'formal', 'sporty', 'fantasy', 'seasonal', 'premium'],
+      default: 'casual'
+    },
+    rarity: {
+      type: String,
+      enum: ['common', 'rare', 'epic', 'legendary'],
+      default: 'common'
+    },
+    color: {
+      type: String,
+      default: '#1CB0F6'
+    },
+    iconEmoji: {
+      type: String, // Emoji hoặc icon đại diện cho outfit
+      default: '👕'
+    }
+  },
   duration: {
     type: Number, // Thời gian hiệu lực tính bằng giây, 0 = vĩnh viễn
     default: 0
@@ -49,6 +70,10 @@ const shopItemSchema = new mongoose.Schema({
   isAvailable: {
     type: Boolean,
     default: true
+  },
+  isDefault: {
+    type: Boolean,
+    default: false
   },
   createdAt: {
     type: Date,

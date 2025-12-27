@@ -19,6 +19,9 @@ import WhatshotIcon from '@mui/icons-material/Whatshot';
 // Import shopService
 import { shopService } from '../services/shopService';
 
+// Import chibi image
+import chibiImage from '../assets/chibi.png';
+
 // ========== STYLED COMPONENTS ==========
 
 const PageWrapper = styled.div`
@@ -302,6 +305,23 @@ const SpecialBadge = styled.div`
   box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
 `;
 
+const OwnedBadge = styled.div`
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  background: #10b981;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+`;
+
 // ========== COMPONENT ==========
 
 const Shop = () => {
@@ -315,6 +335,8 @@ const Shop = () => {
     gems: []
   });
   const [inventory, setInventory] = useState([]);
+  const [ownedOutfitIds, setOwnedOutfitIds] = useState([]);
+  const [currentOutfit, setCurrentOutfit] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isPurchasing, setIsPurchasing] = useState(false);
 
@@ -352,6 +374,18 @@ const Shop = () => {
       const inventoryData = await shopService.getInventory();
       if (inventoryData.success) {
         setInventory(inventoryData.inventory);
+        
+        // Extract owned outfit IDs
+        const outfitIds = inventoryData.inventory
+          .filter(item => item.itemId?.type === 'outfit')
+          .map(item => item.itemId._id);
+        setOwnedOutfitIds(outfitIds);
+      }
+
+      // Load current outfit
+      const outfitData = await shopService.getCurrentOutfit();
+      if (outfitData.success && outfitData.currentOutfit) {
+        setCurrentOutfit(outfitData.currentOutfit._id);
       }
 
     } catch (error) {
@@ -432,6 +466,42 @@ const Shop = () => {
           const inventoryData = await shopService.getInventory();
           if (inventoryData.success) {
             setInventory(inventoryData.inventory);
+            
+            // Update owned outfit IDs
+            const outfitIds = inventoryData.inventory
+              .filter(item => item.itemId?.type === 'outfit')
+              .map(item => item.itemId._id);
+            setOwnedOutfitIds(outfitIds);
+          }
+
+          // Nếu là outfit, hỏi có muốn trang bị ngay không
+          if (product.type === 'outfit') {
+            const equipResult = await Swal.fire({
+              title: 'Trang bị ngay?',
+              html: `
+                <div style="text-align: center;">
+                  <div style="font-size: 4rem; margin-bottom: 1rem;">${product.outfitData?.iconEmoji || '👕'}</div>
+                  <p style="font-size: 1.125rem; margin-bottom: 0.5rem;">Bạn có muốn trang bị ${product.name} ngay không?</p>
+                </div>
+              `,
+              icon: 'question',
+              showCancelButton: true,
+              confirmButtonColor: '#1CB0F6',
+              cancelButtonColor: '#6b7280',
+              confirmButtonText: '✓ Trang bị ngay',
+              cancelButtonText: 'Để sau'
+            });
+
+            if (equipResult.isConfirmed) {
+              try {
+                const equipData = await shopService.equipOutfit(product._id || product.id);
+                if (equipData.success) {
+                  showToast('success', 'Đã trang bị!', `${product.name} đã được trang bị`);
+                }
+              } catch (equipError) {
+                console.error('Equip error:', equipError);
+              }
+            }
           }
 
           // Show success message
@@ -476,8 +546,8 @@ const Shop = () => {
   const handleUseItem = async (inventoryItem) => {
     try {
       const result = await Swal.fire({
-        title: `Sử dụng ${inventoryItem.item?.name}?`,
-        text: inventoryItem.item?.description,
+        title: `Sử dụng ${inventoryItem.itemId?.name}?`,
+        text: inventoryItem.itemId?.description,
         icon: 'question',
         showCancelButton: true,
         confirmButtonColor: '#1CB0F6',
@@ -502,6 +572,21 @@ const Shop = () => {
     } catch (error) {
       console.error('Use item error:', error);
       const errorMessage = error.response?.data?.message || 'Có lỗi xảy ra khi sử dụng vật phẩm';
+      showToast('error', 'Lỗi', errorMessage);
+    }
+  };
+
+  const handleEquipOutfit = async (outfitId, outfitName) => {
+    try {
+      const equipData = await shopService.equipOutfit(outfitId);
+      
+      if (equipData.success) {
+        setCurrentOutfit(outfitId);
+        showToast('success', 'Đã trang bị!', `${outfitName} đã được trang bị`);
+      }
+    } catch (error) {
+      console.error('Equip outfit error:', error);
+      const errorMessage = error.response?.data?.message || 'Có lỗi khi trang bị outfit';
       showToast('error', 'Lỗi', errorMessage);
     }
   };
@@ -557,15 +642,39 @@ const Shop = () => {
       }
     }
 
+    // ✅ Outfit specific handling
+    let icon = iconMap[item.itemId] || iconMap[item.type] || item.icon;
+    let gradient = gradientMap[item.itemId] || gradientMap[item.type] || item.gradient || 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)';
+    
+    if (item.type === 'outfit' && item.outfitData) {
+      // Nếu có image, hiển thị ảnh, nếu không dùng emoji
+      if (item.image) {
+        // Map image filenames to imported images
+        const imageMap = {
+          'chibi.png': chibiImage
+        };
+        const imageSrc = imageMap[item.image] || chibiImage;
+        icon = <img src={imageSrc} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />;
+      } else {
+        icon = <span style={{ fontSize: '3rem' }}>{item.outfitData.iconEmoji || '👕'}</span>;
+      }
+      
+      // Use outfit color for gradient
+      const baseColor = item.outfitData.color || '#374151';
+      gradient = `linear-gradient(135deg, ${baseColor} 0%, ${baseColor}dd 100%)`;
+    }
+
     return {
       id: item._id || item.id,
-      icon: iconMap[item.itemId] || iconMap[item.type] || item.icon,
+      icon: icon,
       name: item.name || 'Vật phẩm',
       description: item.description || 'Không có mô tả',
       price: priceValue,
-      gradient: gradientMap[item.itemId] || gradientMap[item.type] || item.gradient || 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)',
+      gradient: gradient,
       special: item.isLimited ? 'LIMITED' : item.special,
-      type: item.type || 'other'
+      type: item.type || 'other',
+      outfitData: item.outfitData, // Pass through outfit data
+      _id: item._id // Ensure _id is passed
     };
   };
 
@@ -650,23 +759,33 @@ const Shop = () => {
             <ProductsGrid>
               {currentProducts.map(product => {
                 const formattedProduct = formatProduct(product);
+                const isOwned = formattedProduct.type === 'outfit' && ownedOutfitIds.includes(formattedProduct._id);
+                const canPurchase = !isPurchasing && !isOwned;
+                
                 return (
                   <ProductCard 
                     key={formattedProduct.id}
-                    onClick={() => handlePurchase(formattedProduct)}
-                    style={{ opacity: isPurchasing ? 0.6 : 1, cursor: isPurchasing ? 'not-allowed' : 'pointer' }}
+                    onClick={() => canPurchase && handlePurchase(formattedProduct)}
+                    style={{ 
+                      opacity: isOwned ? 0.7 : (isPurchasing ? 0.6 : 1), 
+                      cursor: canPurchase ? 'pointer' : 'not-allowed',
+                      position: 'relative'
+                    }}
                   >
                     {formattedProduct.special && <SpecialBadge>{formattedProduct.special}</SpecialBadge>}
+                    {isOwned && <OwnedBadge>✓ ĐÃ SỞ HỮU</OwnedBadge>}
                     <ProductIcon gradient={formattedProduct.gradient}>
                       {formattedProduct.icon}
                     </ProductIcon>
                     <ProductName>{formattedProduct.name}</ProductName>
                     <ProductDescription>{formattedProduct.description}</ProductDescription>
-                    <ProductPrice>
+                    <ProductPrice style={{ 
+                      background: isOwned ? 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)' : undefined 
+                    }}>
                       {typeof formattedProduct.price === 'number' ? (
                         <>
                           <Diamond sx={{ fontSize: 20 }} />
-                          <span>{formattedProduct.price}</span>
+                          <span>{isOwned ? 'Đã sở hữu' : formattedProduct.price}</span>
                         </>
                       ) : (
                         <span>{formattedProduct.price}</span>
@@ -687,31 +806,58 @@ const Shop = () => {
                 </div>
               ) : (
                 inventory.map(invItem => {
-                  // ✅ Kiểm tra invItem.item có tồn tại không trước khi format
-                  if (!invItem || !invItem.item) {
+                  // ✅ Kiểm tra invItem.itemId có tồn tại không trước khi format
+                  if (!invItem || !invItem.itemId) {
                     console.warn('Invalid inventory item:', invItem);
                     return null;
                   }
 
-                  const product = formatProduct(invItem.item);
+                  const product = formatProduct(invItem.itemId);
+                  const isEquipped = invItem.itemId.type === 'outfit' && currentOutfit === invItem.itemId._id;
+                  
                   return (
                     <ProductCard 
                       key={invItem._id || Math.random()}
-                      onClick={() => handleUseItem(invItem)}
+                      onClick={() => {
+                        if (invItem.itemId.type === 'outfit') {
+                          if (!isEquipped) {
+                            // Chỉ cho trang bị nếu chưa mặc
+                            handleEquipOutfit(invItem.itemId._id, invItem.itemId.name);
+                          }
+                          // Nếu đang mặc thì không làm gì
+                        } else {
+                          handleUseItem(invItem);
+                        }
+                      }}
+                      style={{ cursor: invItem.itemId.type === 'outfit' && isEquipped ? 'default' : 'pointer' }}
                     >
                       <ProductIcon gradient={product.gradient}>
                         {product.icon}
                       </ProductIcon>
                       <ProductName>{product.name}</ProductName>
                       <ProductDescription>
-                        Số lượng: {invItem.quantity || 1}
+                        {invItem.itemId.description}
                         {invItem.expiresAt && (
-                          <div>Hết hạn: {new Date(invItem.expiresAt).toLocaleDateString()}</div>
+                          <div style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}>
+                            Hết hạn: {new Date(invItem.expiresAt).toLocaleDateString()}
+                          </div>
                         )}
                       </ProductDescription>
-                      <ProductPrice style={{ background: 'linear-gradient(135deg, #58CC02 0%, #46A302 100%)' }}>
-                        ✓ Sử dụng
-                      </ProductPrice>
+                      {invItem.itemId.type === 'outfit' ? (
+                        isEquipped ? (
+                          <ProductPrice style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', cursor: 'default' }}>
+                            ✓ Đang mặc
+                          </ProductPrice>
+                        ) : (
+                          <ProductPrice style={{ background: 'linear-gradient(135deg, #1CB0F6 0%, #0d9ed8 100%)' }}>
+                            ✓ Trang bị
+                          </ProductPrice>
+                        )
+                      ) : (
+                        <ProductPrice style={{ background: 'linear-gradient(135deg, #58CC02 0%, #46A302 100%)' }}>
+                          ✓ Sử dụng
+                        </ProductPrice>
+                      )}
                     </ProductCard>
                   );
                 }).filter(Boolean) // ✅ Loại bỏ các item null

@@ -10,6 +10,25 @@ const ShopItem = require('../src/models/ShopItem');
 require('../config/database');
 
 const shopItems = [
+  // Default Outfit - Miễn phí cho mọi user
+  {
+    name: 'Trang Phục Chibi Mặc Định',
+    description: 'Trang phục mặc định dễ thương cho mọi người',
+    type: 'outfit',
+    price: { gems: 0 },
+    effects: {},
+    outfitData: {
+      category: 'casual',
+      rarity: 'common',
+      color: '#58CC02',
+      iconEmoji: '👶'
+    },
+    image: 'chibi.png',
+    isAvailable: false, // Không hiển thị trong shop
+    isDefault: true
+  },
+
+  // Hearts
   {
     name: '1 Trái Tim',
     description: 'Khôi phục 1 trái tim ngay lập tức',
@@ -26,12 +45,150 @@ const shopItems = [
     effects: { hearts: 5 },
     isAvailable: true
   },
+  
+  // Powerups
   {
     name: 'Streak Freeze',
     description: 'Bảo vệ streak của bạn 1 ngày',
-    type: 'powerup',
+    type: 'boost',
     price: { gems: 50 },
     effects: { streakFreeze: 1 },
+    isAvailable: true
+  },
+
+  // Outfits - Common
+  {
+    name: 'Áo Thun Xanh Cơ Bản',
+    description: 'Trang phục học tập hàng ngày',
+    type: 'outfit',
+    price: { gems: 100 },
+    effects: {},
+    outfitData: {
+      category: 'casual',
+      rarity: 'common',
+      color: '#1CB0F6',
+      iconEmoji: '👕'
+    },
+    isAvailable: true
+  },
+  {
+    name: 'Quần Jean Đơn Giản',
+    description: 'Thoải mái cho mọi hoạt động',
+    type: 'outfit',
+    price: { gems: 80 },
+    effects: {},
+    outfitData: {
+      category: 'casual',
+      rarity: 'common',
+      color: '#4A90E2',
+      iconEmoji: '👖'
+    },
+    isAvailable: true
+  },
+
+  // Outfits - Rare
+  {
+    name: 'Bộ Đồ Thể Thao',
+    description: 'Trang phục năng động cho người học năng suất',
+    type: 'outfit',
+    price: { gems: 250 },
+    effects: {},
+    outfitData: {
+      category: 'sporty',
+      rarity: 'rare',
+      color: '#FF6B6B',
+      iconEmoji: '🏃'
+    },
+    isAvailable: true
+  },
+  {
+    name: 'Vest Lịch Lãm',
+    description: 'Phong cách chuyên nghiệp cho người học nghiêm túc',
+    type: 'outfit',
+    price: { gems: 300 },
+    effects: {},
+    outfitData: {
+      category: 'formal',
+      rarity: 'rare',
+      color: '#2C3E50',
+      iconEmoji: '🎩'
+    },
+    isAvailable: true
+  },
+
+  // Outfits - Epic
+  {
+    name: 'Kimono Nhật Bản',
+    description: 'Trang phục truyền thống Nhật Bản sang trọng',
+    type: 'outfit',
+    price: { gems: 500 },
+    effects: {},
+    outfitData: {
+      category: 'fantasy',
+      rarity: 'epic',
+      color: '#E91E63',
+      iconEmoji: '👘'
+    },
+    isAvailable: true
+  },
+  {
+    name: 'Bộ Đồ Ninja',
+    description: 'Stealth mode để tập trung học tập',
+    type: 'outfit',
+    price: { gems: 600 },
+    effects: {},
+    outfitData: {
+      category: 'fantasy',
+      rarity: 'epic',
+      color: '#424242',
+      iconEmoji: '🥷'
+    },
+    isAvailable: true
+  },
+
+  // Outfits - Legendary
+  {
+    name: 'Bộ Giáp Vàng Huyền Thoại',
+    description: 'Dành cho những chiến binh học tập vĩ đại nhất',
+    type: 'outfit',
+    price: { gems: 1000 },
+    effects: {},
+    outfitData: {
+      category: 'premium',
+      rarity: 'legendary',
+      color: '#FFD700',
+      iconEmoji: '🛡️'
+    },
+    isAvailable: true
+  },
+  {
+    name: 'Áo Choàng Phù Thủy',
+    description: 'Năng lực ma thuật để chinh phục ngôn ngữ',
+    type: 'outfit',
+    price: { gems: 1200 },
+    effects: {},
+    outfitData: {
+      category: 'fantasy',
+      rarity: 'legendary',
+      color: '#9C27B0',
+      iconEmoji: '🧙'
+    },
+    isAvailable: true
+  },
+
+  // Seasonal Outfits
+  {
+    name: 'Bộ Đồ Giáng Sinh',
+    description: 'Tinh thần lễ hội mùa đông',
+    type: 'outfit',
+    price: { gems: 400 },
+    effects: {},
+    outfitData: {
+      category: 'seasonal',
+      rarity: 'epic',
+      color: '#C92A2A',
+      iconEmoji: '🎅'
+    },
     isAvailable: true
   }
 ];
@@ -74,26 +231,3 @@ async function seedShopItems() {
 }
 
 seedShopItems();
-
-export const shopService = {
-  // ...existing code...
-
-  getGems: async () => {
-    try {
-      const response = await api.get('/shop/gems');
-      // Normalize different backend shapes to a plain number
-      const data = response?.data || {};
-      const amount =
-        (data.gems && typeof data.gems === 'object' && typeof data.gems.amount === 'number') ? data.gems.amount
-        : (typeof data.gems === 'number' ? data.gems
-        : (data.userStats && data.userStats.gems && typeof data.userStats.gems.amount === 'number') ? data.userStats.gems.amount
-        : 0);
-      return amount;
-    } catch (error) {
-      console.error('Error fetching gems:', error);
-      return 0;
-    }
-  },
-
-  // ...existing code...
-};

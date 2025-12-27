@@ -11,7 +11,7 @@ Tài liệu này hướng dẫn test các API cho các tính năng giống Duoli
 
 ---
 
-## 🔐 Authentication
+## 🔐 
 
 Tất cả các API đều yêu cầu **JWT Token** trong header:
 

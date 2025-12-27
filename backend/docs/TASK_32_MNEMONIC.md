@@ -377,7 +377,7 @@ GEMINI_API_KEY=your_google_gemini_api_key_here
 1. Install dependencies: `npm install`
 2. Add `GEMINI_API_KEY` to `.env`
 3. Start server: `npm start`
-4. Obtain JWT token via login
+4. Obtain  token via login
 
 #### Test Scenarios
 

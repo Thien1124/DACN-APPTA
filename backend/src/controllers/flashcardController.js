@@ -2,7 +2,6 @@ const Flashcard = require('../models/Flashcard');
 const Deck = require('../models/Deck');
 const asyncHandler = require('express-async-handler');
 
-// ✅ SỬA: Dùng const thay vì exports.
 const getAllFlashcards = async (req, res) => {
   try {
     const flashcards = await Flashcard.find()
@@ -22,7 +21,7 @@ const getAllFlashcards = async (req, res) => {
   }
 };
 
-// ✅ SỬA: Các functions khác cũng dùng const
+
 const getFlashcardById = async (req, res) => {
   try {
     const flashcard = await Flashcard.findById(req.params.id)

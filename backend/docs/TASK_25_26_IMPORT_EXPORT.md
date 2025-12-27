@@ -386,7 +386,7 @@ Hoặc chỉ cần spreadsheet ID: `1A2B3C4D5E6F7G8H9I0J`
 
 **Description**: Validate dữ liệu trước khi import (không thực sự import)
 
-**Auth**: Required (JWT)
+**Auth**: Required ()
 
 **Request**:
 ```json

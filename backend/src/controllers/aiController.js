@@ -1,12 +1,12 @@
 const geminiService = require('../services/geminiService');
 const Flashcard = require('../models/Flashcard');
 const Deck = require('../models/Deck');
-const Exercise = require('../models/Exercise'); // ✅ Thêm import Exercise
+const Exercise = require('../models/Exercise'); // 
 const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
 const OpenAI = require('openai');
-const Roadmap = require('../models/RoadmapTopic'); // ✅ Sửa từ RoadmapTopic thành LearningPath
+const Roadmap = require('../models/RoadmapTopic'); //
 
 // Khởi tạo OpenAI client
 const openai = new OpenAI({

@@ -1,6 +1,8 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const TokenBlacklist = require('../models/TokenBlacklist');
+const ShopItem = require('../models/ShopItem');
+const UserInventory = require('../models/UserInventory');
 const { sendOTPEmail, sendPasswordResetOTP } = require('../services/emailService');
 const { logAudit, getIpAddress, getUserAgent } = require('../services/auditService');
 const { sendWelcomeNotification } = require('../services/notificationService');
@@ -40,6 +42,51 @@ const generateToken = (userId) => {
     process.env.JWT_SECRET,
     { expiresIn: process.env.JWT_EXPIRE || '7d' }
   );
+};
+
+/**
+ * Thêm outfit mặc định vào inventory của user
+ */
+const addDefaultOutfitToUser = async (userId) => {
+  try {
+    // Tìm outfit mặc định
+    const defaultOutfit = await ShopItem.findOne({ isDefault: true, type: 'outfit' });
+    
+    if (!defaultOutfit) {
+      console.warn('[WARN] Không tìm thấy outfit mặc định');
+      return;
+    }
+
+    // Kiểm tra user đã có outfit này chưa
+    const existingOutfit = await UserInventory.findOne({
+      userId,
+      itemId: defaultOutfit._id
+    });
+
+    if (existingOutfit) {
+      console.log('[INFO] User đã có outfit mặc định');
+      return;
+    }
+
+    // Thêm outfit vào inventory
+    await UserInventory.create({
+      userId,
+      itemId: defaultOutfit._id,
+      purchasedAt: new Date(),
+      isActive: true
+    });
+
+    // Set làm currentOutfit nếu user chưa có outfit nào
+    const user = await User.findById(userId);
+    if (!user.currentOutfit) {
+      user.currentOutfit = defaultOutfit._id;
+      await user.save();
+    }
+
+    console.log('[SUCCESS] Đã thêm outfit mặc định cho user:', userId);
+  } catch (error) {
+    console.error('[ERROR] Lỗi khi thêm outfit mặc định:', error);
+  }
 };
 
 /**
@@ -247,6 +294,13 @@ const verifyOTP = async (req, res) => {
       });
     } catch (notifError) {
       console.error('[ERROR] Failed to send welcome notification:', notifError);
+    }
+
+    // Thêm outfit mặc định vào inventory
+    try {
+      await addDefaultOutfitToUser(user._id);
+    } catch (outfitError) {
+      console.error('[ERROR] Failed to add default outfit:', outfitError);
     }
 
     const token = generateToken(user._id);

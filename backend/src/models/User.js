@@ -147,6 +147,13 @@ const userSchema = new mongoose.Schema({
     }
   },
 
+  // Task 15+: Outfit - Trang phục hiện tại
+  currentOutfit: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'ShopItem',
+    default: null
+  },
+
   // Thêm fields tracking progress:
   completedLessons: [{
     type: mongoose.Schema.Types.ObjectId,
@@ -294,6 +301,38 @@ userSchema.methods.verifyPasswordResetOTP = function(inputCode) {
 userSchema.pre('validate', function(next) {
   if (this.provider === 'local' && !this.email) {
     this.invalidate('email', 'Vui lòng cung cấp email');
+  }
+  next();
+});
+
+// Auto-add default outfit after user is created
+userSchema.post('save', async function(doc, next) {
+  // Only run for new users
+  if (this.isNew) {
+    try {
+      const ShopItem = mongoose.model('ShopItem');
+      const UserInventory = mongoose.model('UserInventory');
+      
+      const defaultOutfit = await ShopItem.findOne({ isDefault: true, type: 'outfit' });
+      
+      if (defaultOutfit) {
+        await UserInventory.create({
+          userId: doc._id,
+          itemId: defaultOutfit._id,
+          purchasedAt: new Date(),
+          isActive: true
+        });
+        
+        // Set as current outfit
+        await this.constructor.findByIdAndUpdate(doc._id, {
+          currentOutfit: defaultOutfit._id
+        });
+        
+        console.log('[SUCCESS] Auto-added default outfit for new user:', doc._id);
+      }
+    } catch (error) {
+      console.error('[ERROR] Failed to add default outfit:', error);
+    }
   }
   next();
 });
