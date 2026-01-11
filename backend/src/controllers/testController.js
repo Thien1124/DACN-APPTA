@@ -15,7 +15,7 @@ exports.getAllTests = async (req, res) => {
     const skip = (page - 1) * limit;
 
     // Build query
-    const query = { isPublished: true };
+    const query = { isPublic: true, isActive: true };
     if (skill) query.skill = skill;
     if (level) query.level = level;
     if (type) query.type = type;

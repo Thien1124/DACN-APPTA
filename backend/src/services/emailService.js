@@ -383,11 +383,11 @@ const sendPasswordResetOTP = async (email, otp, name) => {
     };
     
     const info = await transporter.sendMail(mailOptions);
-     (' Email reset password OTP đã gửi thành công:', info.messageId);
+    console.log('✅ Email reset password OTP đã gửi thành công:', info.messageId);
     return { success: true, messageId: info.messageId };
     
   } catch (error) {
-    console.error(' Lỗi gửi email reset password OTP:', error.message);
+    console.error('❌ Lỗi gửi email reset password OTP:', error.message);
     throw new Error('Không thể gửi email. Vui lòng thử lại sau.');
   }
 };

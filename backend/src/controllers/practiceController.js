@@ -84,7 +84,7 @@ exports.getExercises = async (req, res) => {
 
     // Lấy bài tập
     const exercises = await PracticeExercise.find(query)
-      .select('-correctAnswer -explanation') // Không trả về đáp án
+      .select('-correctAnswer')
       .sort({ createdAt: -1 })
       .limit(limitNum)
       .skip(skip);

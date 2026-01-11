@@ -16,11 +16,9 @@ exports.getUserProgress = async (req, res) => {
     
     console.log(`📖 Getting progress for user: ${userId}`);
     
-    // Tìm progress từ Progress model
     let progress = await Progress.findOne({ user: userId });
     
     if (!progress) {
-      // Nếu chưa có, tạo mới
       progress = await Progress.create({
         user: userId,
         completedLessons: [],
@@ -48,16 +46,11 @@ exports.getUserProgress = async (req, res) => {
   }
 };
 
-// @desc    Cập nhật tiến độ bài học
-// @route   PUT /api/progress/lessons/:lessonId
-// @access  Private
 exports.updateLessonProgress = async (req, res) => {
   try {
     const { lessonId } = req.params;
-    const userId = req.user?._id || req.user?.id; // ✅ Sử dụng _id hoặc id
+    const userId = req.user?._id || req.user?.id;
     const { completed, score, timeSpent } = req.body;
-    
-    // ✅ Validate userId first
     if (!userId) {
       console.error('❌ No userId found in req.user:', req.user);
       return res.status(401).json({
@@ -69,7 +62,6 @@ exports.updateLessonProgress = async (req, res) => {
     console.log(`📚 Updating lesson progress for user ${userId}, lesson ${lessonId}`);
     console.log(`📊 Data: completed=${completed}, score=${score}, timeSpent=${timeSpent}`);
     
-    // ✅ Validate lessonId
     if (!lessonId || lessonId === 'undefined' || lessonId === 'null') {
       return res.status(400).json({
         success: false,
@@ -77,7 +69,6 @@ exports.updateLessonProgress = async (req, res) => {
       });
     }
     
-    // Tìm hoặc tạo progress record
     let progress = await Progress.findOne({ user: userId });
     
     if (!progress) {
@@ -90,7 +81,6 @@ exports.updateLessonProgress = async (req, res) => {
        ('✅ Created new progress record');
     }
     
-    // Cập nhật lesson progress
     const lessonProgress = progress.lessonProgress.get(lessonId) || {
       attempts: 0,
       bestScore: 0,
@@ -108,16 +98,18 @@ exports.updateLessonProgress = async (req, res) => {
     
     progress.lessonProgress.set(lessonId, lessonProgress);
     
-    // ✅ Nếu lesson hoàn thành, thêm vào completedLessons và đánh dấu từ vựng đã học
+    let xpGained = 0;
+    
     if (completed && !progress.completedLessons.includes(lessonId)) {
       progress.completedLessons.push(lessonId);
       console.log(`✅ Marked lesson ${lessonId} as completed`);
       
-      // ✅ TỰ ĐỘNG CẬP NHẬT STREAK KHI HOÀN THÀNH LESSON
+      xpGained = Math.max(10, Math.floor(score / 2));
+      console.log(`🎯 XP gained: ${xpGained} (score: ${score})`);
+      
       try {
         const user = await User.findById(userId);
         if (user) {
-          // Khởi tạo streak nếu chưa có
           if (!user.streak) {
             user.streak = { count: 0, lastActivityDate: null };
           }
@@ -129,27 +121,31 @@ exports.updateLessonProgress = async (req, res) => {
             lastActivity.setHours(0, 0, 0, 0);
           }
 
-          // Kiểm tra nếu chưa học trong ngày hôm nay
           if (!lastActivity || lastActivity.getTime() !== today.getTime()) {
             if (!lastActivity) {
-              // Lần đầu tiên học
               user.streak.count = 1;
             } else {
-              // Tính số ngày chênh lệch
               const diffMs = today.getTime() - lastActivity.getTime();
               const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
               if (diffDays === 1) {
-                // Học liên tiếp, tăng streak
                 user.streak.count += 1;
               } else {
-                // Bỏ lỡ ít nhất một ngày, reset streak về 1
                 user.streak.count = 1;
               }
             }
 
-            // Cập nhật ngày hoạt động cuối cùng
             user.streak.lastActivityDate = today;
+            
+            if (!user.xp) {
+              user.xp = { total: 0 };
+            }
+            if (typeof user.xp === 'number') {
+              user.xp = { total: user.xp };
+            }
+            user.xp.total = (user.xp.total || 0) + xpGained;
+            console.log(`💎 XP updated: ${user.xp.total} (+${xpGained})`);
+            
             await user.save();
             console.log(`🔥 Streak updated to ${user.streak.count} for user ${userId}`);
           } else {
@@ -158,10 +154,8 @@ exports.updateLessonProgress = async (req, res) => {
         }
       } catch (streakError) {
         console.error('❌ Error updating streak:', streakError);
-        // Không throw error để không làm fail progress update
       }
       
-      // ✅ TỰ ĐỘNG ĐÁNH DẤU TẤT CẢ TỪ VỰNG TRONG LESSON LÀ ĐÃ HỌC
       try {
         const vocabularies = await Vocabulary.find({ lesson: lessonId });
         
@@ -171,7 +165,6 @@ exports.updateLessonProgress = async (req, res) => {
         let alreadyLearnedCount = 0;
         
         for (const vocab of vocabularies) {
-          // Kiểm tra đã học chưa
           const existingLearn = vocab.learnedBy.find(learn => 
             learn.user.toString() === userId.toString()
           );
@@ -181,7 +174,7 @@ exports.updateLessonProgress = async (req, res) => {
               user: userId,
               learnedAt: new Date(),
               reviewCount: 0,
-              mastery: 20, // Bắt đầu với 20% mastery
+              mastery: 20,
               starred: false
             });
             await vocab.save();
@@ -196,11 +189,9 @@ exports.updateLessonProgress = async (req, res) => {
          (`📊 Auto-mark summary: ${markedCount} new, ${alreadyLearnedCount} already learned`);
       } catch (vocabError) {
         console.error('❌ Error auto-marking vocabularies:', vocabError);
-        // Không throw error để không làm fail progress update
       }
     }
     
-    // Cập nhật current lesson nếu chưa hoàn thành
     if (!completed) {
       progress.currentLesson = lessonId;
     }
@@ -209,9 +200,16 @@ exports.updateLessonProgress = async (req, res) => {
     
      (`✅ Lesson progress updated successfully`);
     
+    const updatedUser = await User.findById(userId).select('xp');
+    const currentXP = updatedUser?.xp?.total || updatedUser?.xp || 0;
+    
     res.json({
       success: true,
-      data: progress,
+      data: {
+        progress,
+        xp: currentXP,
+        xpGained: xpGained
+      },
       message: 'Đã cập nhật tiến độ học tập'
     });
   } catch (error) {

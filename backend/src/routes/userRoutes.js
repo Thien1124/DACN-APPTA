@@ -27,6 +27,13 @@ router.get('/profile', authenticate, (req, res) => {
         isActive: req.user.isActive,
         emailVerified: req.user.emailVerified,
         provider: req.user.provider,
+        // Thêm gamification fields
+        xp: req.user.xp || 0,
+        streak: req.user.streak || { count: 0, lastStudyDate: null },
+        gems: req.user.gems || { amount: 0 },
+        currentOutfit: req.user.currentOutfit,
+        completedLessons: req.user.completedLessons || [],
+        currentLesson: req.user.currentLesson,
         createdAt: req.user.createdAt,
         updatedAt: req.user.updatedAt
       }

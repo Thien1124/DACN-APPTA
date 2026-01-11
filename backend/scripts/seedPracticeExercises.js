@@ -24,6 +24,7 @@ const exercises = [
     type: 'fill_blank',
     choices: ['is', 'are', 'am'],
     correctAnswer: 'is',
+    blankPosition: 1,
     explanation: 'Use "is" with third person singular (she/he/it)',
     level: 'A1',
     difficulty: 'easy',
@@ -73,6 +74,7 @@ const exercises = [
     type: 'fill_blank',
     choices: ['have', 'had', 'will have'],
     correctAnswer: 'have',
+    blankPosition: 2,
     explanation: 'First conditional: If + present simple, ... will + infinitive',
     level: 'B1',
     difficulty: 'medium',
@@ -83,14 +85,17 @@ const exercises = [
 const seedExercises = async () => {
   try {
     await PracticeExercise.deleteMany({});
-     ('🗑️  Deleted old exercises');
+    console.log('🗑️  Deleted old exercises');
 
-    await PracticeExercise.insertMany(exercises);
-     (`✅ Seeded ${exercises.length} practice exercises`);
+    const result = await PracticeExercise.insertMany(exercises);
+    console.log(`✅ Seeded ${result.length} practice exercises`);
 
+    mongoose.connection.close();
+    console.log('📦 Database connection closed');
     process.exit(0);
   } catch (error) {
     console.error('❌ Seed error:', error);
+    mongoose.connection.close();
     process.exit(1);
   }
 };
