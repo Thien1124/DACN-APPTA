@@ -36,7 +36,7 @@ The project utilizes **MongoDB** with a flexible schema design to handle diverse
 1. **Clone the repository:**
    ```bash
    git clone [https://github.com/Thien1124/DACN-APPTA.git](https://github.com/Thien1124/DACN-APPTA.git)
-   cd DACN-APPTAInstall dependencies:
+   cd DACN-APPTA
 
 2.**Install dependencies:**
     
