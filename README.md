@@ -39,16 +39,16 @@ The project utilizes **MongoDB** with a flexible schema design to handle diverse
    cd DACN-APPTAInstall dependencies:
 
 2.**Install dependencies:**
-    ```bash
+    
     npm install
     
 3.**Configure Environment Variables (.env):
 Create a .env file in the root directory and add:**
-     ```bash
-     PORT=5000
-    MONGO_URI=your_mongodb_connection_string
-    GEMINI_API_KEY=your_google_ai_key
-    JWT_SECRET=your_secret_key
+
+   PORT=5000
+   MONGO_URI=your_mongodb_connection_string
+   GEMINI_API_KEY=your_google_ai_key
+   JWT_SECRET=your_secret_key
     
 4. **Run the application:**
     ```bash
